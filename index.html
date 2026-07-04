@@ -506,11 +506,12 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     </div>
   </div>
   <div class="wrap" style="padding-bottom:20px">
-    <div class="tabs">
-      <div class="tab on" onclick="admTab('dash',this)">📊 Dashboard</div>
+    <div class="tabs" style="flex-wrap:wrap;gap:3px">
+      <div class="tab on" onclick="admTab('dash',this)">📊 Dash</div>
       <div class="tab" onclick="admTab('tasks',this)">📌 Tasks</div>
+      <div class="tab" onclick="admTab('chk',this)">📋 Checklists</div>
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
-      <div class="tab" onclick="admTab('report',this)">📥 Report</div>
+      <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
     <!-- DASHBOARD -->
@@ -660,22 +661,140 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
 
-    <!-- REPORT -->
-    <div id="tab-report" style="display:none">
-      <div class="card" style="border-left:4px solid #2E7D32">
-        <h3 style="font-size:15px;font-weight:800;margin-bottom:6px;color:#2E7D32">📊 Excel Report with Dashboard</h3>
-        <p style="font-size:13px;color:#607D8B;margin-bottom:14px;line-height:1.6">Downloads a full Excel file with: Dashboard, KPI Summary, Employee Details (one sheet per employee), Fault Items, Problems, and Tasks. Share by email or WhatsApp.</p>
-        <div><label>Report Date</label><input type="date" id="rep-date"></div>
-        <div style="margin-top:14px;display:grid;gap:8px">
-          <button class="btn orange" onclick="downloadGraphicalReport()" style="font-size:14px;padding:14px">📊 Download Graphical HTML Report</button>
-          <button class="btn green" onclick="downloadExcel()">📥 Download Excel Report</button>
-          <button class="btn wa" onclick="shareReportWA()">📲 Download + Notify via WhatsApp</button>
-          <button class="btn outline" onclick="shareReportEmail()">✉️ Download + Send Email</button>
+    <!-- CHECKLISTS -->
+    <div id="tab-chk" style="display:none">
+      <!-- Global custom items -->
+      <div class="card" style="border-left:4px solid #1565C0">
+        <h3 style="font-size:14px;font-weight:800;color:#1565C0;margin-bottom:10px">➕ Add Custom Checklist Item (All Employees)</h3>
+        <div style="display:grid;gap:8px">
+          <div><label>Section</label>
+            <select id="ci-sec" style="margin-top:5px"></select>
+          </div>
+          <div><label>Item Text</label><input type="text" id="ci-text" placeholder="e.g. Check fire alarm panel"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div><label>Unit (optional)</label><input type="text" id="ci-unit" placeholder="e.g. °C, V, %"></div>
+            <div><label>Min Value</label><input type="number" id="ci-min" placeholder="—"></div>
+            <div><label>Max Value</label><input type="number" id="ci-max" placeholder="—"></div>
+          </div>
+          <button class="btn blue" style="margin:0" onclick="addCustomItem()">➕ Add to All Checklists</button>
         </div>
       </div>
-      <div class="card" style="background:#FFF8E1;border:2px solid #FFD54F;padding:14px">
-        <p style="font-weight:700;font-size:13px;color:#5D4037;margin-bottom:6px">How to share</p>
-        <p style="font-size:13px;color:#6D4C41;line-height:1.65">1. Tap <strong>Download Excel Report</strong> — file saves to phone/PC<br>2. WhatsApp: open chat → attach → Files → select the file → send<br>3. Email: compose → attach → send</p>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800">📋 Current Custom Items (All Employees)</div>
+        <div id="custom-item-list" style="padding:13px"></div>
+      </div>
+      <!-- Per-employee custom items -->
+      <div class="card" style="border-left:4px solid #6A1B9A">
+        <h3 style="font-size:14px;font-weight:800;color:#6A1B9A;margin-bottom:10px">👷 Add Item for Specific Employee Only</h3>
+        <div style="display:grid;gap:8px">
+          <div><label>Employee</label><select id="ei-emp" style="margin-top:5px"></select></div>
+          <div><label>Item Text</label><input type="text" id="ei-text" placeholder="e.g. Check ICU AHU filter"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div><label>Unit</label><input type="text" id="ei-unit" placeholder="e.g. °C"></div>
+            <div><label>Min</label><input type="number" id="ei-min" placeholder="—"></div>
+            <div><label>Max</label><input type="number" id="ei-max" placeholder="—"></div>
+          </div>
+          <button class="btn purple" style="margin:0" onclick="addEmpItem()">➕ Add to Employee Checklist</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800">👷 Employee-Specific Items</span>
+          <select id="ei-filter" onchange="renderEmpItems()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
+            <option value="all">All Employees</option>
+          </select>
+        </div>
+        <div id="emp-item-list" style="padding:13px"></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="tab-report" style="display:none">
+      <!-- Period picker -->
+      <div class="card" style="border-left:4px solid #2E7D32">
+        <h3 style="font-size:15px;font-weight:800;margin-bottom:10px;color:#2E7D32">📊 Generate Report</h3>
+        <div style="display:grid;gap:10px">
+          <div><label>Report Period</label>
+            <select id="rep-period" onchange="onPeriodChange()" style="margin-top:5px">
+              <option value="day">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week (Mon–Sun)</option>
+              <option value="lastweek">Last Week</option>
+              <option value="month">This Month</option>
+              <option value="lastmonth">Last Month</option>
+              <option value="year">This Year</option>
+              <option value="lastyear">Last Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          <div id="rep-custom-range" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label>From Date</label><input type="date" id="rep-from"></div>
+            <div><label>To Date</label><input type="date" id="rep-to"></div>
+          </div>
+          <div id="rep-period-label" style="font-size:12px;color:#607D8B;font-weight:700;padding:6px 10px;background:#F0F4F8;border-radius:8px"></div>
+          <button class="btn orange" onclick="generateRangeReport()" style="font-size:14px;padding:14px">📊 Generate Report</button>
+        </div>
+      </div>
+      <!-- Quick download buttons -->
+      <div class="card" style="border-left:4px solid #1565C0">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:#1565C0">⚡ Quick Download</h3>
+        <div style="display:grid;gap:8px">
+          <button onclick="quickReport('day')" style="background:#E3F2FD;border:none;color:#1565C0;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 Today's Report</button>
+          <button onclick="quickReport('yesterday')" style="background:#EDE7F6;border:none;color:#4527A0;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 Yesterday's Report</button>
+          <button onclick="quickReport('week')" style="background:#E8F5E9;border:none;color:#2E7D32;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 This Week's Report (7 days)</button>
+          <button onclick="quickReport('lastweek')" style="background:#F1F8E9;border:none;color:#33691E;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 Last Week's Report</button>
+          <button onclick="quickReport('month')" style="background:#FFF3E0;border:none;color:#E65100;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 This Month's Report (30 days)</button>
+          <button onclick="quickReport('lastmonth')" style="background:#FBE9E7;border:none;color:#BF360C;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 Last Month's Report</button>
+          <button onclick="quickReport('year')" style="background:#E8EAF6;border:none;color:#283593;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 This Year's Report (365 days)</button>
+          <button onclick="quickReport('lastyear')" style="background:#EFEBE9;border:none;color:#4E342E;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 Last Year's Report</button>
+        </div>
+      </div>
+      <!-- Loading indicator -->
+      <div id="rep-loading" style="display:none;text-align:center;padding:30px;color:#607D8B;font-weight:700">
+        ⏳ Fetching data from Firebase... please wait.
+      </div>
+      <!-- Report preview area -->
+      <div id="rep-preview" style="display:none">
+        <div class="card" style="border-left:4px solid #2E7D32">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <span id="rep-title-lbl" style="font-weight:900;font-size:15px;color:#1B5E20"></span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="downloadCurrentReport()" style="background:#2E7D32;border:none;color:#fff;padding:9px 14px;border-radius:9px;font-weight:700;cursor:pointer;font-size:12px">📥 Download HTML</button>
+              <button onclick="downloadCurrentExcel()" style="background:#1565C0;border:none;color:#fff;padding:9px 14px;border-radius:9px;font-weight:700;cursor:pointer;font-size:12px">📊 Download Excel</button>
+            </div>
+          </div>
+          <!-- KPI summary -->
+          <div id="rep-kpis" class="kpi-grid" style="grid-template-columns:repeat(3,1fr)"></div>
+        </div>
+        <!-- Per-employee breakdown -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">👷 Employee Performance</div>
+          <div id="rep-emp-table" style="padding:13px"></div>
+        </div>
+        <!-- Daily trend -->
+        <div class="card">
+          <div style="font-weight:800;font-size:14px;margin-bottom:12px">📈 Daily Completion Trend</div>
+          <div id="rep-trend"></div>
+        </div>
+        <!-- Problems -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">⚠️ Problems Reported</div>
+          <div id="rep-problems" style="padding:13px"></div>
+        </div>
+        <!-- Tasks -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📌 Tasks Summary</div>
+          <div id="rep-tasks-summary" style="padding:13px"></div>
+        </div>
+      </div>
+      <!-- Daily report (single date) - kept for backward compat -->
+      <div class="card" style="border-left:4px solid #607D8B">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:8px">📂 Single Day + Task Archive</h3>
+        <div><label>Date</label><input type="date" id="rep-date"></div>
+        <div style="margin-top:10px;display:grid;gap:8px">
+          <button class="btn green" onclick="downloadExcel()">📥 Today's Excel Report</button>
+          <button class="btn wa" onclick="shareReportWA()">📲 WhatsApp Notify</button>
+        </div>
       </div>
       <div class="card" style="border-left:4px solid #607D8B;padding:0;overflow:hidden">
         <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
@@ -936,7 +1055,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:''};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{}};
 let currentEmp=null; // {name,loginId,password}
 let statuses={},values={},problems=[];
 
@@ -1089,6 +1208,11 @@ async function empPoll(){
       const arr=Object.values(tasks).filter(Boolean);
       if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
     }
+    // Sync custom checklist items from Firebase
+    const ci=await fbGet('/customItems');
+    if(ci&&Array.isArray(ci)){cfg.customItems=ci;saveCfg();}
+    const ec=await fbGet('/empChecklists');
+    if(ec&&typeof ec==='object'){cfg.empChecklists=ec;saveCfg();}
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -1125,37 +1249,56 @@ function startChecklist(){
   go('view-checklist');
 }
 
+function buildChkItem(si,ii,item){
+  const isObj=typeof item==='object';
+  const label=isObj?(item.t||item.text):item;
+  const unit=isObj?(item.u||item.unit||''):'';
+  const ph=isObj?(item.ph||'Enter'):'Enter';
+  const mn=isObj?(item.mn!==undefined&&item.mn!==null?item.mn:undefined):undefined;
+  const mx=isObj?(item.mx!==undefined&&item.mx!==null?item.mx:undefined):undefined;
+  const hasNum=isObj&&(unit||mn!==undefined||mx!==undefined||item.ph);
+  return `<div class="item-row" id="row-${si}-${ii}">
+    <div style="flex:1;min-width:0">
+      <span class="item-txt">${label}</span>
+      ${hasNum?`<div style="display:flex;align-items:center;gap:7px;margin-top:7px">
+        <input type="number" id="val-${si}-${ii}"
+          placeholder="${ph}"
+          ${mn!==undefined?'min="'+mn+'"':''}
+          ${mx!==undefined?'max="'+mx+'"':''}
+          oninput="setValue(${si},${ii},this.value)"
+          style="width:90px;padding:8px 6px;font-size:16px;font-weight:800;text-align:center;border:2px solid #B0BEC5;border-radius:8px;outline:none;margin:0"
+          onfocus="this.style.borderColor='#1565C0'" onblur="this.style.borderColor='#B0BEC5'">
+        <span style="font-size:13px;font-weight:700;color:#546E7A">${unit}</span>
+      </div>`:''}
+    </div>
+    <div class="s-btns">
+      <button class="sb" onclick="setStatus(${si},${ii},this,'OK')">✓ OK</button>
+      <button class="sb" onclick="setStatus(${si},${ii},this,'Fault')">✗ Fault</button>
+      <button class="sb" onclick="setStatus(${si},${ii},this,'N/A')">— N/A</button>
+    </div>
+  </div>`;
+}
+
 function buildChk(){
-  document.getElementById('chk-body').innerHTML=SECTIONS.map((sec,si)=>`
-    <div class="sec-hdr" style="background:${sec.color}" onclick="toggleSec(${si})">
+  // Build merged sections: standard items + custom items per section
+  const customItems=cfg.customItems||[];
+  const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
+  document.getElementById('chk-body').innerHTML=SECTIONS.map((sec,si)=>{
+    const secCustom=customItems.filter(c=>c.sectionIdx===si);
+    const allItems=[...sec.items,...secCustom];
+    return `<div class="sec-hdr" style="background:${sec.color}" onclick="toggleSec(${si})">
       <span>${sec.name}</span><span id="arr-${si}">▾</span>
     </div>
     <div class="sec-body" id="sb-${si}">
-      ${sec.items.map((item,ii)=>{
-        const isObj=typeof item==='object';
-        const label=isObj?item.t:item;
-        return `<div class="item-row" id="row-${si}-${ii}">
-          <div style="flex:1;min-width:0">
-            <span class="item-txt">${label}</span>
-            ${isObj?`<div style="display:flex;align-items:center;gap:7px;margin-top:7px">
-              <input type="number" id="val-${si}-${ii}"
-                placeholder="${item.ph||'Enter'}"
-                ${item.mn!==undefined?'min="'+item.mn+'"':''}
-                ${item.mx!==undefined?'max="'+item.mx+'"':''}
-                oninput="setValue(${si},${ii},this.value)"
-                style="width:90px;padding:8px 6px;font-size:16px;font-weight:800;text-align:center;border:2px solid #B0BEC5;border-radius:8px;outline:none;margin:0"
-                onfocus="this.style.borderColor='#1565C0'" onblur="this.style.borderColor='#B0BEC5'">
-              <span style="font-size:13px;font-weight:700;color:#546E7A">${item.u||''}</span>
-            </div>`:''}
-          </div>
-          <div class="s-btns">
-            <button class="sb" onclick="setStatus(${si},${ii},this,'OK')">✓ OK</button>
-            <button class="sb" onclick="setStatus(${si},${ii},this,'Fault')">✗ Fault</button>
-            <button class="sb" onclick="setStatus(${si},${ii},this,'N/A')">— N/A</button>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
+      ${allItems.map((item,ii)=>buildChkItem(si,ii,item)).join('')}
+    </div>`;
+  }).join('')+(empItems.length?`
+    <div class="sec-hdr" style="background:#6A1B9A" onclick="toggleSec(99)">
+      <span>⭐ My Custom Items</span><span id="arr-99">▾</span>
+    </div>
+    <div class="sec-body" id="sb-99">
+      ${empItems.map((item,ii)=>buildChkItem(99,ii,item)).join('')}
+    </div>`:'');
 }
 
 function setValue(si,ii,val){
@@ -1333,30 +1476,36 @@ function endTask(id){
   const i=tasks.findIndex(t=>t.id===id);
   if(i<0)return;
   tasks[i].endedAt=Date.now();
-  // Archive immediately — move to archive, remove from active
+  tasks[i].status='done';
+  tasks[i].doneBy=currentEmp?currentEmp.name:'';
+  // Archive immediately locally
   const archive=getTaskArchive();
   archive.push({...tasks[i],archivedAt:Date.now(),archivedDate:todayStr()});
   localStorage.setItem('HFM4_TASKS_ARCHIVE',JSON.stringify(archive));
-  // Remove from active tasks and Firebase
+  // Remove from employee's active list locally
   const remaining=tasks.filter(t=>t.id!==id);
   localStorage.setItem('HFM4_TASKS',JSON.stringify(remaining));
-  fbDelete('/tasks/'+id);
+  // Push DONE status to Firebase so admin sees ✅ Done in real-time (don't delete yet)
+  fbPatch('/tasks/'+id,{endedAt:tasks[i].endedAt,status:'done',doneBy:tasks[i].doneBy});
+  // Auto-delete from Firebase after 2 minutes (admin has seen it by then)
+  setTimeout(()=>fbDelete('/tasks/'+id),120000);
   renderMyTasks();
-  showToast('Task done ✓ — removed from your list');
+  showToast('Task done ✓ — admin notified');
 }
 
 // ══════════════════════════════════════════════════════
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','staff','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','chk','staff','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
   if(tab==='dash') startLiveTracking();
   if(tab==='tasks') renderAdminTasks();
+  if(tab==='chk') renderChecklistAdmin();
   if(tab==='staff') renderStaff();
-  if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();}
+  if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
 function renderAdmin(){
@@ -1458,8 +1607,8 @@ function renderAdminTasks(){
   if(cur) sel.value=cur;
   const td=document.getElementById('t-date');if(!td.value)td.value=todayStr();
   const filter=document.getElementById('task-filter').value;
-  // Active tasks only (no Done — those are archived immediately)
-  let tasks=getTasks().filter(t=>!t.endedAt);
+  // Show all tasks — Done ones in green, admin can remove them
+  let tasks=getTasks();
   if(filter!=='all') tasks=tasks.filter(t=>taskStatus(t)===filter);
   tasks.sort((a,b)=>b.createdAt-a.createdAt);
   const el=document.getElementById('adm-task-list');
@@ -1925,14 +2074,19 @@ function startLiveTracking(){
       } else {
         setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
       }
-      // Sync tasks too
+      // Sync tasks — always replace local with Firebase truth (catches done + deleted tasks)
       const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
       if(tr.ok){
         const tasks=await tr.json();
-        if(tasks&&typeof tasks==='object'){
+        if(tasks&&typeof tasks==='object'&&!Array.isArray(tasks)){
           const arr=Object.values(tasks).filter(Boolean);
-          if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
+          localStorage.setItem('HFM4_TASKS',JSON.stringify(arr)); // replace even if empty
+        } else if(!tasks){
+          localStorage.setItem('HFM4_TASKS','[]'); // Firebase returned null = all tasks gone
         }
+        // Refresh Tasks tab if it is currently visible
+        const tasksTab=document.getElementById('tab-tasks');
+        if(tasksTab&&tasksTab.style.display!=='none') renderAdminTasks();
       }
     }catch(e){
       setFbStatus('error','Cannot reach Firebase: '+e.message+'. Check internet connection and Firebase URL.');
@@ -2062,6 +2216,362 @@ function clearTaskArchive(){
   localStorage.removeItem('HFM4_TASKS_ARCHIVE');
   renderArchive();
   showToast2('Archive cleared');
+}
+
+// ══════════════════════════════════════════════════════
+// CHECKLIST MANAGEMENT
+// ══════════════════════════════════════════════════════
+function renderChecklistAdmin(){
+  // Populate section dropdown
+  const sec=document.getElementById('ci-sec');
+  if(sec){sec.innerHTML=SECTIONS.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');}
+  // Populate employee dropdowns
+  const empSel=document.getElementById('ei-emp');
+  const empFil=document.getElementById('ei-filter');
+  if(empSel){empSel.innerHTML=cfg.employees.map(e=>`<option value="${e.loginId}">${e.name}</option>`).join('');}
+  if(empFil){empFil.innerHTML='<option value="all">All Employees</option>'+cfg.employees.map(e=>`<option value="${e.loginId}">${e.name}</option>`).join('');}
+  renderCustomItems();
+  renderEmpItems();
+}
+
+function addCustomItem(){
+  const secIdx=parseInt(document.getElementById('ci-sec').value);
+  const text=(document.getElementById('ci-text').value||'').trim();
+  const unit=(document.getElementById('ci-unit').value||'').trim();
+  const mn=document.getElementById('ci-min').value;
+  const mx=document.getElementById('ci-max').value;
+  if(!text){alert('Enter item text.');return;}
+  if(!cfg.customItems) cfg.customItems=[];
+  cfg.customItems.push({id:Date.now().toString(),sectionIdx:secIdx,text,unit,mn:mn!==''?parseFloat(mn):null,mx:mx!==''?parseFloat(mx):null});
+  saveCfg();
+  // Push to Firebase so employees get it
+  fbPut('/customItems',cfg.customItems);
+  document.getElementById('ci-text').value='';
+  document.getElementById('ci-unit').value='';
+  document.getElementById('ci-min').value='';
+  document.getElementById('ci-max').value='';
+  renderCustomItems();
+  showToast2('Custom item added ✓');
+}
+
+function removeCustomItem(id){
+  cfg.customItems=(cfg.customItems||[]).filter(i=>i.id!==id);
+  saveCfg();fbPut('/customItems',cfg.customItems);
+  renderCustomItems();showToast2('Item removed');
+}
+
+function renderCustomItems(){
+  const el=document.getElementById('custom-item-list');if(!el)return;
+  const items=cfg.customItems||[];
+  if(!items.length){el.innerHTML='<p style="color:#90A4AE;font-size:13px">No custom items added yet.</p>';return;}
+  el.innerHTML=items.map(item=>{
+    const secName=SECTIONS[item.sectionIdx]?SECTIONS[item.sectionIdx].name.split('—')[0].trim():'?';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-bottom:1px solid #F0F4F8;gap:10px">
+      <div>
+        <div style="font-weight:700;font-size:13px">${item.text}${item.unit?' <span style="color:#607D8B;font-size:11px">('+item.unit+')</span>':''}</div>
+        <div style="font-size:11px;color:#90A4AE;margin-top:2px">Section: ${secName}</div>
+      </div>
+      <button onclick="removeCustomItem('${item.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">✕ Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function addEmpItem(){
+  const loginId=document.getElementById('ei-emp').value;
+  const text=(document.getElementById('ei-text').value||'').trim();
+  const unit=(document.getElementById('ei-unit').value||'').trim();
+  const mn=document.getElementById('ei-min').value;
+  const mx=document.getElementById('ei-max').value;
+  if(!loginId||!text){alert('Select employee and enter item text.');return;}
+  if(!cfg.empChecklists) cfg.empChecklists={};
+  if(!cfg.empChecklists[loginId]) cfg.empChecklists[loginId]=[];
+  cfg.empChecklists[loginId].push({id:Date.now().toString(),text,unit,mn:mn!==''?parseFloat(mn):null,mx:mx!==''?parseFloat(mx):null});
+  saveCfg();
+  fbPut('/empChecklists',cfg.empChecklists);
+  document.getElementById('ei-text').value='';
+  document.getElementById('ei-unit').value='';
+  document.getElementById('ei-min').value='';
+  document.getElementById('ei-max').value='';
+  renderEmpItems();
+  showToast2('Employee item added ✓');
+}
+
+function removeEmpItem(loginId,id){
+  if(!cfg.empChecklists||!cfg.empChecklists[loginId])return;
+  cfg.empChecklists[loginId]=cfg.empChecklists[loginId].filter(i=>i.id!==id);
+  saveCfg();fbPut('/empChecklists',cfg.empChecklists);
+  renderEmpItems();showToast2('Item removed');
+}
+
+function renderEmpItems(){
+  const el=document.getElementById('emp-item-list');if(!el)return;
+  const filter=(document.getElementById('ei-filter')||{}).value||'all';
+  const ec=cfg.empChecklists||{};
+  let rows=[];
+  cfg.employees.forEach(emp=>{
+    if(filter!=='all'&&filter!==emp.loginId)return;
+    const items=ec[emp.loginId]||[];
+    items.forEach(item=>{
+      rows.push(`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-bottom:1px solid #F0F4F8;gap:10px">
+        <div>
+          <div style="font-weight:700;font-size:13px">${item.text}${item.unit?' <span style="color:#607D8B;font-size:11px">('+item.unit+')</span>':''}</div>
+          <div style="font-size:11px;color:#90A4AE;margin-top:2px">👷 ${emp.name}</div>
+        </div>
+        <button onclick="removeEmpItem('${emp.loginId}','${item.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">✕ Remove</button>
+      </div>`);
+    });
+  });
+  el.innerHTML=rows.length?rows.join(''):'<p style="color:#90A4AE;font-size:13px">No employee-specific items yet.</p>';
+}
+
+// ══════════════════════════════════════════════════════
+// RANGE REPORTS
+// ══════════════════════════════════════════════════════
+let _currentReportData=null;
+let _currentReportLabel='';
+
+function getDateRange(period){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const startOfWeek=d=>{const c=new Date(d);c.setDate(c.getDate()-((c.getDay()+6)%7));return c;};
+  let from,to,label;
+  if(period==='day'){from=to=fmt(now);label='Today — '+now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  else if(period==='yesterday'){const y=new Date(now);y.setDate(y.getDate()-1);from=to=fmt(y);label='Yesterday — '+y.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});}
+  else if(period==='week'){const s=startOfWeek(now);const e=new Date(s);e.setDate(s.getDate()+6);from=fmt(s);to=fmt(e);label='This Week: '+s.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' – '+e.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+  else if(period==='lastweek'){const s=startOfWeek(now);s.setDate(s.getDate()-7);const e=new Date(s);e.setDate(s.getDate()+6);from=fmt(s);to=fmt(e);label='Last Week: '+s.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' – '+e.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+  else if(period==='month'){from=`${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;to=fmt(now);label='This Month: '+now.toLocaleDateString('en-IN',{month:'long',year:'numeric'});}
+  else if(period==='lastmonth'){const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const le=new Date(now.getFullYear(),now.getMonth(),0);from=fmt(lm);to=fmt(le);label='Last Month: '+lm.toLocaleDateString('en-IN',{month:'long',year:'numeric'});}
+  else if(period==='year'){from=`${now.getFullYear()}-01-01`;to=fmt(now);label='This Year: '+now.getFullYear();}
+  else if(period==='lastyear'){from=`${now.getFullYear()-1}-01-01`;to=`${now.getFullYear()-1}-12-31`;label='Last Year: '+(now.getFullYear()-1);}
+  else if(period==='custom'){from=document.getElementById('rep-from').value;to=document.getElementById('rep-to').value;label='Custom: '+from+' to '+to;}
+  return {from,to,label};
+}
+
+function onPeriodChange(){
+  const period=document.getElementById('rep-period').value;
+  const custom=document.getElementById('rep-custom-range');
+  if(custom) custom.style.display=period==='custom'?'grid':'none';
+  const {from,to,label}=getDateRange(period);
+  const lbl=document.getElementById('rep-period-label');
+  if(lbl) lbl.textContent='📅 '+label;
+}
+
+function quickReport(period){
+  document.getElementById('rep-period').value=period;
+  onPeriodChange();
+  generateRangeReport();
+  // scroll to report tab if needed
+  admTab('report',document.querySelectorAll('.tab')[4]);
+}
+
+async function generateRangeReport(){
+  const period=document.getElementById('rep-period').value;
+  const {from,to,label}=getDateRange(period);
+  if(!from||!to){alert('Please select a valid date range.');return;}
+  document.getElementById('rep-loading').style.display='block';
+  document.getElementById('rep-preview').style.display='none';
+  // Fetch all daily data from Firebase
+  let allDaily={};
+  const base=getDbUrl();
+  if(base){
+    try{
+      const r=await xhrRequest(base+'/daily.json','GET',null,15000);
+      if(r.ok&&r.data&&typeof r.data==='object') allDaily=r.data;
+    }catch(e){console.warn('Firebase fetch failed:',e.message);}
+  }
+  // Also merge local localStorage data
+  for(let k in localStorage){
+    const m=k.match(/^HFM4_(\d{4}-\d{2}-\d{2})_(.+)$/);
+    if(!m)continue;
+    const date=m[1],loginId=m[2];
+    if(!allDaily[date]) allDaily[date]={};
+    if(!allDaily[date][loginId]){
+      try{allDaily[date][loginId]=JSON.parse(localStorage.getItem(k));}catch(e){}
+    }
+  }
+  // Filter by date range
+  const rangeData={};
+  Object.entries(allDaily).forEach(([date,empData])=>{if(date>=from&&date<=to)rangeData[date]=empData;});
+  _currentReportData={from,to,label,rangeData};
+  _currentReportLabel=label;
+  document.getElementById('rep-loading').style.display='none';
+  renderRangeReport(from,to,label,rangeData);
+}
+
+function renderRangeReport(from,to,label,rangeData){
+  const dates=Object.keys(rangeData).sort();
+  const allProblems=[],allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
+  // Aggregate per-employee stats
+  const empStats={};
+  cfg.employees.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0,totalOK:0,totalNA:0};});
+  dates.forEach(date=>{
+    const dayData=rangeData[date]||{};
+    Object.entries(dayData).forEach(([loginId,d])=>{
+      if(!d)return;
+      if(!empStats[loginId]) empStats[loginId]={name:d.name||loginId,days:0,totalPct:0,totalFaults:0,totalOK:0,totalNA:0};
+      empStats[loginId].days++;
+      empStats[loginId].totalPct+=(d.pct||0);
+      empStats[loginId].totalFaults+=(d.fault||0);
+      empStats[loginId].totalOK+=(d.ok||0);
+      empStats[loginId].totalNA+=(d.na||0);
+      (d.problems||[]).forEach(p=>allProblems.push({...p,date,emp:d.name||loginId}));
+    });
+  });
+  // KPIs
+  const totalDays=dates.length;
+  const activeEmps=Object.values(empStats).filter(e=>e.days>0);
+  const avgPct=activeEmps.length?Math.round(activeEmps.reduce((s,e)=>s+e.totalPct/Math.max(e.days,1),0)/activeEmps.length):0;
+  const totalFaults=activeEmps.reduce((s,e)=>s+e.totalFaults,0);
+  const totalProblems=allProblems.length;
+  const totalTasksDone=allTasks.length;
+  // Render KPIs
+  document.getElementById('rep-title-lbl').textContent='📊 '+label;
+  document.getElementById('rep-kpis').innerHTML=`
+    <div class="kpi"><div class="num" style="color:#1565C0">${totalDays}</div><div class="lbl">Days Tracked</div></div>
+    <div class="kpi"><div class="num" style="color:#2E7D32">${avgPct}%</div><div class="lbl">Avg Completion</div></div>
+    <div class="kpi"><div class="num" style="color:#C62828">${totalFaults}</div><div class="lbl">Total Faults</div></div>
+    <div class="kpi"><div class="num" style="color:#E65100">${totalProblems}</div><div class="lbl">Problems</div></div>
+    <div class="kpi"><div class="num" style="color:#00897B">${totalTasksDone}</div><div class="lbl">Tasks Done</div></div>
+    <div class="kpi"><div class="num" style="color:#6A1B9A">${activeEmps.length}</div><div class="lbl">Active Staff</div></div>
+  `;
+  // Employee table
+  const empRows=Object.values(empStats).filter(e=>e.days>0).sort((a,b)=>(b.totalPct/b.days)-(a.totalPct/a.days));
+  document.getElementById('rep-emp-table').innerHTML=empRows.length?empRows.map(e=>{
+    const avg=Math.round(e.totalPct/e.days);
+    const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
+    const grade=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
+    return `<div class="ep-row">
+      <div class="ep-name">${e.name}</div>
+      <div class="ep-bar"><div class="ep-fill" style="width:${avg}%;background:${col}"></div></div>
+      <div class="ep-pct" style="color:${col}">${avg}%</div>
+      <span class="grade grade-${grade}" style="margin-left:4px">${grade}</span>
+      <div style="font-size:11px;color:#90A4AE;min-width:60px;text-align:right">${e.days}d · ${e.totalFaults} faults</div>
+    </div>`;
+  }).join(''):'<p style="color:#90A4AE;font-size:13px">No employee data found for this period.</p>';
+  // Daily trend bars
+  const maxPct=100;
+  document.getElementById('rep-trend').innerHTML=dates.length?dates.map(date=>{
+    const dayData=rangeData[date]||{};
+    const vals=Object.values(dayData).filter(Boolean).filter(d=>d.pct!==undefined);
+    const avg=vals.length?Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length):0;
+    const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
+    const d=new Date(date+'T00:00:00');
+    const dlbl=d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    return `<div class="chart-bar-row">
+      <div class="chart-bar-name">${dlbl}</div>
+      <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${avg}%;background:${col}"></div></div>
+      <div class="chart-bar-pct" style="color:${col}">${avg}%</div>
+    </div>`;
+  }).join(''):'<p style="color:#90A4AE;font-size:13px">No data for this period.</p>';
+  // Problems
+  const priColors={'🔴 Critical':'#C62828','🟠 High':'#E65100','🟡 Medium':'#F57F17','🟢 Low':'#2E7D32'};
+  document.getElementById('rep-problems').innerHTML=allProblems.length?allProblems.map(p=>`
+    <div class="fi" style="border-color:${priColors[p.pri]||'#C62828'}">
+      <span style="font-weight:800">${p.pri||''} ${p.loc}</span> — ${p.desc}
+      <span style="font-size:11px;color:#90A4AE;margin-left:6px">${p.date} ${p.time||''} · ${p.emp}</span>
+    </div>`).join(''):'<p style="color:#90A4AE;font-size:13px">No problems reported in this period.</p>';
+  // Tasks summary
+  document.getElementById('rep-tasks-summary').innerHTML=allTasks.length?allTasks.map(t=>`
+    <div style="padding:9px 0;border-bottom:1px solid #F0F4F8">
+      <div style="font-weight:700;font-size:13px">✅ ${t.desc}</div>
+      <div style="font-size:11px;color:#90A4AE;margin-top:2px">👷 ${t.assignedName} · Done: ${t.archivedDate} · ${t.pri||''}</div>
+    </div>`).join(''):'<p style="color:#90A4AE;font-size:13px">No completed tasks in this period.</p>';
+  document.getElementById('rep-preview').style.display='block';
+}
+
+function downloadCurrentReport(){
+  if(!_currentReportData){alert('Generate a report first.');return;}
+  const {from,to,label,rangeData}=_currentReportData;
+  const dates=Object.keys(rangeData).sort();
+  const allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
+  const allProblems=[];
+  const empStats={};
+  cfg.employees.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0};});
+  dates.forEach(date=>{
+    Object.entries(rangeData[date]||{}).forEach(([lid,d])=>{
+      if(!d)return;
+      if(!empStats[lid])empStats[lid]={name:d.name||lid,days:0,totalPct:0,totalFaults:0};
+      empStats[lid].days++;empStats[lid].totalPct+=(d.pct||0);empStats[lid].totalFaults+=(d.fault||0);
+      (d.problems||[]).forEach(p=>allProblems.push({...p,date,emp:d.name||lid}));
+    });
+  });
+  const empRows=Object.values(empStats).filter(e=>e.days>0).sort((a,b)=>(b.totalPct/b.days)-(a.totalPct/a.days));
+  const avgPct=empRows.length?Math.round(empRows.reduce((s,e)=>s+e.totalPct/Math.max(e.days,1),0)/empRows.length):0;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${label}</title>
+  <style>body{font-family:Arial,sans-serif;background:#F0F4F8;margin:0;padding:20px;color:#263238}
+  .page{max-width:900px;margin:0 auto;background:#fff;border-radius:14px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+  h1{color:#0D1B4B;font-size:22px}h2{color:#1565C0;font-size:16px;margin:20px 0 10px;border-bottom:2px solid #E8EAF6;padding-bottom:6px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .kpi{background:#F8F9FF;border-radius:10px;padding:14px;text-align:center;border:2px solid #E8EAF6}
+  .kpi .n{font-size:28px;font-weight:900;line-height:1}.kpi .l{font-size:11px;color:#607D8B;font-weight:700;text-transform:uppercase;margin-top:3px}
+  .emp-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F0F4F8}
+  .bar-bg{flex:1;height:12px;background:#E8EAF6;border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px}
+  .prob{padding:8px 12px;border-left:4px solid #C62828;background:#FFF5F5;border-radius:0 8px 8px 0;margin:5px 0;font-size:13px}
+  .task{padding:8px 0;border-bottom:1px solid #F0F4F8;font-size:13px}
+  .trend-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+  .trend-bg{flex:1;height:10px;background:#E8EAF6;border-radius:5px;overflow:hidden}
+  @media print{body{background:#fff}.page{box-shadow:none;padding:0}}</style></head>
+  <body><div class="page">
+  <h1>🏥 ${cfg.hosp} — ${label}</h1>
+  <p style="color:#607D8B;font-size:13px">Generated: ${new Date().toLocaleString('en-IN')} · Days: ${dates.length} · Staff: ${empRows.length}</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="n" style="color:#2E7D32">${avgPct}%</div><div class="l">Avg Completion</div></div>
+    <div class="kpi"><div class="n" style="color:#C62828">${empRows.reduce((s,e)=>s+e.totalFaults,0)}</div><div class="l">Total Faults</div></div>
+    <div class="kpi"><div class="n" style="color:#E65100">${allProblems.length}</div><div class="l">Problems</div></div>
+    <div class="kpi"><div class="n" style="color:#1565C0">${dates.length}</div><div class="l">Days Tracked</div></div>
+    <div class="kpi"><div class="n" style="color:#00897B">${allTasks.length}</div><div class="l">Tasks Completed</div></div>
+    <div class="kpi"><div class="n" style="color:#6A1B9A">${empRows.length}</div><div class="l">Active Staff</div></div>
+  </div>
+  <h2>👷 Employee Performance</h2>
+  ${empRows.map(e=>{const avg=Math.round(e.totalPct/e.days);const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';const gr=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
+    return `<div class="emp-row"><div style="min-width:140px;font-weight:700;font-size:13px">${e.name}</div><div class="bar-bg"><div class="bar-fill" style="width:${avg}%;background:${col}"></div></div><div style="min-width:40px;font-weight:800;color:${col};text-align:right">${avg}%</div><div style="min-width:22px;background:${col}20;color:${col};border-radius:5px;padding:2px 6px;font-weight:800;font-size:12px">${gr}</div><div style="font-size:11px;color:#90A4AE;min-width:70px">${e.days}d · ${e.totalFaults}⚡</div></div>`;}).join('')}
+  <h2>📈 Daily Trend</h2>
+  ${dates.map(date=>{const vals=Object.values(rangeData[date]||{}).filter(Boolean).filter(d=>d.pct!==undefined);const avg=vals.length?Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length):0;const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
+    return `<div class="trend-row"><div style="min-width:80px">${date}</div><div class="trend-bg"><div class="bar-fill" style="width:${avg}%;background:${col};height:100%"></div></div><div style="min-width:40px;font-weight:700;color:${col};text-align:right">${avg}%</div></div>`;}).join('')}
+  <h2>⚠️ Problems Reported (${allProblems.length})</h2>
+  ${allProblems.length?allProblems.map(p=>`<div class="prob"><strong>${p.pri||''} ${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.date} · ${p.emp}</span></div>`).join(''):'<p style="color:#90A4AE">No problems in this period.</p>'}
+  <h2>📌 Completed Tasks (${allTasks.length})</h2>
+  ${allTasks.length?allTasks.map(t=>`<div class="task">✅ <strong>${t.desc}</strong> — ${t.assignedName} · ${t.archivedDate} · ${t.pri||''}</div>`).join(''):'<p style="color:#90A4AE">No completed tasks in this period.</p>'}
+  <p style="margin-top:30px;text-align:center;font-size:11px;color:#B0BEC5">Hospital Facility Management System · ${cfg.hosp}</p>
+  </div></body></html>`;
+  const a=document.createElement('a');
+  a.href='data:text/html;charset=utf-8,'+encodeURIComponent(html);
+  a.download=`FM_Report_${from}_to_${to}.html`;
+  a.click();
+  showToast2('Report downloaded ✓');
+}
+
+function downloadCurrentExcel(){
+  if(!_currentReportData){alert('Generate a report first.');return;}
+  const {from,to,label,rangeData}=_currentReportData;
+  const dates=Object.keys(rangeData).sort();
+  const allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
+  const allProblems=[];
+  // Summary sheet data
+  const summaryRows=[['Date','Employee','Completion %','Faults','OK Items','N/A Items','Grade']];
+  dates.forEach(date=>{
+    Object.entries(rangeData[date]||{}).forEach(([lid,d])=>{
+      if(!d)return;
+      const pct=d.pct||0;
+      const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
+      summaryRows.push([date,d.name||lid,pct,d.fault||0,d.ok||0,d.na||0,grade]);
+      (d.problems||[]).forEach(p=>allProblems.push([date,d.name||lid,p.loc,p.desc,p.pri,p.time||'']));
+    });
+  });
+  const taskRows=[['Date','Task','Assigned To','Priority','Due Date']];
+  allTasks.forEach(t=>taskRows.push([t.archivedDate,t.desc,t.assignedName,t.pri,t.dueDate||'']));
+  const problemRows=[['Date','Employee','Location','Description','Priority','Time'],...allProblems];
+  // Build workbook
+  try{
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summaryRows),'Daily Summary');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(problemRows),'Problems');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(taskRows),'Completed Tasks');
+    XLSX.writeFile(wb,`FM_Report_${from}_to_${to}.xlsx`);
+    showToast2('Excel downloaded ✓');
+  }catch(e){alert('Excel export failed: '+e.message);}
 }
 
 // ══════════════════════════════════════════════════════
