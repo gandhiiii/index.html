@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Hospital Facility Management</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase REST: no SDK needed — plain fetch() to Realtime Database REST API -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F4F8;color:#263238;font-size:15px;min-height:100vh}
+.view{display:none;min-height:100vh}.view.active{display:block}
+.hdr{background:#0D1B4B;color:#fff;padding:13px 16px;position:sticky;top:0;z-index:100;box-shadow:0 3px 12px rgba(0,0,0,.3)}
+.hdr h1{font-size:16px;font-weight:800}.hdr p{font-size:11px;opacity:.75;margin-top:1px}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hbtn{background:rgba(255,255,255,.18);border:none;color:#fff;padding:7px 12px;border-radius:18px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.wrap{max-width:800px;margin:0 auto;padding:14px 13px 110px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:13px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:13px 16px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer;border:none;width:100%;margin-bottom:9px;transition:all .14s}
+.btn:last-child{margin-bottom:0}.btn:active{opacity:.82;transform:scale(.98)}
+.blue{background:#1565C0;color:#fff}.green{background:#2E7D32;color:#fff}
+.red{background:#C62828;color:#fff}.wa{background:#25D366;color:#fff}
+.orange{background:#E65100;color:#fff}.outline{background:#fff;color:#1565C0;border:2px solid #1565C0}
+.purple{background:#6A1B9A;color:#fff}
+.tabs{display:flex;gap:0;background:#E8EAF6;border-radius:10px;padding:3px;margin-bottom:14px}
+.tab{flex:1;padding:9px 4px;text-align:center;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:#607D8B;transition:all .15s;white-space:nowrap}
+.tab.on{background:#fff;color:#1565C0;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.sec-hdr{padding:12px 15px;color:#fff;font-weight:800;font-size:12px;border-radius:10px;margin:12px 0 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.sec-body{border:2px solid #E8EAF6;border-top:none;border-radius:0 0 10px 10px;margin-bottom:3px;overflow:hidden}
+.item-row{display:flex;align-items:center;padding:10px 13px;border-bottom:1px solid #F0F4F8;gap:9px;flex-wrap:wrap;background:#fff}
+.item-row:last-child{border:none}
+.item-txt{flex:1;min-width:110px;font-size:13px;line-height:1.4;color:#37474F}
+.s-btns{display:flex;gap:4px;flex-shrink:0}
+.sb{padding:7px 11px;border:2px solid #E0E0E0;border-radius:18px;font-size:11px;font-weight:800;cursor:pointer;background:#F5F5F5;color:#9E9E9E;transition:all .1s;white-space:nowrap}
+.sb.ok{background:#E8F5E9;border-color:#2E7D32;color:#1B5E20}
+.sb.fault{background:#FFEBEE;border-color:#C62828;color:#B71C1C}
+.sb.na{background:#ECEFF1;border-color:#78909C;color:#455A64}
+.sticky{position:fixed;bottom:0;left:0;right:0;background:#0D1B4B;color:#fff;padding:11px 15px;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 14px rgba(0,0,0,.25)}
+.pbar-wrap{flex:1;margin:0 11px}
+.pbar{height:7px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#42A5F5,#81D4FA);border-radius:4px;transition:width .4s}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:13px}
+.kpi{background:#fff;border-radius:13px;padding:15px 10px;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.kpi .num{font-size:28px;font-weight:900;line-height:1}.kpi .lbl{font-size:10px;color:#607D8B;margin-top:3px;font-weight:700;text-transform:uppercase}
+.chart-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chart-bar-name{font-size:12px;font-weight:700;min-width:95px;color:#37474F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart-bar-bg{flex:1;height:14px;background:#E8EAF6;border-radius:7px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:7px;transition:width .6s}
+.chart-bar-pct{font-size:12px;font-weight:800;min-width:36px;text-align:right;color:#1565C0}
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut{width:90px;height:90px;border-radius:50%;flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:6px}
+.dl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700}
+.dl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.ep-row{display:flex;align-items:center;gap:9px;padding:11px 15px;border-bottom:1px solid #F0F4F8;flex-wrap:wrap}
+.ep-row:last-child{border:none}
+.ep-name{font-weight:700;font-size:13px;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-bar{flex:1;min-width:55px;height:10px;background:#E8EAF6;border-radius:5px;overflow:hidden}
+.ep-fill{height:100%;border-radius:5px;transition:width .5s}
+.ep-pct{font-weight:800;font-size:13px;min-width:36px;text-align:right;color:#1565C0}
+.badge{display:inline-block;padding:3px 8px;border-radius:9px;font-size:11px;font-weight:700}
+.b-fault{background:#FFEBEE;color:#B71C1C}
+.grade{padding:3px 8px;border-radius:7px;font-weight:800;font-size:12px}
+.grade-A{background:#E8F5E9;color:#1B5E20}.grade-B{background:#E3F2FD;color:#1565C0}
+.grade-C{background:#FFF8E1;color:#E65100}.grade-D{background:#FFEBEE;color:#B71C1C}
+.task-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:9px;box-shadow:0 2px 7px rgba(0,0,0,.07);border-left:4px solid #CFD8DC}
+.task-card.inprog{border-left-color:#1565C0;background:#FAFCFF}
+.task-card.done{border-left-color:#2E7D32;background:#F9FBF9}
+.task-card.overdue{border-left-color:#C62828;background:#FFF8F8}
+.fi{padding:10px 13px;border-left:4px solid #C62828;background:#FFF5F5;border-radius:0 8px 8px 0;margin-bottom:7px;font-size:13px}
+input,select,textarea{width:100%;padding:11px;border:2px solid #CFD8DC;border-radius:10px;font-size:14px;font-family:inherit;margin-top:5px;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:#1565C0}
+label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;letter-spacing:.4px}
+.toast{position:fixed;top:65px;right:13px;color:#fff;padding:9px 15px;border-radius:9px;font-size:13px;z-index:999;display:none;box-shadow:0 4px 12px rgba(0,0,0,.2);font-weight:700}
+/* Login */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0D1B4B 0%,#1565C0 100%)}
+.login-box{background:#fff;border-radius:20px;padding:28px 22px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+.login-logo{font-size:48px;text-align:center;margin-bottom:6px}
+.login-title{text-align:center;font-size:20px;font-weight:900;color:#0D1B4B;margin-bottom:4px}
+.login-sub{text-align:center;font-size:13px;color:#90A4AE;margin-bottom:22px}
+.emp-badge{display:inline-flex;align-items:center;gap:8px;background:#E3F2FD;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#1565C0;margin-bottom:16px}
+@media(max-width:380px){.sb{padding:6px 8px;font-size:10px}.s-btns{gap:2px}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ════════════════════════════════════════ -->
+<div id="view-setup" class="view active">
+  <div class="hdr"><h1>🏥 Hospital FM — First Setup</h1><p>Admin setup — one time only</p></div>
+  <div style="max-width:580px;margin:0 auto;padding:18px 13px 40px">
+    <div class="card">
+      <h2 style="font-size:16px;margin-bottom:5px">Setup your system</h2>
+      <p style="color:#607D8B;font-size:13px;margin-bottom:18px">Works on Android, iPhone &amp; Desktop. Live tracking via Firebase (free, no credit card).</p>
+      <div style="display:grid;gap:13px">
+        <div><label>Hospital Name</label><input id="s-hosp" type="text" placeholder="e.g. City General Hospital"></div>
+        <div><label>Admin Password (you will use this to login)</label><input id="s-pwd" type="password" placeholder="Set a password"></div>
+        <div><label>Admin WhatsApp Number (country code + number, no +)</label><input id="s-wa" type="tel" placeholder="e.g. 919876543210"></div>
+        <div><label>Admin Email (for email reports)</label><input id="s-email" type="email" placeholder="admin@hospital.com"></div>
+        <div style="background:#E8F5E9;border-radius:10px;padding:12px;border:2px solid #A5D6A7">
+          <label style="color:#2E7D32">🔴 LIVE TRACKING — Firebase Database URL (free)</label>
+          <input id="s-db" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-top:6px;border-color:#A5D6A7">
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button onclick="testDbConnection()" type="button" style="background:#2E7D32;border:none;color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex:1">🔌 Test Connection</button>
+          </div>
+          <p id="fb-test-result" style="font-size:12px;margin-top:7px;display:none;padding:6px 10px;border-radius:7px;font-weight:700"></p>
+          <p style="font-size:11px;color:#388E3C;margin-top:6px;line-height:1.6">Get free URL at <strong>console.firebase.google.com</strong> — see guide below (no terminal needed, 5 minutes).</p>
+        </div>
+      </div>
+      <div style="margin-top:18px"><button class="btn blue" onclick="saveSetup()">✓ Save and Continue</button></div>
+      <details style="margin-top:14px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1565C0;padding:8px 0">📖 How to get your free Firebase URL (5 minutes, no terminal)</summary>
+        <div style="background:#F8F9FA;border-radius:8px;padding:12px;margin-top:8px;font-size:12px;line-height:2;color:#37474F">
+          <strong>Step 1:</strong> Go to <strong>console.firebase.google.com</strong> (login with Google account)<br>
+          <strong>Step 2:</strong> Click <strong>"Add project"</strong> → type any name e.g. <em>hospital-fm</em> → Continue → Continue → Create project<br>
+          <strong>Step 3:</strong> Click <strong>"Build"</strong> in left menu → <strong>"Realtime Database"</strong><br>
+          <strong>Step 4:</strong> Click <strong>"Create Database"</strong> → choose any location → select <strong>"Start in test mode"</strong> → Enable<br>
+          <strong>Step 5:</strong> You will see your database URL at the top — it looks like:<br>
+          <em style="color:#1565C0">https://hospital-fm-12345-default-rtdb.firebaseio.com</em><br>
+          Copy that URL and paste it in the field above<br><br>
+          <strong>Step 6:</strong> Tap <strong>"🔌 Test Connection"</strong> — it should say ✅ Connected<br><br>
+          <strong>⚠️ If live data is not showing on dashboard:</strong><br>
+          Go to Firebase Console → Realtime Database → <strong>Rules</strong> tab → Change rules to:<br>
+          <code style="background:#E8EAF6;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{"rules":{".read":true,".write":true}}</code>
+          Click <strong>Publish</strong>. Test mode rules expire after 30 days — this makes them permanent.<br><br>
+          <strong>✅ Free forever. No credit card. No terminal. No code. Works on iPhone, Android &amp; Desktop.</strong>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LANDING ════════════════════════════════════════ -->
+<div id="view-landing" class="view">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🏥</div>
+      <div class="login-title" id="land-hosp">Hospital FM</div>
+      <div class="login-sub" id="land-date"></div>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <button class="btn blue" style="padding:16px;font-size:16px" onclick="go('view-emp-login')">👷 Employee Login</button>
+        <button class="btn purple" style="padding:16px;font-size:16px" onclick="go('view-admin-login')">🔐 Admin Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EMPLOYEE LOGIN ════════════════════════════════ -->
+<div id="view-emp-login" class="view">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🏥</div>
+      <div class="login-title" id="el-hosp">Hospital FM</div>
+      <div class="login-sub" id="el-date"></div>
+      <div style="background:#E3F2FD;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
+        <span style="font-size:13px;font-weight:700;color:#1565C0">👷 Employee Login</span>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div><label>Login ID</label><input id="el-id" type="text" placeholder="Enter your Login ID" autocomplete="off" style="font-size:16px;text-align:center;letter-spacing:1px"></div>
+        <div><label>Password</label><input id="el-pwd" type="password" placeholder="Enter your Password" onkeydown="if(event.key==='Enter')empLogin()" style="font-size:16px;text-align:center;letter-spacing:2px"></div>
+        <button class="btn blue" style="margin-top:4px;padding:15px;font-size:16px" onclick="empLogin()">Login →</button>
+      </div>
+      <p id="el-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
+      <!-- First time setup -->
+      <div style="margin-top:16px;border-top:1px solid #F0F4F8;padding-top:14px">
+        <div onclick="toggleImport()" style="text-align:center;font-size:12px;color:#42A5F5;cursor:pointer;padding:4px;font-weight:700">
+          📱 First time on this device? Tap here to set up
+        </div>
+        <div id="import-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:10px;padding:12px">
+          <div style="display:grid;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;display:block;margin-bottom:4px">Step 1 — Paste Setup Code from Admin</label>
+              <textarea id="import-code" rows="3" placeholder="Paste the setup code sent by admin via WhatsApp..." style="margin-top:0;font-size:12px;font-family:monospace;resize:none;background:#fff;border-color:#90CAF9"></textarea>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#E65100;text-transform:uppercase;display:block;margin-bottom:4px">Step 2 — Enter Firebase URL (for live tracking)</label>
+              <input id="import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#FFAB91;font-size:13px">
+              <p style="font-size:11px;color:#BF360C;margin-top:4px">Admin will give you this URL (looks like: hospital-fm-12345-default-rtdb.firebaseio.com). Required for live tracking.</p>
+            </div>
+            <button onclick="importConfig()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer">✓ Apply &amp; Enable Login</button>
+          </div>
+        </div>
+      </div>
+      <!-- Small admin link at the bottom — not obvious to employees -->
+      <div style="margin-top:16px;text-align:center;border-top:1px solid #F0F4F8;padding-top:14px">
+        <span onclick="go('view-admin-login')" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">Admin Access</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN LOGIN ════════════════════════════════════ -->
+<div id="view-admin-login" class="view">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🔐</div>
+      <div class="login-title">Admin Login</div>
+      <div class="login-sub">Enter admin password</div>
+      <div style="display:grid;gap:12px">
+        <div><label>Admin Password</label><input id="al-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+        <button class="btn purple" style="margin-top:6px" onclick="adminLogin()">Login →</button>
+        <button class="btn outline" onclick="showEmpLogin()" style="padding:10px">← Back</button>
+      </div>
+      <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect password</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EMPLOYEE HOME ══════════════════════════════════ -->
+<div id="view-home" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1 id="home-hosp">🏥 Hospital FM</h1><p id="home-date"></p></div>
+      <button class="hbtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;text-align:center;padding:24px">
+      <div style="font-size:48px;margin-bottom:8px" id="emp-icon">👷</div>
+      <div style="font-size:20px;font-weight:900" id="emp-name-display">Employee</div>
+      <div style="font-size:12px;opacity:.8;margin-top:4px" id="emp-id-display">ID: —</div>
+      <div style="margin-top:14px;display:inline-block;background:rgba(255,255,255,.15);padding:6px 16px;border-radius:20px;font-size:13px" id="shift-status-badge">Shift Not Started</div>
+    </div>
+    <div id="shift-done-msg" style="display:none" class="card" style="background:#E8F5E9;border:2px solid #A5D6A7;text-align:center">
+      <div style="font-size:36px">✅</div>
+      <div style="font-weight:800;font-size:16px;color:#1B5E20;margin-top:6px">Shift Completed!</div>
+      <div style="font-size:13px;color:#2E7D32;margin-top:4px">Report sent to admin. Well done!</div>
+    </div>
+    <div id="emp-sync-status" style="text-align:center;padding:8px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:6px;display:none"></div>
+    <div id="emp-test-area" style="display:none;margin-bottom:10px">
+      <button onclick="testFirebaseEmployee()" style="width:100%;padding:9px;background:#E8EAF6;border:none;border-radius:10px;font-size:12px;font-weight:700;color:#1565C0;cursor:pointer">🔧 Test Firebase Connection</button>
+      <div id="emp-test-result" style="font-size:11px;color:#37474F;margin-top:5px;padding:7px;background:#F5F5F5;border-radius:8px;display:none;white-space:pre-wrap;word-break:break-all"></div>
+    </div>
+    <button class="btn blue" id="btn-checklist" onclick="startChecklist()" style="font-size:16px;padding:16px">📋 Start / Continue Checklist</button>
+    <button class="btn orange" id="btn-tasks" onclick="openMyTasks()" style="font-size:15px">📌 My Assigned Tasks</button>
+    <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
+  </div>
+</div>
+
+<!-- ══ CHECKLIST ══════════════════════════════════════ -->
+<div id="view-checklist" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1 id="chk-name">Checklist</h1><p id="chk-date"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="wrap">
+    <div class="card" style="border-left:4px solid #C62828;margin-bottom:8px">
+      <h3 style="color:#C62828;font-size:14px;margin-bottom:11px">⚠️ Report a Problem</h3>
+      <div style="display:grid;gap:9px">
+        <div>
+          <label>Location / Department</label>
+          <select id="p-loc" onchange="toggleOtherLoc(this)">
+            <option value="">— Select Department —</option>
+            <optgroup label="🔧 BASEMENT B3 — Mechanical">
+              <option>B3 — DG Set Room</option>
+              <option>B3 — LT Panel Room</option>
+              <option>B3 — UPS Room</option>
+              <option>B3 — Locker Room</option>
+              <option>B3 — Store Room B3</option>
+            </optgroup>
+            <optgroup label="🔧 BASEMENT B2 — Fire &amp; Pumps">
+              <option>B2 — Fire Pump Room (Jockey Pump)</option>
+              <option>B2 — Fire Pump Room (Main Electric Pump)</option>
+              <option>B2 — Fire Pump Room (Diesel Pump)</option>
+              <option>B2 — Locker Room</option>
+              <option>B2 — Parking Area</option>
+            </optgroup>
+            <optgroup label="🔧 BASEMENT B1 — MGPS &amp; Services">
+              <option>B1 — MGPS Room (Vacuum Pumps)</option>
+              <option>B1 — MGPS Room (Air Compressor)</option>
+              <option>B1 — MGPS Room (Oxygen Tank)</option>
+              <option>B1 — Fresh Air Fan Room</option>
+              <option>B1 — Exhaust Fan Room</option>
+              <option>B1 — Store Room B1</option>
+            </optgroup>
+            <optgroup label="🏠 BASEMENT — Common">
+              <option>Basement — Fire Alarm Panel</option>
+              <option>Basement — Fire Sprinklers</option>
+              <option>Basement — Fire Extinguisher</option>
+              <option>Basement — Parking Lift</option>
+              <option>Basement — Two-Wheeler Parking</option>
+              <option>Basement — CCTV Cameras</option>
+              <option>Basement — Drainage / Waterlogging</option>
+              <option>Basement — WiFi Router</option>
+            </optgroup>
+            <optgroup label="🛗 LIFTS">
+              <option>Lift — Patient Lift (Inside)</option>
+              <option>Lift — Patient Lift (Outside)</option>
+              <option>Lift — Fire Lift</option>
+              <option>Lift — Doctor Lift</option>
+            </optgroup>
+            <optgroup label="🏥 GROUND FLOOR">
+              <option>GF — Main Entrance / Auto Doors</option>
+              <option>GF — Basement Parking Entrance / Gate</option>
+              <option>GF — Medical Gas Station</option>
+              <option>GF — Medical Fridge 1</option>
+              <option>GF — Medical Fridge 2</option>
+              <option>GF — Physiotherapy Department</option>
+              <option>GF — Canteen (Fridge 1)</option>
+              <option>GF — Canteen (Fridge 2)</option>
+              <option>GF — Canteen (Fridge 3)</option>
+              <option>GF — Canteen (Deep Freezer)</option>
+              <option>GF — Canteen (Bain Marie)</option>
+              <option>GF — Canteen (Air Washer / TFA / Exhaust)</option>
+              <option>GF — Male Bathroom</option>
+              <option>GF — Female Bathroom</option>
+              <option>GF — Staff Bathroom</option>
+              <option>GF — Janitor Closet</option>
+              <option>GF — Drinking Water Cooler</option>
+            </optgroup>
+            <optgroup label="📡 FIRST FLOOR — RADIOLOGY">
+              <option>1F — MRI Machine</option>
+              <option>1F — MRI UPS Room</option>
+              <option>1F — MRI Chiller Room</option>
+              <option>1F — Open MRI</option>
+              <option>1F — CT Scan</option>
+              <option>1F — X-Ray Room</option>
+              <option>1F — Sonography Room</option>
+              <option>1F — DEXA Scan Room</option>
+              <option>1F — Admin / Reception</option>
+              <option>1F — Marketing / Discharge / Admission</option>
+              <option>1F — Call Center</option>
+              <option>1F — RCA / MD Room</option>
+              <option>1F — Male Bathroom</option>
+              <option>1F — Female Bathroom</option>
+              <option>1F — Staff Bathroom</option>
+              <option>1F — Janitor Closet</option>
+              <option>1F — Drinking Water Cooler</option>
+            </optgroup>
+            <optgroup label="🏥 SECOND FLOOR — OPD">
+              <option>2F — OPD Room 1</option>
+              <option>2F — OPD Room 2</option>
+              <option>2F — OPD Room 3</option>
+              <option>2F — OPD Room 4</option>
+              <option>2F — OPD Room 5</option>
+              <option>2F — OPD Room 6</option>
+              <option>2F — OPD Room 7</option>
+              <option>2F — OPD Room 8</option>
+              <option>2F — OPD Room 9</option>
+              <option>2F — OPD Room 10</option>
+              <option>2F — OPD Room 11</option>
+              <option>2F — OPD Room 12</option>
+              <option>2F — OPD Room 13</option>
+              <option>2F — PG-1 OPD Room</option>
+              <option>2F — PG-2 OPD Room</option>
+              <option>2F — Physician Room</option>
+              <option>2F — Testing Room</option>
+              <option>2F — Minor OT</option>
+              <option>2F — Blood Collection Room</option>
+              <option>2F — Research Room</option>
+              <option>2F — Doctor Zero Room 1</option>
+              <option>2F — Doctor Zero Room 2</option>
+              <option>2F — Waiting Area / TV</option>
+              <option>2F — Male Bathroom</option>
+              <option>2F — Female Bathroom</option>
+              <option>2F — Staff Bathroom</option>
+              <option>2F — Doctor Bathroom</option>
+            </optgroup>
+            <optgroup label="🔬 THIRD FLOOR — OT &amp; HDU">
+              <option>3F — HDU (High Dependency Unit)</option>
+              <option>3F — HDU Nurse Station</option>
+              <option>3F — HDU Dirty Room</option>
+              <option>3F — HDU Clean Room</option>
+              <option>3F — Pre-Op Room</option>
+              <option>3F — OT 1</option>
+              <option>3F — OT 2</option>
+              <option>3F — OT 3</option>
+              <option>3F — OT 4</option>
+              <option>3F — OT 5</option>
+              <option>3F — OT 6</option>
+              <option>3F — CSSD Dirty Room</option>
+              <option>3F — CSSD Clean Room</option>
+              <option>3F — CSSD Implant Storage</option>
+              <option>3F — Doctor Room</option>
+              <option>3F — Nursing Staff Room</option>
+              <option>3F — Changing Room / Lockers</option>
+              <option>3F — Dumbwaiter</option>
+              <option>3F — Biowaste Area</option>
+              <option>3F — Bathroom</option>
+            </optgroup>
+            <optgroup label="🛏 FOURTH FLOOR — PATIENT ROOMS">
+              <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+              <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+              <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+              <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+              <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+              <option>4F — Room 17</option>
+              <option>4F — Nursing Room / Reception</option>
+              <option>4F — Staff Bathroom</option>
+              <option>4F — Janitor Closet 1</option>
+              <option>4F — Janitor Closet 2</option>
+              <option>4F — Store Room</option>
+              <option>4F — Biowaste / Linen Area</option>
+            </optgroup>
+            <optgroup label="🛏 FIFTH FLOOR — PATIENT ROOMS">
+              <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+              <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+              <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+              <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+              <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+              <option>5F — Room 17</option>
+              <option>5F — Nursing Room / Reception</option>
+              <option>5F — Staff Bathroom</option>
+              <option>5F — Janitor Closet 1</option>
+              <option>5F — Janitor Closet 2</option>
+              <option>5F — Store Room</option>
+              <option>5F — Biowaste / Linen Area</option>
+            </optgroup>
+            <optgroup label="🛏 SIXTH FLOOR — PATIENT ROOMS">
+              <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+              <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+              <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+              <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+              <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+              <option>6F — Room 17</option>
+              <option>6F — Nursing Room / Reception</option>
+              <option>6F — Staff Bathroom</option>
+              <option>6F — Janitor Closet 1</option>
+              <option>6F — Janitor Closet 2</option>
+              <option>6F — Store Room</option>
+              <option>6F — Biowaste / Linen Area</option>
+            </optgroup>
+            <optgroup label="🏗 TERRACE">
+              <option>Terrace — HVAC / AHU Unit</option>
+              <option>Terrace — Outdoor AC Units</option>
+              <option>Terrace — AC Panel</option>
+              <option>Terrace — Exhaust Fans (Bathroom / Canteen)</option>
+              <option>Terrace — Lift Fresh Air System</option>
+              <option>Terrace — Overhead Water Tank</option>
+              <option>Terrace — STP (Sewage Treatment Plant)</option>
+              <option>Terrace — Raw Water Tank</option>
+              <option>Terrace — Fire Water Tank</option>
+              <option>Terrace — RO System / RO Tank</option>
+              <option>Terrace — Plumbing / Valves</option>
+              <option>Terrace — Rainwater Drainage</option>
+              <option>Terrace — Solar Panels</option>
+              <option>Terrace — CCTV Cameras</option>
+              <option>Terrace — Lights</option>
+            </optgroup>
+            <optgroup label="🪜 STAIRCASE &amp; COMMON AREAS">
+              <option>Staircase — Ground Floor</option>
+              <option>Staircase — First Floor</option>
+              <option>Staircase — Second Floor</option>
+              <option>Staircase — Third Floor</option>
+              <option>Staircase — Fourth Floor</option>
+              <option>Staircase — Fifth Floor</option>
+              <option>Staircase — Sixth Floor</option>
+              <option>Common — Fire Door (specify floor)</option>
+              <option>Common — Duct Door (specify floor)</option>
+              <option>Common — CCTV Camera (specify floor)</option>
+              <option>Common — WiFi Router (specify floor)</option>
+              <option>Common — Speaker (specify floor)</option>
+              <option>Common — HVAC Filter (specify floor)</option>
+            </optgroup>
+            <option value="Other">⚙ Other / Not Listed</option>
+          </select>
+          <input type="text" id="p-loc-other" placeholder="Specify location..." style="display:none;margin-top:7px">
+        </div>
+        <div><label>Description</label><textarea id="p-desc" rows="2" placeholder="What is wrong? (e.g. AC not cooling, light not working, leak found)"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div><label>Priority</label><select id="p-pri"><option>🔴 Critical</option><option>🟠 High</option><option selected>🟡 Medium</option><option>🟢 Low</option></select></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn red" style="margin:0;padding:11px" onclick="addProblem()">+ Add</button></div>
+        </div>
+      </div>
+      <div id="prob-list" style="margin-top:8px"></div>
+    </div>
+    <div id="chk-body"></div>
+    <div style="margin-top:18px;border-top:2px solid #E8EAF6;padding-top:14px">
+      <button class="btn green" onclick="completeShift()" style="font-size:15px;padding:15px">✅ Complete Shift &amp; Send Report Automatically</button>
+      <button class="btn wa" onclick="sendWhatsApp()" style="margin-top:6px">📲 Send via WhatsApp</button>
+      <button class="btn outline" onclick="sendEmail()" style="margin-top:6px">✉️ Send via Email</button>
+    </div>
+  </div>
+  <div class="sticky">
+    <div><span id="ok-n" style="font-size:21px;font-weight:900">0</span><span style="font-size:11px;opacity:.7"> OK</span></div>
+    <div class="pbar-wrap"><div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div><div style="text-align:center;font-size:11px;opacity:.6;margin-top:2px"><span id="prog-txt">0 / 0</span></div></div>
+    <div><span id="fault-n" class="badge b-fault">0 faults</span></div>
+  </div>
+</div>
+
+<!-- ══ MY TASKS ══════════════════════════════════════ -->
+<div id="view-tasks" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1 id="task-hdr">My Tasks</h1><p id="task-date2"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div id="my-task-list"><div style="padding:30px;text-align:center;color:#90A4AE">No tasks assigned yet.</div></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL ══════════════════════════════════ -->
+<div id="view-admin" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📊 Admin Panel</h1><p id="adm-date"></p></div>
+      <div style="display:flex;gap:6px">
+        <button class="hbtn" onclick="downloadExcel()">📥 Excel</button>
+        <button class="hbtn" onclick="adminLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="tabs">
+      <div class="tab on" onclick="admTab('dash',this)">📊 Dashboard</div>
+      <div class="tab" onclick="admTab('tasks',this)">📌 Tasks</div>
+      <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
+      <div class="tab" onclick="admTab('report',this)">📥 Report</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dash">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="num" id="k-emp" style="color:#1565C0">0</div><div class="lbl">Active Today</div></div>
+        <div class="kpi"><div class="num" id="k-avg" style="color:#2E7D32">0%</div><div class="lbl">Avg Completion</div></div>
+        <div class="kpi"><div class="num" id="k-faults" style="color:#C62828">0</div><div class="lbl">Total Faults</div></div>
+        <div class="kpi"><div class="num" id="k-issues" style="color:#E65100">0</div><div class="lbl">Problems</div></div>
+        <div class="kpi"><div class="num" id="k-pending" style="color:#FF6F00">0</div><div class="lbl">Pending Tasks</div></div>
+        <div class="kpi"><div class="num" id="k-overdue" style="color:#B71C1C">0</div><div class="lbl">Overdue Tasks</div></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;font-size:14px;margin-bottom:13px">Overall Breakdown</div>
+        <div class="donut-wrap">
+          <div class="donut" id="donut-chart" style="background:conic-gradient(#90A4AE 0 360deg)"></div>
+          <div class="donut-legend">
+            <div class="dl"><div class="dl-dot" style="background:#2E7D32"></div><span id="dl-ok">OK: 0</span></div>
+            <div class="dl"><div class="dl-dot" style="background:#C62828"></div><span id="dl-fault">Faults: 0</span></div>
+            <div class="dl"><div class="dl-dot" style="background:#78909C"></div><span id="dl-na">N/A: 0</span></div>
+            <div class="dl"><div class="dl-dot" style="background:#E8EAF6"></div><span id="dl-pend">Pending: 0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:800;font-size:14px">Employee Completion <span id="live-badge" style="display:none;background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;margin-left:6px;animation:pulse 2s infinite">🔴 LIVE</span></span>
+          <button onclick="startLiveTracking()" style="background:#E3F2FD;border:none;color:#1565C0;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px">↻ Refresh</button>
+        </div>
+        <div id="fb-status-bar" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:10px"></div>
+        <div id="emp-bars"></div>
+        <p style="font-size:10px;color:#90A4AE;margin-top:8px">Grade: A ≥95% · B ≥85% · C ≥70% · D &lt;70%</p>
+        <div id="fb-url-info" style="margin-top:8px;font-size:10px;color:#B0BEC5;word-break:break-all"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">⚠️ Problems Today</div>
+        <div id="adm-issues" style="padding:13px"></div>
+      </div>
+      <!-- PENDING TASKS -->
+      <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #FF6F00">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">📌 Pending Tasks</span>
+          <button onclick="admTab('tasks',document.querySelectorAll('.tab')[1])" style="background:#FFF3E0;border:none;color:#E65100;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px">View All →</button>
+        </div>
+        <div id="dash-pending-tasks" style="padding:13px"></div>
+      </div>
+      <!-- RESET + REMINDERS -->
+      <div class="card" style="border-left:4px solid #E65100;background:#FFF3E0">
+        <div style="font-weight:800;font-size:14px;color:#BF360C;margin-bottom:4px">🔁 Shift Reset &amp; Reminders</div>
+        <p style="font-size:12px;color:#6D4C41;margin-bottom:12px;line-height:1.6">Checklists auto-reset every day at <strong>5:00 AM</strong>. Assigned tasks remain until completed. Use buttons below to reset manually or send reminders.</p>
+        <div id="reminder-list" style="margin-bottom:10px"></div>
+        <div style="display:grid;gap:8px">
+          <button onclick="sendAllPendingReminders()" style="background:#25D366;border:none;color:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;width:100%">📲 Send WhatsApp Reminder — All Pending Tasks</button>
+          <button onclick="doResetChecklists(true)" style="background:#E65100;border:none;color:#fff;padding:11px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;width:100%">🔄 Manual Reset — Clear All Checklists Now</button>
+        </div>
+        <p id="last-reset-info" style="font-size:11px;color:#90A4AE;margin-top:8px;text-align:center"></p>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="tab-tasks" style="display:none">
+      <div class="card" style="border-left:4px solid #1565C0">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:12px;color:#1565C0">➕ Assign Task</h3>
+        <div style="display:grid;gap:10px">
+          <div><label>Assign To</label><select id="t-emp"></select></div>
+          <div><label>Task Description</label><textarea id="t-desc" rows="2" placeholder="What needs to be done?"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Due Date</label><input type="date" id="t-date"></div>
+            <div><label>Due Time</label><input type="time" id="t-time"></div>
+          </div>
+          <div><label>Priority</label><select id="t-pri"><option>🔴 Critical</option><option>🟠 High</option><option selected>🟡 Medium</option><option>🟢 Low</option></select></div>
+          <button class="btn blue" style="margin:0" onclick="assignTask()">✓ Assign Task</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">All Tasks</span>
+          <select id="task-filter" onchange="renderAdminTasks()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
+            <option value="all">All</option><option value="Pending">Pending</option><option value="In Progress">In Progress</option><option value="Done">Done</option><option value="Overdue">Overdue</option>
+          </select>
+        </div>
+        <div id="adm-task-list" style="padding:13px"></div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div id="tab-staff" style="display:none">
+      <!-- FIREBASE SETTINGS -->
+      <div class="card" style="border-left:4px solid #F57C00;background:#FFF3E0">
+        <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:8px">🔌 Firebase Live Tracking URL</h3>
+        <div id="fb-current-url" style="font-size:12px;color:#BF360C;margin-bottom:10px;padding:7px 10px;background:#FFE0B2;border-radius:7px;word-break:break-all;font-weight:700"></div>
+        <div style="display:grid;gap:8px">
+          <input id="settings-db-url" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="font-size:13px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="testAndSaveFirebaseUrl()" style="background:#E65100;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">🔌 Test &amp; Save URL</button>
+            <button onclick="resendSetupWithUrl()" style="background:#25D366;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">📲 Save &amp; Resend to All</button>
+          </div>
+          <div id="settings-test-result" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
+        </div>
+        <details style="margin-top:10px">
+          <summary style="font-size:12px;font-weight:700;color:#E65100;cursor:pointer">⚠️ Live data not showing? Fix Firebase Rules here</summary>
+          <div style="margin-top:8px;font-size:12px;line-height:1.9;color:#4E342E;background:#FBE9E7;padding:10px;border-radius:8px">
+            1. Go to <strong>console.firebase.google.com</strong><br>
+            2. Open your project → <strong>Realtime Database → Rules</strong><br>
+            3. Replace everything with:<br>
+            <code style="background:#333;color:#4FC3F7;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{<br>&nbsp;&nbsp;"rules": {<br>&nbsp;&nbsp;&nbsp;&nbsp;".read": true,<br>&nbsp;&nbsp;&nbsp;&nbsp;".write": true<br>&nbsp;&nbsp;}<br>}</code>
+            4. Click <strong>Publish</strong> → Done<br>
+            5. Come back and tap <strong>Test &amp; Save URL</strong>
+          </div>
+        </details>
+      </div>
+      <!-- Share App Config -->
+      <div class="card" style="border-left:4px solid #00897B;background:#E0F2F1;padding:15px">
+        <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:5px">📤 Share App with Employees</h3>
+        <p style="font-size:12px;color:#004D40;margin-bottom:12px;line-height:1.6">When an employee opens the app on their phone for the first time, they need a <strong>Setup Code</strong> so their phone recognises all staff accounts. Send it once per device.</p>
+        <div id="export-section" style="display:none;margin-bottom:12px">
+          <label style="font-size:11px;font-weight:700;color:#546E7A;text-transform:uppercase;display:block;margin-bottom:4px">Setup Code (send this to employees)</label>
+          <div style="display:flex;gap:7px;align-items:stretch">
+            <textarea id="export-code-box" rows="2" readonly style="font-size:11px;font-family:monospace;flex:1;resize:none;background:#F5FFFA;border-color:#80CBC4"></textarea>
+            <button onclick="copyExportCode()" style="background:#00695C;border:none;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0">Copy</button>
+          </div>
+        </div>
+        <div style="display:grid;gap:8px">
+          <button onclick="sendConfigWA()" style="background:#25D366;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;width:100%">📲 Send Setup Code via WhatsApp</button>
+          <button onclick="showExportCode()" style="background:#fff;border:2px solid #00897B;color:#00695C;padding:10px;border-radius:10px;font-weight:700;cursor:pointer;font-size:12px;width:100%">👁 View / Copy Setup Code</button>
+        </div>
+      </div>
+      <div class="card" style="border-left:4px solid #6A1B9A">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:4px;color:#6A1B9A">➕ Add Employee</h3>
+        <p style="font-size:12px;color:#90A4AE;margin-bottom:12px">Login ID and Password are auto-generated — you can also set your own.</p>
+        <div style="display:grid;gap:10px">
+          <div><label>Full Name</label><input type="text" id="ne-name" placeholder="e.g. Rahul Sharma" oninput="autoFillEmp()"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Login ID (auto)</label><input type="text" id="ne-id" placeholder="Auto e.g. RS001" style="background:#F9FBF9"></div>
+            <div><label>Password (auto)</label><input type="text" id="ne-pwd" placeholder="Auto 4-digit PIN" style="background:#F9FBF9"></div>
+          </div>
+          <div><label>WhatsApp / Phone Number (for reminders)</label><input type="tel" id="ne-phone" placeholder="e.g. 919876543210 (country code + number, no +)"></div>
+          <div style="background:#E8F5E9;border-radius:8px;padding:10px 12px;font-size:12px;color:#2E7D32">
+            💡 Just type the name and tap Add — ID and Password are created automatically. Phone number is needed to send WhatsApp/SMS reminders for pending tasks.
+          </div>
+          <button class="btn purple" style="margin:0" onclick="addEmployee()">➕ Add Employee</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800">Current Employees</div>
+        <div id="staff-list"></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="tab-report" style="display:none">
+      <div class="card" style="border-left:4px solid #2E7D32">
+        <h3 style="font-size:15px;font-weight:800;margin-bottom:6px;color:#2E7D32">📊 Excel Report with Dashboard</h3>
+        <p style="font-size:13px;color:#607D8B;margin-bottom:14px;line-height:1.6">Downloads a full Excel file with: Dashboard, KPI Summary, Employee Details (one sheet per employee), Fault Items, Problems, and Tasks. Share by email or WhatsApp.</p>
+        <div><label>Report Date</label><input type="date" id="rep-date"></div>
+        <div style="margin-top:14px;display:grid;gap:8px">
+          <button class="btn orange" onclick="downloadGraphicalReport()" style="font-size:14px;padding:14px">📊 Download Graphical HTML Report</button>
+          <button class="btn green" onclick="downloadExcel()">📥 Download Excel Report</button>
+          <button class="btn wa" onclick="shareReportWA()">📲 Download + Notify via WhatsApp</button>
+          <button class="btn outline" onclick="shareReportEmail()">✉️ Download + Send Email</button>
+        </div>
+      </div>
+      <div class="card" style="background:#FFF8E1;border:2px solid #FFD54F;padding:14px">
+        <p style="font-weight:700;font-size:13px;color:#5D4037;margin-bottom:6px">How to share</p>
+        <p style="font-size:13px;color:#6D4C41;line-height:1.65">1. Tap <strong>Download Excel Report</strong> — file saves to phone/PC<br>2. WhatsApp: open chat → attach → Files → select the file → send<br>3. Email: compose → attach → send</p>
+      </div>
+      <div class="card" style="border-left:4px solid #607D8B;padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">📂 Completed Task Archive</span>
+          <button onclick="clearTaskArchive()" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">Clear Archive</button>
+        </div>
+        <div id="archive-list" style="padding:13px;max-height:340px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast2"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CHECKLIST DATA
+// ══════════════════════════════════════════════════════
+// Item format: string = OK/Fault/N/A only | object = {t:label, u:unit, ph:placeholder, mn:min, mx:max} + OK/Fault/N/A
+const SECTIONS=[
+  {name:'BASEMENT B3–B1 — Mechanical & Electrical',color:'#1A237E',items:[
+    {t:'DG Set: Fuel level',u:'%',ph:'e.g. 75',mn:0,mx:100},
+    {t:'DG Set: Battery voltage',u:'V',ph:'e.g. 12.6'},
+    'DG Set: Coolant level — check and top up if needed',
+    'DG Set: Visual check — no leaks, no abnormal noise',
+    'DG Set: Last run log entry completed',
+    'LT Panel: All breakers healthy, no trips or faults',
+    {t:'LT Panel: Incoming voltage — R phase',u:'V',ph:'e.g. 230'},
+    {t:'LT Panel: Incoming voltage — Y phase',u:'V',ph:'e.g. 230'},
+    {t:'LT Panel: Incoming voltage — B phase',u:'V',ph:'e.g. 230'},
+    'LT Panel Room: Light and exhaust fan working',
+    {t:'UPS: Battery charge level',u:'%',ph:'e.g. 95',mn:0,mx:100},
+    {t:'UPS: Incoming voltage',u:'V',ph:'e.g. 230'},
+    {t:'UPS: Outgoing voltage',u:'V',ph:'e.g. 230'},
+    {t:'UPS: Current load on UPS',u:'%',ph:'e.g. 60',mn:0,mx:100},
+    'UPS Room: Light, exhaust fan and earthing OK',
+    'MGPS B1: Vacuum pumps operational',
+    'MGPS B1: Air filters condition checked',
+    {t:'MGPS B1: Oxygen/Gas tank pressure',u:'Bar',ph:'e.g. 4.5'},
+    {t:'MGPS B1: Air compressor pressure',u:'Bar',ph:'e.g. 7'},
+    'MGPS B1: Air compressor oil level OK',
+    {t:'Fire Pumps B2: Jockey pump pressure',u:'Bar',ph:'e.g. 7'},
+    'Fire Pumps B2: Jockey pump auto-start test OK',
+    'Fire Pumps B2: Main electric pump — operational',
+    {t:'Fire Pumps B2: Diesel pump fuel level',u:'%',ph:'e.g. 80',mn:0,mx:100},
+    'Fire Pumps B2: Diesel pump — no leaks, start OK',
+  ]},
+  {name:'BASEMENT B3–B1 — Safety & Infrastructure',color:'#283593',items:[
+    'Fire alarm panel: No faults or active alarms',
+    'Fire sprinklers B3–B1: No blockage, damage or missing heads',
+    'Fire detectors B3–B1: All active — indicator lights green',
+    'Fire extinguishers B3–B1: All tagged, charged and in place',
+    'Parking lift: Hydraulic fluid level OK',
+    'Parking lift: Smooth operation and alignment checked',
+    'Fresh air fans B3–B1: All operational',
+    'Exhaust fans B3–B1: All operational',
+    'All lights B3–B1: Fully functional',
+    'WiFi routers B3–B1: All online and connected',
+    'Speakers B3–B1: All functional',
+    'Drainage B3–B1: No blockage or waterlogging',
+    'Store room doors and locks: All secure',
+    'CCTV cameras B3–B1: Aligned and recording',
+    'Locker room B3–B2: Light, fan and camera OK',
+  ]},
+  {name:'ALL LIFTS',color:'#880E4F',items:[
+    'Patient Lift: Door sensors and auto-close working',
+    'Patient Lift: Alarm bell functional',
+    'Patient Lift: Lighting inside working',
+    'Patient Lift: All floor buttons responding',
+    'Patient Lift: Emergency intercom working',
+    'Fire Lift: Door sensors and auto-close working',
+    'Fire Lift: Fire service override mode tested OK',
+    'Fire Lift: Alarm and interior lighting working',
+    'Doctor Lift: Door sensors and auto-close working',
+    'Doctor Lift: Alarm, lighting and all buttons working',
+    'All Lifts: No abnormal noise or vibration',
+    'All Lifts: Load certificate displayed and valid',
+  ]},
+  {name:'GROUND FLOOR',color:'#1B5E20',items:[
+    'Main entrance: Auto-doors functional and clean',
+    'Main entrance: All lights working',
+    'Basement parking entrance: Gate/barrier operational',
+    'Two-wheeler parking: Order and cleanliness OK',
+    'Medical gas station: Pressure gauges normal',
+    'Medical gas station: All indicator lights OK',
+    {t:'Medical fridge 1: Temperature',u:'°C',ph:'e.g. 4',mn:-5,mx:10},
+    {t:'Medical fridge 2: Temperature',u:'°C',ph:'e.g. 4',mn:-5,mx:10},
+    'Physiotherapy: All equipment functional and clean',
+    {t:'Canteen fridge 1: Temperature',u:'°C',ph:'e.g. 4',mn:-2,mx:8},
+    {t:'Canteen fridge 2: Temperature',u:'°C',ph:'e.g. 4',mn:-2,mx:8},
+    {t:'Canteen fridge 3: Temperature',u:'°C',ph:'e.g. 4',mn:-2,mx:8},
+    {t:'Canteen deep freezer: Temperature',u:'°C',ph:'e.g. -18',mn:-30,mx:-10},
+    'Canteen: Bain Marie 1 and 2 functional',
+    'Canteen: Air washer and TFA operational',
+    'Canteen: Exhaust fan operational',
+    'Bathrooms Male/Female GF: Clean, fixtures and drainage OK',
+    'Staff bathroom GF: Cleanliness and fixtures OK',
+    'Janitor closet GF: Stocked and organised',
+    'Drinking water cooler GF: Functional and clean',
+  ]},
+  {name:'FIRST FLOOR — RADIOLOGY',color:'#0D47A1',items:[
+    'MRI: System operational and console on',
+    'MRI: UPS status — all phases healthy',
+    {t:'MRI: UPS battery level',u:'%',ph:'e.g. 95',mn:0,mx:100},
+    {t:'MRI: Chiller room temperature',u:'°C',ph:'e.g. 18',mn:15,mx:25},
+    'MRI: Chiller operation — no alarms',
+    'Open MRI: System and console operational',
+    'CT Scan: System and console operational',
+    'CT Scan: UPS and cooling system OK',
+    'X-ray room: Machine operational',
+    'X-ray room: Lead aprons and shielding intact',
+    'Sonography room: Machine operational',
+    'DEXA Scan: Machine operational',
+    'Admin, Marketing, Discharge, Admission: Computers OK',
+    'Call center: All phones and headsets functional',
+    'RCA / MD room: Equipment check done',
+    'Bathrooms Male/Female/Staff 1F: Cleanliness OK',
+    'Janitor closet 1F and drinking water cooler: OK',
+  ]},
+  {name:'SECOND FLOOR — OPD',color:'#4A148C',items:[
+    'PG-1 and PG-2 OPD rooms: Equipment and cleanliness OK',
+    'Physician room and testing room: Equipment OK',
+    'OPD 1–7: Lights, furniture, equipment check',
+    {t:'OPD 1–7: AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:16,mx:30},
+    'OPD 8–13: Lights, furniture, equipment check',
+    {t:'OPD 8–13: AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:16,mx:30},
+    'Minor OT 2F: Equipment and cleanliness OK',
+    'Blood collection room: Fridge operational',
+    {t:'Blood collection fridge: Temperature',u:'°C',ph:'e.g. 4',mn:2,mx:8},
+    'Research room: Equipment and computers OK',
+    {t:'Research room fridge: Temperature',u:'°C',ph:'e.g. 4',mn:2,mx:8},
+    'Doctor Zero rooms 1 and 2: OK',
+    'OPD TV and waiting area TV: Functional',
+    'Bathrooms Male/Female/Staff/Doctor 2F: Clean OK',
+  ]},
+  {name:'THIRD FLOOR — OT AND HDU',color:'#B71C1C',items:[
+    'HDU: All patient monitors functional',
+    'HDU: MGPS oxygen points all working',
+    {t:'HDU: MGPS oxygen pressure',u:'Bar',ph:'e.g. 4'},
+    'HDU: Nurse calling system operational',
+    {t:'HDU: AC temperature (actual)',u:'°C',ph:'e.g. 22',mn:18,mx:28},
+    'HDU Dirty room: Cleanliness and drainage OK',
+    'HDU Clean room: Cleanliness and stock OK',
+    'PREOP room: Equipment and cleanliness OK',
+    {t:'OT 1, 2, 3: AC temperature (actual)',u:'°C',ph:'e.g. 20',mn:16,mx:25},
+    'OT 1, 2, 3: Lights, AC, equipment pre-check OK',
+    {t:'OT 4, 5, 6: AC temperature (actual)',u:'°C',ph:'e.g. 20',mn:16,mx:25},
+    'OT 4, 5, 6: Lights, AC, equipment pre-check OK',
+    'CSSD: Autoclave sterilization cycle completed',
+    {t:'CSSD: Autoclave temperature logged',u:'°C',ph:'e.g. 134'},
+    {t:'CSSD: Autoclave pressure logged',u:'Bar',ph:'e.g. 2.1'},
+    'CSSD Implant storage: Temperature and inventory OK',
+    'Doctor room, nursing room, bathrooms 3F: OK',
+    'Changing room, lockers, dumbwaiter: OK',
+    'Biowaste 3F: Properly segregated and labeled',
+  ]},
+  {name:'FOURTH FLOOR — PATIENT ROOMS',color:'#006064',items:[
+    'Rooms 2–9 (4F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 2–9 (4F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 2–9 (4F): TV and fridge operational',
+    'Rooms 10–17 (4F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 10–17 (4F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 10–17 (4F): TV and fridge operational',
+    'Staff bathroom 4F: Geyser, light, tap, flush OK',
+    {t:'Staff bathroom 4F: Geyser water temperature',u:'°C',ph:'e.g. 45',mn:35,mx:65},
+    'Janitor closets 1 and 2 — 4F: Stocked and organised',
+    'Nursing room and reception 4F: Equipment OK',
+    'Biowaste space 4F: Properly segregated',
+    'Store room 4F: Organised and locked',
+  ]},
+  {name:'FIFTH FLOOR — PATIENT ROOMS',color:'#004D40',items:[
+    'Rooms 2–9 (5F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 2–9 (5F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 2–9 (5F): TV and fridge operational',
+    'Rooms 10–17 (5F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 10–17 (5F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 10–17 (5F): TV and fridge operational',
+    'Staff bathroom 5F: Geyser, light, tap, flush OK',
+    {t:'Staff bathroom 5F: Geyser water temperature',u:'°C',ph:'e.g. 45',mn:35,mx:65},
+    'Janitor closets 1 and 2 — 5F: Stocked and organised',
+    'Nursing room and reception 5F: Equipment OK',
+    'Biowaste space 5F: Properly segregated',
+    'Store room 5F: Organised and locked',
+  ]},
+  {name:'SIXTH FLOOR — PATIENT ROOMS',color:'#1A237E',items:[
+    'Rooms 2–9 (6F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 2–9 (6F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 2–9 (6F): TV and fridge operational',
+    'Rooms 10–17 (6F): Bed, fan, light, nurse call, MGPS O₂ OK',
+    {t:'Rooms 10–17 (6F): AC temperature (actual)',u:'°C',ph:'e.g. 24',mn:18,mx:30},
+    'Rooms 10–17 (6F): TV and fridge operational',
+    'Staff bathroom 6F: Geyser, light, tap, flush OK',
+    {t:'Staff bathroom 6F: Geyser water temperature',u:'°C',ph:'e.g. 45',mn:35,mx:65},
+    'Janitor closets 1 and 2 — 6F: Stocked and organised',
+    'Nursing room and reception 6F: Equipment OK',
+    'Biowaste space 6F: Properly segregated',
+    'Store room 6F: Organised and locked',
+  ]},
+  {name:'TERRACE',color:'#E65100',items:[
+    'HVAC and AHU units: All operational, no alarms',
+    'Outdoor AC units: All running, no error codes',
+    'AC panel terrace: All breakers healthy',
+    'Bathroom and canteen exhaust fans: Functional',
+    'Lift fresh air system: Operational',
+    {t:'Overhead water tank: Level',u:'%',ph:'e.g. 85',mn:0,mx:100},
+    'Overhead water tank: Clean, no algae or debris',
+    'STP: Operational, no overflow or smell',
+    {t:'Raw water tank: Level',u:'%',ph:'e.g. 75',mn:0,mx:100},
+    {t:'Fire water tank: Level (must be ≥75%)',u:'%',ph:'e.g. 90',mn:0,mx:100},
+    'RO system: Membranes and filters OK',
+    {t:'RO water tank: Level',u:'%',ph:'e.g. 80',mn:0,mx:100},
+    {t:'RO output water TDS',u:'ppm',ph:'e.g. 25',mn:0,mx:150},
+    'Plumbing lines and valves: No leaks',
+    'Rainwater drainage: Clear, no blockage',
+    {t:'Solar panels: Energy production today',u:'kWh',ph:'e.g. 42'},
+    {t:'Solar inverter: Output voltage',u:'V',ph:'e.g. 230'},
+    {t:'Solar inverter: Grid frequency',u:'Hz',ph:'e.g. 50.1'},
+    'Solar panels: Panels clean, no physical damage',
+    'Solar inverter: No fault or alarm lights',
+    'Terrace CCTV cameras: Aligned and recording',
+    'Terrace lights: All working',
+  ]},
+  {name:'STAIRCASE — ALL FLOORS',color:'#37474F',items:[
+    'Staircase lights G to 7F: All working',
+    'Glass panels and grab bars: Secure, no damage',
+    'Fire extinguishers staircase: Present, tagged, charged — all floors',
+    'Windows staircase: All floors — no broken glass',
+    'CCTV cameras staircase: All floors aligned and recording',
+    'Speakers staircase: All floors functional',
+    'Fire detectors and sprinklers staircase: All floors active',
+  ]},
+  {name:'BUILDING-WIDE CHECKS',color:'#33691E',items:[
+    'Wooden doors G to 6F: Handles, stoppers, closers, locks OK',
+    'Fire doors B3 to 7F: Self-closing and latching properly',
+    'All duct access doors B3–7F: Secured shut',
+    'HVAC filters: All floors — cleaned and condition logged',
+    'All lights: All floors and zones working',
+    'All fans: All floors operational',
+    'Geysers: All floors — hot water and operation OK',
+    'WiFi routers: All floors online',
+    'Speakers: All floors functional',
+    'Computers: All floors — power on and operational',
+    'Nurse calling system: All floors tested OK',
+    'CCTV cameras: All floors — aligned and recording',
+    'Fire alarm: All floors — no active alarms, panel OK',
+    'Fire sprinklers: All floors — no blockage',
+    'Fire detectors: All floors — indicator lights green',
+    'Furniture: All floors — no damage',
+    'Civil/paint: All floors — no cracks or peeling',
+    'Plumbing: All floors — no leaks or drips',
+    {t:'Main incoming power voltage (Line-Line)',u:'V',ph:'e.g. 415'},
+    {t:'Main incoming power frequency',u:'Hz',ph:'e.g. 50.0',mn:49,mx:51},
+    {t:'Building total electrical load',u:'%',ph:'e.g. 65',mn:0,mx:100},
+  ]},
+];
+const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let cfg={hosp:'Hospital FM',adminPwd:'admin',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:''};
+let currentEmp=null; // {name,loginId,password}
+let statuses={},values={},problems=[];
+
+function pad(n){return String(n).padStart(2,'0');}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmtDate(s){return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+function fmtTS(ms){if(!ms)return '—';return new Date(ms).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+function duration(s,e){if(!s||!e)return '';const m=Math.round((e-s)/60000);return m<60?m+'min':Math.floor(m/60)+'h '+(m%60)+'m';}
+function bar(pct,len=20){const f=Math.round(pct/100*len);return '▓'.repeat(f)+'░'.repeat(len-f);}
+function loadCfg(){try{const c=JSON.parse(localStorage.getItem('HFM4_CFG')||'{}');Object.assign(cfg,c);}catch(e){}}
+function saveCfg(){localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));}
+
+// ══════════════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════════════
+function saveSetup(){
+  const hosp=document.getElementById('s-hosp').value.trim();
+  const pwd=document.getElementById('s-pwd').value.trim();
+  const wa=document.getElementById('s-wa').value.trim().replace(/\D/g,'');
+  const email=document.getElementById('s-email').value.trim();
+  const dbUrl=document.getElementById('s-db').value.trim();
+  if(!hosp||!pwd||!wa){alert('Please fill Hospital Name, Admin Password, and WhatsApp Number.');return;}
+  cfg={hosp,adminPwd:pwd,waNum:wa,email,employees:[],dbUrl,convexUrl:dbUrl};
+  saveCfg();
+  updateLiveBadge(!!getDbUrl());
+  showLanding();
+}
+
+// ══════════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════════
+function go(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showLanding(){
+  showEmpLogin();
+}
+
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+function empLogin(){
+  const id=document.getElementById('el-id').value.trim().toUpperCase();
+  const pwd=document.getElementById('el-pwd').value.trim();
+  // Case-insensitive ID, exact password match
+  const emp=cfg.employees.find(e=>e.loginId.toUpperCase()===id && e.password===pwd);
+  if(!emp){document.getElementById('el-err').style.display='block';return;}
+  document.getElementById('el-err').style.display='none';
+  currentEmp=emp;
+  document.getElementById('el-id').value='';document.getElementById('el-pwd').value='';
+  loadEmployeeHome();
+}
+
+function adminLogin(){
+  const pwd=document.getElementById('al-pwd').value.trim();
+  if(pwd!==cfg.adminPwd){document.getElementById('al-err').style.display='block';return;}
+  document.getElementById('al-err').style.display='none';
+  document.getElementById('al-pwd').value='';
+  go('view-admin');
+  updateLiveBadge(!!getDbUrl());
+  startLiveTracking();
+}
+
+function logout(){
+  currentEmp=null;statuses={};values={};problems=[];
+  if(_empPollTimer){clearInterval(_empPollTimer);_empPollTimer=null;}
+  showEmpLogin();
+}
+function adminLogout(){showEmpLogin();}
+
+// ══════════════════════════════════════════════════════
+// EMPLOYEE HOME
+// ══════════════════════════════════════════════════════
+let _empPollTimer=null;
+
+function loadEmployeeHome(){
+  document.getElementById('home-hosp').textContent='🏥 '+cfg.hosp;
+  document.getElementById('home-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('emp-name-display').textContent=currentEmp.name;
+  document.getElementById('emp-id-display').textContent='ID: '+currentEmp.loginId;
+  // Check if shift already completed today
+  const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
+  const done=saved&&saved.shiftCompleted;
+  document.getElementById('shift-done-msg').style.display=done?'block':'none';
+  document.getElementById('shift-status-badge').textContent=done?'✅ Shift Completed':'🕐 Shift Active';
+  // Show Firebase sync status
+  updateEmpSyncBadge();
+  // Start employee-side polling (reset signals + new tasks) every 15 seconds
+  if(_empPollTimer)clearInterval(_empPollTimer);
+  _empPollTimer=setInterval(empPoll,15000);
+  empPoll(); // run immediately
+  go('view-home');
+}
+
+function updateEmpSyncBadge(status,msg){
+  const el=document.getElementById('emp-sync-status');if(!el)return;
+  const testArea=document.getElementById('emp-test-area');
+  el.style.display='block';
+  if(status==='error'){
+    el.style.background='#FFEBEE';el.style.color='#B71C1C';
+    el.textContent='❌ Sync error: '+msg;
+    if(testArea) testArea.style.display='block'; // show test button on error
+  } else if(status==='ok'){
+    el.style.background='#E8F5E9';el.style.color='#1B5E20';
+    el.textContent='📡 Live · Synced to admin ✓';
+    if(testArea) testArea.style.display='none';
+  } else {
+    if(getDbUrl()){
+      el.style.background='#E8F5E9';el.style.color='#1B5E20';
+      el.textContent='📡 Live sync ON — admin can see your progress';
+    } else {
+      el.style.background='#FFF8E1';el.style.color='#E65100';
+      el.textContent='⚠️ No Firebase URL — data saved locally only';
+      if(testArea) testArea.style.display='block';
+    }
+  }
+}
+
+async function testFirebaseEmployee(){
+  const res=document.getElementById('emp-test-result');
+  if(!res)return;
+  res.style.display='block';res.textContent='Testing...\n';
+  const base=getDbUrl();
+  res.textContent+='1. Firebase URL: '+(base?base:'❌ NOT SET')+'\n';
+  if(!base){res.textContent+='→ Get the setup code from admin and re-import it.';return;}
+  try{
+    res.textContent+='2. Testing write...\n';
+    const wr=await xhrRequest(base+'/hfm_ping.json','PUT',{ts:Date.now(),device:navigator.userAgent.substring(0,50)},8000);
+    if(wr.ok){res.textContent+='   ✅ Write OK\n';}else{res.textContent+='   ❌ Write failed (HTTP '+wr.status+')\n→ Open Firebase console → Rules → set: {".read":true,".write":true}\n';return;}
+    res.textContent+='3. Testing read...\n';
+    const rr=await xhrRequest(base+'/hfm_ping.json','GET',null,8000);
+    if(rr.ok){res.textContent+='   ✅ Read OK\n';}else{res.textContent+='   ❌ Read failed (HTTP '+rr.status+')\n→ Check Firebase rules allow .read:true\n';return;}
+    res.textContent+='✅ Firebase working! If admin still can\'t see you, tap "Start Checklist" and mark at least one item.';
+  }catch(e){
+    res.textContent+='❌ Connection failed: '+e.message+'\n→ Check internet connection and Firebase URL is correct.';
+  }
+}
+
+async function empPoll(){
+  if(!currentEmp||!getDbUrl())return;
+  try{
+    // Check for admin reset signal
+    await checkResetSignal();
+    // Sync latest tasks from Firebase
+    const tasks=await fbGet('/tasks');
+    if(tasks&&typeof tasks==='object'){
+      const arr=Object.values(tasks).filter(Boolean);
+      if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
+    }
+    updateEmpSyncBadge('ok');
+  }catch(e){
+    updateEmpSyncBadge('error',e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// CHECKLIST
+// ══════════════════════════════════════════════════════
+function startChecklist(){
+  statuses={};values={};problems=[];
+  document.getElementById('chk-name').textContent='📋 '+currentEmp.name;
+  document.getElementById('chk-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('prob-list').innerHTML='';
+  buildChk();
+  const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
+  if(saved){
+    statuses=saved.statuses||{};values=saved.values||{};problems=saved.problems||[];renderProbs();
+    Object.entries(statuses).forEach(([k,v])=>{
+      const [si,ii]=k.split(',');
+      const row=document.getElementById('row-'+si+'-'+ii);
+      if(!row)return;
+      const idx={OK:0,Fault:1,'N/A':2}[v];
+      if(idx!==undefined) row.querySelectorAll('.sb')[idx].className='sb '+v.toLowerCase().replace('/','');
+    });
+    // Restore numeric/text values
+    Object.entries(values).forEach(([k,val])=>{
+      const [si,ii]=k.split(',');
+      const el=document.getElementById('val-'+si+'-'+ii);
+      if(el) el.value=val;
+    });
+  }
+  updateCounts();
+  go('view-checklist');
+}
+
+function buildChk(){
+  document.getElementById('chk-body').innerHTML=SECTIONS.map((sec,si)=>`
+    <div class="sec-hdr" style="background:${sec.color}" onclick="toggleSec(${si})">
+      <span>${sec.name}</span><span id="arr-${si}">▾</span>
+    </div>
+    <div class="sec-body" id="sb-${si}">
+      ${sec.items.map((item,ii)=>{
+        const isObj=typeof item==='object';
+        const label=isObj?item.t:item;
+        return `<div class="item-row" id="row-${si}-${ii}">
+          <div style="flex:1;min-width:0">
+            <span class="item-txt">${label}</span>
+            ${isObj?`<div style="display:flex;align-items:center;gap:7px;margin-top:7px">
+              <input type="number" id="val-${si}-${ii}"
+                placeholder="${item.ph||'Enter'}"
+                ${item.mn!==undefined?'min="'+item.mn+'"':''}
+                ${item.mx!==undefined?'max="'+item.mx+'"':''}
+                oninput="setValue(${si},${ii},this.value)"
+                style="width:90px;padding:8px 6px;font-size:16px;font-weight:800;text-align:center;border:2px solid #B0BEC5;border-radius:8px;outline:none;margin:0"
+                onfocus="this.style.borderColor='#1565C0'" onblur="this.style.borderColor='#B0BEC5'">
+              <span style="font-size:13px;font-weight:700;color:#546E7A">${item.u||''}</span>
+            </div>`:''}
+          </div>
+          <div class="s-btns">
+            <button class="sb" onclick="setStatus(${si},${ii},this,'OK')">✓ OK</button>
+            <button class="sb" onclick="setStatus(${si},${ii},this,'Fault')">✗ Fault</button>
+            <button class="sb" onclick="setStatus(${si},${ii},this,'N/A')">— N/A</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function setValue(si,ii,val){
+  values[si+','+ii]=val;
+  saveProgress();
+}
+
+function toggleSec(si){
+  const b=document.getElementById('sb-'+si);const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  document.getElementById('arr-'+si).textContent=open?'▸':'▾';
+}
+
+function setStatus(si,ii,btn,v){
+  statuses[si+','+ii]=v;
+  btn.closest('.item-row').querySelectorAll('.sb').forEach(b=>b.className='sb');
+  btn.className='sb '+v.toLowerCase().replace('/','');
+  updateCounts();saveProgress();showToast('Saved ✓');
+}
+
+function updateCounts(){
+  const vals=Object.values(statuses);
+  const ok=vals.filter(v=>v==='OK').length;
+  const fault=vals.filter(v=>v==='Fault').length;
+  const na=vals.filter(v=>v==='N/A').length;
+  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  document.getElementById('ok-n').textContent=ok;
+  document.getElementById('fault-n').textContent=fault+' fault'+(fault!==1?'s':'');
+  document.getElementById('pfill').style.width=pct+'%';
+  document.getElementById('prog-txt').textContent=ok+' / '+TOTAL+' ('+pct+'%)';
+}
+
+function saveProgress(extra={}){
+  const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
+  const data={...saved,statuses,values,problems,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
+  localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
+  // Push to Firebase for live admin tracking
+  if(getDbUrl()){
+    fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
+      .then(()=>updateEmpSyncBadge('ok'))
+      .catch(e=>updateEmpSyncBadge('error',e.message));
+  } else {
+    console.warn('No Firebase URL set on this device. Data saved locally only.');
+  }
+}
+
+function addProblem(){
+  const sel=document.getElementById('p-loc').value;
+  const other=document.getElementById('p-loc-other').value.trim();
+  const loc=sel==='Other'?other:sel;
+  const desc=document.getElementById('p-desc').value.trim();
+  const pri=document.getElementById('p-pri').value;
+  if(!loc||loc==='— Select Department —'){alert('Please select a location.');return;}
+  if(!desc){alert('Please enter a description of the problem.');return;}
+  problems.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  document.getElementById('p-loc').value='';
+  document.getElementById('p-loc-other').value='';
+  document.getElementById('p-loc-other').style.display='none';
+  document.getElementById('p-desc').value='';
+  renderProbs();saveProgress();showToast('Problem added ✓');
+}
+function toggleOtherLoc(sel){
+  document.getElementById('p-loc-other').style.display=sel.value==='Other'?'block':'none';
+}
+function renderProbs(){
+  document.getElementById('prob-list').innerHTML=problems.map((p,i)=>`
+    <div class="fi" style="margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div><strong>${p.pri}</strong> · ${p.loc} — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.time}</span></div>
+      <button onclick="removeProb(${i})" style="background:none;border:none;color:#C62828;font-size:17px;cursor:pointer;padding:0 0 0 7px;flex-shrink:0">×</button>
+    </div>`).join('');
+}
+function removeProb(i){problems.splice(i,1);renderProbs();saveProgress();}
+
+// Build report text
+function buildReport(){
+  const vals=Object.values(statuses);
+  const ok=vals.filter(v=>v==='OK').length;
+  const fault=vals.filter(v=>v==='Fault').length;
+  const na=vals.filter(v=>v==='N/A').length;
+  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  const grade=pct>=95?'A ⭐':pct>=85?'B ✅':pct>=70?'C ⚠️':'D 🔴';
+  const faultItems=[];
+  SECTIONS.forEach((sec,si)=>sec.items.forEach((item,ii)=>{if(statuses[si+','+ii]==='Fault')faultItems.push('  • '+sec.name.split('—')[0].trim()+': '+item);}));
+  const now=new Date();
+  let msg=`🏥 *${cfg.hosp} — Shift Report*\n`;
+  msg+=`📅 ${now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}  🕐 ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}\n`;
+  msg+=`👷 *${currentEmp.name}*  (ID: ${currentEmp.loginId})\n\n`;
+  msg+=`✅ OK: ${ok}   ❌ Fault: ${fault}   — N/A: ${na}\n`;
+  msg+=`📊 *Completion: ${pct}%*   Grade: *${grade}*\n`;
+  if(faultItems.length>0)msg+=`\n⚠️ *FAULT ITEMS (${faultItems.length}):*\n${faultItems.join('\n')}\n`;
+  if(problems.length>0){msg+=`\n🚨 *PROBLEMS REPORTED (${problems.length}):*\n`;problems.forEach(p=>{msg+=`  • ${p.pri} — ${p.loc}: ${p.desc}\n`;});}
+  // Key readings (numeric values entered)
+  const readings=[];
+  SECTIONS.forEach((sec,si)=>sec.items.forEach((item,ii)=>{
+    const v=values[si+','+ii];
+    if(v!==undefined&&v!==''){
+      const lbl=typeof item==='object'?item.t:item;
+      const u=typeof item==='object'?(item.u||''):'';
+      readings.push(`  • ${lbl}: *${v}${u?(' '+u):''}*`);
+    }
+  }));
+  if(readings.length)msg+=`\n📊 *KEY READINGS (${readings.length}):*\n${readings.join('\n')}\n`;
+  if(!faultItems.length&&!problems.length&&!readings.length)msg+=`\n✅ No faults or problems found.\n`;
+  msg+=`\n_Hospital FM — Shift Complete_`;
+  return msg;
+}
+
+function completeShift(){
+  const vals=Object.values(statuses);
+  const pct=vals.length>0?Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100):0;
+  if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
+  saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
+  // Auto-send WhatsApp
+  const msg=buildReport();
+  window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+  showToast('Shift completed! Report sent ✓');
+  setTimeout(()=>loadEmployeeHome(),1500);
+}
+
+function sendWhatsApp(){const msg=buildReport();window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');}
+function sendEmail(){
+  const sub=encodeURIComponent(cfg.hosp+' Shift Report — '+currentEmp.name+' — '+new Date().toLocaleDateString('en-IN'));
+  const body=encodeURIComponent(buildReport().replace(/\*/g,''));
+  window.location.href='mailto:'+cfg.email+'?subject='+sub+'&body='+body;
+}
+function sendReportManual(){
+  const msg=buildReport();
+  window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ══════════════════════════════════════════════════════
+// MY TASKS
+// ══════════════════════════════════════════════════════
+function openMyTasks(){
+  document.getElementById('task-hdr').textContent='📌 Tasks — '+currentEmp.name;
+  document.getElementById('task-date2').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  go('view-tasks');renderMyTasks();
+}
+function renderMyTasks(){
+  // Show only pending/in-progress tasks — completed tasks are archived immediately
+  const tasks=getTasks().filter(t=>t.assignedTo===currentEmp.loginId&&!t.endedAt);
+  const el=document.getElementById('my-task-list');
+  if(!tasks.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#2E7D32;font-size:14px;font-weight:700">✅ No pending tasks!<br><span style="font-size:12px;color:#90A4AE;font-weight:400">All tasks completed.</span></div>';return;}
+  el.innerHTML=tasks.map(t=>{
+    const st=taskStatus(t);
+    const stC={Pending:'#90A4AE','In Progress':'#1565C0',Done:'#2E7D32',Overdue:'#C62828'}[st];
+    const stB={Pending:'#ECEFF1','In Progress':'#E3F2FD',Done:'#E8F5E9',Overdue:'#FFEBEE'}[st];
+    return `<div class="task-card ${st==='In Progress'?'inprog':st==='Done'?'done':st==='Overdue'?'overdue':''}">
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="font-weight:800;font-size:14px">${t.desc}</div>
+        <span style="background:${stB};color:${stC};padding:3px 9px;border-radius:9px;font-size:11px;font-weight:700;flex-shrink:0">${st}</span>
+      </div>
+      <div style="font-size:11px;color:#90A4AE;margin-bottom:8px">${t.pri} · Due: ${t.dueDate||'—'} ${t.dueTime||''}</div>
+      <div style="font-size:12px;color:#546E7A;margin-bottom:9px;line-height:1.6">
+        ${t.startedAt?'▶ Started: '+fmtTS(t.startedAt):'Not started yet'}
+        ${t.endedAt?' · ■ Done: '+fmtTS(t.endedAt)+' · ⏱ '+duration(t.startedAt,t.endedAt):''}
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${!t.startedAt?`<button style="background:#E3F2FD;color:#1565C0;border:none;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer" onclick="startTask('${t.id}')">▶ Start</button>`:''}
+        ${t.startedAt&&!t.endedAt?`<button style="background:#E8F5E9;color:#2E7D32;border:none;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer" onclick="endTask('${t.id}')">■ Mark Done</button>`:''}
+        ${t.endedAt?'<span style="font-size:12px;color:#2E7D32;font-weight:700;padding:8px 0">✓ Completed</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function taskStatus(t){
+  if(t.endedAt) return 'Done';
+  if(t.startedAt) return 'In Progress';
+  if(t.dueDate&&t.dueTime&&new Date()>new Date(t.dueDate+'T'+t.dueTime)) return 'Overdue';
+  return 'Pending';
+}
+function startTask(id){const tasks=getTasks();const i=tasks.findIndex(t=>t.id===id);if(i<0)return;tasks[i].startedAt=Date.now();saveTasks(tasks);renderMyTasks();showToast('Task started ✓');}
+function endTask(id){
+  const tasks=getTasks();
+  const i=tasks.findIndex(t=>t.id===id);
+  if(i<0)return;
+  tasks[i].endedAt=Date.now();
+  // Archive immediately — move to archive, remove from active
+  const archive=getTaskArchive();
+  archive.push({...tasks[i],archivedAt:Date.now(),archivedDate:todayStr()});
+  localStorage.setItem('HFM4_TASKS_ARCHIVE',JSON.stringify(archive));
+  // Remove from active tasks and Firebase
+  const remaining=tasks.filter(t=>t.id!==id);
+  localStorage.setItem('HFM4_TASKS',JSON.stringify(remaining));
+  fbDelete('/tasks/'+id);
+  renderMyTasks();
+  showToast('Task done ✓ — removed from your list');
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+function admTab(tab,el){
+  ['dash','tasks','staff','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-'+tab).style.display='block';
+  el.classList.add('on');
+  if(tab==='dash') startLiveTracking();
+  if(tab==='tasks') renderAdminTasks();
+  if(tab==='staff') renderStaff();
+  if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();}
+}
+
+function renderAdmin(){
+  document.getElementById('adm-date').textContent='Today: '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  let totalOk=0,totalFault=0,totalNa=0,totalPct=0,count=0,allProbs=[];
+  const empBars=[];
+  cfg.employees.forEach(emp=>{
+    const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+emp.loginId)||'null');
+    if(!saved){empBars.push(`<div class="chart-bar-row"><div class="chart-bar-name" title="${emp.name}">${emp.name}</div><div style="flex:1;font-size:11px;color:#90A4AE">Not started</div><div class="chart-bar-pct">—</div></div>`);return;}
+    const vals=Object.values(saved.statuses||{});
+    const ok=vals.filter(v=>v==='OK').length,fault=vals.filter(v=>v==='Fault').length,na=vals.filter(v=>v==='N/A').length;
+    const eff=TOTAL-na,pct=eff>0?Math.round(ok/eff*100):0;
+    const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
+    const fill=pct>=80?'linear-gradient(90deg,#2E7D32,#66BB6A)':pct>=50?'linear-gradient(90deg,#1976D2,#42A5F5)':'linear-gradient(90deg,#C62828,#EF5350)';
+    totalOk+=ok;totalFault+=fault;totalNa+=na;totalPct+=pct;count++;
+    if(saved.problems) allProbs.push(...saved.problems.map(p=>({...p,emp:emp.name})));
+    empBars.push(`<div class="chart-bar-row">
+      <div class="chart-bar-name" title="${emp.name}">${emp.name}</div>
+      <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${pct}%;background:${fill}"></div></div>
+      <div class="chart-bar-pct">${pct}%</div>
+      <span class="grade grade-${grade}">${grade}</span>
+      ${fault>0?`<span class="badge b-fault">${fault}✗</span>`:''}
+      ${saved.shiftCompleted?'<span style="font-size:11px;color:#2E7D32;font-weight:700">✅</span>':''}
+    </div>`);
+  });
+  document.getElementById('emp-bars').innerHTML=empBars.join('')||'<div style="color:#90A4AE;font-size:13px;padding:4px">No employees added yet. Go to Staff tab.</div>';
+  document.getElementById('k-emp').textContent=count;
+  document.getElementById('k-avg').textContent=(count>0?Math.round(totalPct/count):0)+'%';
+  document.getElementById('k-faults').textContent=totalFault;
+  document.getElementById('k-issues').textContent=allProbs.length;
+  // Pending tasks KPI
+  const allTasks=getTasks();
+  const pendingCount=allTasks.filter(t=>taskStatus(t)==='Pending').length;
+  const inProgCount=allTasks.filter(t=>taskStatus(t)==='In Progress').length;
+  const overdueCount=allTasks.filter(t=>taskStatus(t)==='Overdue').length;
+  document.getElementById('k-pending').textContent=pendingCount+inProgCount;
+  document.getElementById('k-overdue').textContent=overdueCount;
+  // Pending tasks dashboard section
+  const ptEl=document.getElementById('dash-pending-tasks');
+  if(ptEl){
+    const activeTasks=allTasks.filter(t=>taskStatus(t)!=='Done');
+    if(!activeTasks.length){ptEl.innerHTML='<div style="text-align:center;color:#2E7D32;font-size:13px;padding:8px">✅ No pending tasks right now</div>';}
+    else{
+      ptEl.innerHTML=activeTasks.slice(0,8).map(t=>{
+        const st=taskStatus(t);
+        const stC={Pending:'#90A4AE','In Progress':'#1565C0',Overdue:'#C62828'}[st]||'#90A4AE';
+        const stB={Pending:'#ECEFF1','In Progress':'#E3F2FD',Overdue:'#FFEBEE'}[st]||'#ECEFF1';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F0F4F8;gap:8px">
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.desc}</div>
+            <div style="font-size:11px;color:#90A4AE">👷 ${t.assignedName} · Due: ${t.dueDate||'—'} ${t.dueTime||''}</div>
+          </div>
+          <span style="background:${stB};color:${stC};padding:3px 8px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0">${st}</span>
+        </div>`;
+      }).join('')+(activeTasks.length>8?`<div style="text-align:center;font-size:12px;color:#90A4AE;padding:8px">+ ${activeTasks.length-8} more — see Tasks tab</div>`:'');
+    }
+  }
+  const t=cfg.employees.length*TOTAL||1;
+  const okD=Math.round(totalOk/t*360),fD=Math.round(totalFault/t*360),naD=Math.round(totalNa/t*360);
+  document.getElementById('donut-chart').style.background=`conic-gradient(#2E7D32 0deg ${okD}deg,#C62828 ${okD}deg ${okD+fD}deg,#78909C ${okD+fD}deg ${okD+fD+naD}deg,#E8EAF6 ${okD+fD+naD}deg 360deg)`;
+  document.getElementById('dl-ok').textContent=`OK: ${totalOk}`;
+  document.getElementById('dl-fault').textContent=`Faults: ${totalFault}`;
+  document.getElementById('dl-na').textContent=`N/A: ${totalNa}`;
+  document.getElementById('dl-pend').textContent=`Pending: ${Math.max(0,cfg.employees.length*TOTAL-totalOk-totalFault-totalNa)}`;
+  const iEl=document.getElementById('adm-issues');
+  iEl.innerHTML=allProbs.length?allProbs.map(p=>`<div class="fi"><strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">by ${p.emp} at ${p.time}</span></div>`).join(''):'<div style="text-align:center;color:#90A4AE;font-size:13px;padding:10px">No problems today ✓</div>';
+  renderReminderList();
+}
+
+// ══════════════════════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════════════════════
+function getTasks(){return JSON.parse(localStorage.getItem('HFM4_TASKS')||'[]');}
+function saveTasks(t){
+  localStorage.setItem('HFM4_TASKS',JSON.stringify(t));
+  // Push each task to Firebase (upsert by taskId)
+  t.forEach(task=>fbPut('/tasks/'+task.id,task));
+}
+
+function assignTask(){
+  const empId=document.getElementById('t-emp').value;
+  const desc=document.getElementById('t-desc').value.trim();
+  const date=document.getElementById('t-date').value;
+  const time=document.getElementById('t-time').value;
+  const pri=document.getElementById('t-pri').value;
+  if(!empId||!desc){alert('Select employee and enter task description.');return;}
+  const emp=cfg.employees.find(e=>e.loginId===empId);
+  const tasks=getTasks();
+  tasks.push({id:Date.now().toString(),assignedTo:empId,assignedName:emp?emp.name:empId,desc,dueDate:date,dueTime:time,pri,createdAt:Date.now(),startedAt:null,endedAt:null});
+  saveTasks(tasks);
+  document.getElementById('t-desc').value='';
+  renderAdminTasks();showToast2('Task assigned to '+(emp?emp.name:empId)+' ✓');
+}
+
+function renderAdminTasks(){
+  const sel=document.getElementById('t-emp');
+  const cur=sel.value;
+  sel.innerHTML=cfg.employees.map(e=>`<option value="${e.loginId}">${e.name} (${e.loginId})</option>`).join('');
+  if(cur) sel.value=cur;
+  const td=document.getElementById('t-date');if(!td.value)td.value=todayStr();
+  const filter=document.getElementById('task-filter').value;
+  // Active tasks only (no Done — those are archived immediately)
+  let tasks=getTasks().filter(t=>!t.endedAt);
+  if(filter!=='all') tasks=tasks.filter(t=>taskStatus(t)===filter);
+  tasks.sort((a,b)=>b.createdAt-a.createdAt);
+  const el=document.getElementById('adm-task-list');
+  if(!tasks.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;font-size:13px">No tasks yet.</div>';return;}
+  el.innerHTML=tasks.map(t=>{
+    const st=taskStatus(t);
+    const stC={Pending:'#90A4AE','In Progress':'#1565C0',Done:'#2E7D32',Overdue:'#C62828'}[st];
+    const stB={Pending:'#ECEFF1','In Progress':'#E3F2FD',Done:'#E8F5E9',Overdue:'#FFEBEE'}[st];
+    return `<div class="task-card ${st==='In Progress'?'inprog':st==='Done'?'done':st==='Overdue'?'overdue':''}">
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <div>
+          <div style="font-weight:800;font-size:13px">${t.desc}</div>
+          <div style="font-size:11px;color:#90A4AE;margin-top:3px">👷 ${t.assignedName} · ${t.pri} · Due: ${t.dueDate||'—'} ${t.dueTime||''}</div>
+          <div style="font-size:12px;color:#546E7A;margin-top:5px">
+            ${t.startedAt?'▶ '+fmtTS(t.startedAt):'Not started'}
+            ${t.endedAt?' · ■ '+fmtTS(t.endedAt)+' · ⏱ '+duration(t.startedAt,t.endedAt):''}
+          </div>
+        </div>
+        <span style="background:${stB};color:${stC};padding:3px 9px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap;height:fit-content">${st}</span>
+      </div>
+      <button onclick="deleteTask('${t.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;margin-top:9px">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteTask(id){if(!confirm('Remove task?'))return;saveTasks(getTasks().filter(t=>t.id!==id));fbDelete('/tasks/'+id);renderAdminTasks();}
+
+// ══════════════════════════════════════════════════════
+// STAFF MANAGEMENT
+// ══════════════════════════════════════════════════════
+function renderStaff(){
+  // Populate Firebase URL settings card
+  const cur=getDbUrl();
+  const curEl=document.getElementById('fb-current-url');
+  if(curEl) curEl.textContent=cur?('Current: '+cur):'⚠️ No Firebase URL set — live tracking is OFF';
+  const inp=document.getElementById('settings-db-url');
+  if(inp&&cur&&!inp.value) inp.value=cur;
+  const el=document.getElementById('staff-list');
+  if(!cfg.employees.length){el.innerHTML='<div style="padding:16px;color:#90A4AE;font-size:13px">No employees yet. Add one above.</div>';return;}
+  el.innerHTML=cfg.employees.map((e,i)=>`
+    <div style="padding:13px 15px;border-bottom:1px solid #F0F4F8">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-weight:800;font-size:14px">${e.name}</div>
+        <button onclick="removeEmployee(${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 11px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0">Remove</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <div style="background:#E3F2FD;border-radius:8px;padding:6px 12px">
+          <div style="font-size:10px;font-weight:700;color:#90A4AE;text-transform:uppercase">Login ID</div>
+          <div style="font-size:16px;font-weight:900;color:#1565C0;letter-spacing:1px">${e.loginId}</div>
+        </div>
+        <div style="background:#F3E5F5;border-radius:8px;padding:6px 12px">
+          <div style="font-size:10px;font-weight:700;color:#90A4AE;text-transform:uppercase">Password</div>
+          <div style="font-size:16px;font-weight:900;color:#6A1B9A;letter-spacing:2px">${e.password}</div>
+        </div>
+        ${e.phone?`<div style="background:#E8F5E9;border-radius:8px;padding:6px 12px">
+          <div style="font-size:10px;font-weight:700;color:#90A4AE;text-transform:uppercase">Phone</div>
+          <div style="font-size:13px;font-weight:800;color:#2E7D32">+${e.phone}</div>
+        </div>`:'<div style="background:#FFF8E1;border-radius:8px;padding:6px 12px;font-size:11px;color:#E65100;font-weight:700">⚠️ No phone<br>for reminders</div>'}
+      </div>
+      <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+        <button onclick="shareCredsWA(${i})" style="background:#E8F5E9;border:none;color:#2E7D32;padding:7px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">📲 Send Login</button>
+        ${e.phone?`<button onclick="sendPendingReminderWA(${i})" style="background:#E3F2FD;border:none;color:#1565C0;padding:7px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">📲 WA Reminder</button>
+        <button onclick="sendPendingReminderSMS(${i})" style="background:#F3E5F5;border:none;color:#6A1B9A;padding:7px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">💬 SMS Reminder</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function shareCredsWA(i){
+  const e=cfg.employees[i];
+  const code=exportConfig();
+  const msg=`🏥 *${cfg.hosp} — Your Login Details*\n\n👷 Name: *${e.name}*\n🔑 Login ID: *${e.loginId}*\n🔒 Password: *${e.password}*\n\n━━━━━━━━━━━━━━━━━━━━\n📱 *FIRST TIME SETUP (do this once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this setup code:\n\n${code}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your ID & Password above\n━━━━━━━━━━━━━━━━━━━━\n_Keep this message safe. Do not share._`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+async function testAndSaveFirebaseUrl(){
+  const url=(document.getElementById('settings-db-url').value||'').trim().replace(/\/+$/,'');
+  const res=document.getElementById('settings-test-result');
+  res.style.display='block';res.style.background='#E3F2FD';res.style.color='#1565C0';res.textContent='🔄 Testing Firebase connection...';
+  if(!url){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Please enter the Firebase URL first.';return;}
+  try{
+    // Test write
+    const wr=await fetchWithTimeout(url+'/hfm_test.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ok:true,ts:Date.now()})},8000);
+    if(!wr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Firebase write blocked (HTTP '+wr.status+'). Fix the Rules — see instructions above, then try again.';return;}
+    // Test read
+    const rr=await fetchWithTimeout(url+'/hfm_test.json',{},8000);
+    if(!rr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Firebase read blocked. Fix the Rules and try again.';return;}
+    const data=await rr.json();
+    if(!data||!data.ok){res.style.background='#FFF8E1';res.style.color='#E65100';res.textContent='⚠️ Connected but test failed. Try again.';return;}
+    // All good — save
+    cfg.dbUrl=url;cfg.convexUrl=url;
+    saveCfg();
+    updateLiveBadge(true);
+    document.getElementById('fb-current-url').textContent='Current: '+url;
+    res.style.background='#E8F5E9';res.style.color='#1B5E20';
+    res.textContent='✅ Firebase working! URL saved. Now tap "Save & Resend to All" to update employee devices.';
+    // Restart live tracking with new URL
+    startLiveTracking();
+  }catch(e){
+    res.style.background='#FFEBEE';res.style.color='#C62828';
+    res.textContent='❌ Cannot reach Firebase: '+e.message+'. Check the URL is correct.';
+  }
+}
+
+function resendSetupWithUrl(){
+  const url=(document.getElementById('settings-db-url').value||'').trim().replace(/\/+$/,'');
+  if(url){cfg.dbUrl=url;cfg.convexUrl=url;saveCfg();}
+  if(!getDbUrl()){alert('Enter and save the Firebase URL first.');return;}
+  // Send setup code (now includes Firebase URL) to all employees via WhatsApp
+  sendConfigWA();
+  showToast2('Opening WhatsApp with updated setup code ✓');
+}
+
+function autoFillEmp(){
+  const name=document.getElementById('ne-name').value.trim();
+  if(!name) return;
+  // Auto-generate Login ID: first letters of name + 3-digit number
+  const initials=name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,3)||'EMP';
+  const num=String(cfg.employees.length+1).padStart(3,'0');
+  const suggestId=initials+num;
+  // Auto-generate 4-digit PIN
+  const suggestPwd=String(Math.floor(1000+Math.random()*9000));
+  const idEl=document.getElementById('ne-id');
+  const pwdEl=document.getElementById('ne-pwd');
+  if(!idEl.value) idEl.value=suggestId;
+  if(!pwdEl.value) pwdEl.value=suggestPwd;
+}
+
+function addEmployee(){
+  const name=document.getElementById('ne-name').value.trim();
+  if(!name){alert('Enter employee name.');return;}
+  const initials=name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,3)||'EMP';
+  const num=String(cfg.employees.length+1).padStart(3,'0');
+  const loginId=(document.getElementById('ne-id').value.trim().toUpperCase()||initials+num);
+  const password=(document.getElementById('ne-pwd').value.trim()||String(Math.floor(1000+Math.random()*9000)));
+  const phone=(document.getElementById('ne-phone').value.trim().replace(/\D/g,'')||'');
+  if(cfg.employees.find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists. Change it.');return;}
+  cfg.employees.push({name,loginId,password,phone});
+  saveCfg();
+  document.getElementById('ne-name').value='';
+  document.getElementById('ne-id').value='';
+  document.getElementById('ne-pwd').value='';
+  document.getElementById('ne-phone').value='';
+  renderStaff();
+  showToast2('✓ Added: '+name+'  ID: '+loginId+'  Pass: '+password);
+}
+
+function removeEmployee(i){
+  if(!confirm('Remove '+cfg.employees[i].name+'?'))return;
+  cfg.employees.splice(i,1);saveCfg();renderStaff();
+}
+
+// ══════════════════════════════════════════════════════
+// EXCEL REPORT WITH DASHBOARD SHEET
+// ══════════════════════════════════════════════════════
+function getEmpData(emp,repDate){
+  const saved=JSON.parse(localStorage.getItem('HFM4_'+repDate+'_'+emp.loginId)||'null');
+  if(!saved)return null;
+  const vals=Object.values(saved.statuses||{});
+  const ok=vals.filter(v=>v==='OK').length;
+  const fault=vals.filter(v=>v==='Fault').length;
+  const na=vals.filter(v=>v==='N/A').length;
+  const checked=ok+fault+na;
+  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
+  return {saved,ok,fault,na,checked,pct,grade,done:!!saved.shiftCompleted};
+}
+
+function downloadExcel(){
+  const repDate=document.getElementById('rep-date').value||todayStr();
+  const wb=XLSX.utils.book_new();
+  const allEmpData=cfg.employees.map(emp=>({emp,data:getEmpData(emp,repDate)}));
+  const active=allEmpData.filter(e=>e.data);
+  const avgPct=active.length>0?Math.round(active.reduce((s,e)=>s+e.data.pct,0)/active.length):0;
+  const totalFault=active.reduce((s,e)=>s+e.data.fault,0);
+  const allProbs=[];
+  active.forEach(({emp,data})=>{if(data.saved.problems)data.saved.problems.forEach(p=>allProbs.push({...p,emp:emp.name}));});
+
+  // ── SHEET 1: DASHBOARD ──────────────────────────
+  const LINE='═'.repeat(60);
+  const line='-'.repeat(60);
+  const dash=[
+    [LINE],
+    [`  ${cfg.hosp.toUpperCase()} — FACILITY MANAGEMENT DASHBOARD`],
+    [`  Report Date: ${fmtDate(repDate)}   Generated: ${new Date().toLocaleString('en-IN')}`],
+    [LINE],[''],
+    ['  ┌─────────────────── KPI OVERVIEW ───────────────────┐'],
+    [`  │  Employees Active Today:   ${active.length} / ${cfg.employees.length}`],
+    [`  │  Average Completion:       ${bar(avgPct,20)}  ${avgPct}%`],
+    [`  │  Total Faults:             ${totalFault}`],
+    [`  │  Problems Reported:        ${allProbs.length}`],
+    [`  │  Shifts Completed:         ${active.filter(e=>e.data.done).length}`],
+    ['  └────────────────────────────────────────────────────┘'],[''],
+    ['  ┌─────────────── EMPLOYEE PERFORMANCE ───────────────┐'],
+    ['  │  Name                  Completion    Grade  Faults  Status'],
+    ['  │  '+line.slice(0,57)],
+  ];
+  allEmpData.forEach(({emp,data})=>{
+    if(!data){dash.push([`  │  ${emp.name.padEnd(22)}  ${'░'.repeat(20)}   0%   —      —      Not Started`]);return;}
+    const nameP=emp.name.slice(0,20).padEnd(22);
+    const barStr=bar(data.pct,20);
+    const status=data.done?'✓ Done':'Active';
+    dash.push([`  │  ${nameP}  ${barStr}  ${String(data.pct+'%').padStart(4)}   ${data.grade}      ${String(data.fault).padStart(3)}    ${status}`]);
+  });
+  dash.push(['  └────────────────────────────────────────────────────┘'],['']);
+  dash.push(['  ┌─────────── SECTION COMPLETION (ALL STAFF) ─────────┐']);
+  SECTIONS.forEach(sec=>{
+    let okC=0,totC=0;
+    active.forEach(({emp,data})=>{
+      const si=SECTIONS.indexOf(sec);
+      sec.items.forEach((_,ii)=>{
+        const v=(data.saved.statuses||{})[si+','+ii];
+        if(v==='OK'||v==='Fault') totC++;
+        if(v==='OK') okC++;
+      });
+    });
+    const sp=totC>0?Math.round(okC/totC*100):0;
+    const nameShort=sec.name.slice(0,30).padEnd(30);
+    dash.push([`  │  ${nameShort}  ${bar(sp,15)}  ${String(sp+'%').padStart(4)}`]);
+  });
+  dash.push(['  └────────────────────────────────────────────────────┘'],['']);
+  if(allProbs.length>0){
+    dash.push(['  ┌─────────────── PROBLEMS REPORTED ─────────────────┐']);
+    allProbs.forEach(p=>dash.push([`  │  ${p.pri.slice(0,12).padEnd(12)}  ${p.loc.slice(0,20).padEnd(20)}  ${p.desc.slice(0,30)}`]));
+    dash.push(['  └────────────────────────────────────────────────────┘'],['']);
+  }
+  const ws0=XLSX.utils.aoa_to_sheet(dash);
+  ws0['!cols']=[{wch:80}];
+  XLSX.utils.book_append_sheet(wb,ws0,'📊 DASHBOARD');
+
+  // ── SHEET 2: KPI SUMMARY ─────────────────────────
+  const kpiRows=[
+    ['HOSPITAL FACILITY MANAGEMENT — KPI SUMMARY'],[''],
+    ['Hospital',cfg.hosp],['Date',repDate],['Generated',new Date().toLocaleString('en-IN')],[''],
+    ['Employee','Login ID','OK','Fault','N/A','Pending','Completion %','Grade','Shift Done','Submitted At'],
+  ];
+  allEmpData.forEach(({emp,data})=>{
+    if(!data){kpiRows.push([emp.name,emp.loginId,0,0,0,TOTAL,'0%','—','No','—']);return;}
+    kpiRows.push([emp.name,emp.loginId,data.ok,data.fault,data.na,TOTAL-data.checked,data.pct+'%',data.grade,data.done?'Yes':'No',data.saved.updated?fmtTS(data.saved.updated):'—']);
+  });
+  kpiRows.push([''],['TOTALS','',active.reduce((s,e)=>s+e.data.ok,0),totalFault,active.reduce((s,e)=>s+e.data.na,0),'',avgPct+'% avg','','','']);
+  const ws1=XLSX.utils.aoa_to_sheet(kpiRows);
+  ws1['!cols']=[{wch:24},{wch:12},{wch:6},{wch:8},{wch:6},{wch:10},{wch:14},{wch:8},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'KPI Summary');
+
+  // ── SHEETS 3+: ONE PER EMPLOYEE ──────────────────
+  allEmpData.forEach(({emp,data})=>{
+    const rows=[
+      [`EMPLOYEE REPORT — ${emp.name.toUpperCase()}`],
+      ['Login ID',emp.loginId],['Date',repDate],
+      ['Completion',data?data.pct+'%':'0%'],['Grade',data?data.grade:'—'],
+      ['Shift Completed',data&&data.done?'Yes':'No'],[''],
+      ['Section','Item','Status','Reading'],
+    ];
+    SECTIONS.forEach((sec,si)=>{
+      sec.items.forEach((item,ii)=>{
+        const isObj=typeof item==='object';
+        const label=isObj?item.t:item;
+        const v=data?(data.saved.statuses||{})[si+','+ii]||'Pending':'Pending';
+        const reading=data&&data.saved.values?((data.saved.values[si+','+ii]||'')+(isObj&&data.saved.values[si+','+ii]!==undefined&&data.saved.values[si+','+ii]!==''?' '+(item.u||''):'')):'';
+        rows.push([sec.name,label,v,reading]);
+      });
+    });
+    if(data&&data.saved.problems&&data.saved.problems.length){
+      rows.push([''],['PROBLEMS REPORTED'],['Priority','Location','Description','Time']);
+      data.saved.problems.forEach(p=>rows.push([p.pri,p.loc,p.desc,p.time]));
+    }
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:35},{wch:55},{wch:10},{wch:14}];
+    const sheetName=(emp.name.slice(0,25));
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  });
+
+  // ── FAULT ITEMS SHEET ─────────────────────────────
+  const faultRows=[['Employee','Section','Item','Time']];
+  allEmpData.forEach(({emp,data})=>{
+    if(!data)return;
+    SECTIONS.forEach((sec,si)=>sec.items.forEach((item,ii)=>{
+      if((data.saved.statuses||{})[si+','+ii]==='Fault')
+        faultRows.push([emp.name,sec.name,item,data.saved.updated?fmtTS(data.saved.updated):'—']);
+    }));
+  });
+  if(faultRows.length===1) faultRows.push(['No faults recorded','','','']);
+  const wsF=XLSX.utils.aoa_to_sheet(faultRows);
+  wsF['!cols']=[{wch:22},{wch:35},{wch:55},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsF,'Fault Items');
+
+  // ── PROBLEMS SHEET ────────────────────────────────
+  const probRows=[['Employee','Priority','Location','Description','Time']];
+  allEmpData.forEach(({emp,data})=>{
+    if(!data||!data.saved.problems)return;
+    data.saved.problems.forEach(p=>probRows.push([emp.name,p.pri,p.loc,p.desc,p.time]));
+  });
+  if(probRows.length===1) probRows.push(['No problems reported','','','','']);
+  const wsP=XLSX.utils.aoa_to_sheet(probRows);
+  wsP['!cols']=[{wch:22},{wch:14},{wch:28},{wch:45},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,wsP,'Problems');
+
+  // ── TASKS SHEET ───────────────────────────────────
+  const taskRows=[['Task','Assigned To','Priority','Due Date','Due Time','Start Time','End Time','Duration','Status']];
+  getTasks().forEach(t=>{
+    taskRows.push([t.desc,t.assignedName,t.pri,t.dueDate||'—',t.dueTime||'—',t.startedAt?fmtTS(t.startedAt):'Not started',t.endedAt?fmtTS(t.endedAt):'—',duration(t.startedAt,t.endedAt)||'—',taskStatus(t)]);
+  });
+  if(taskRows.length===1) taskRows.push(['No tasks','','','','','','','','']);
+  const wsT=XLSX.utils.aoa_to_sheet(taskRows);
+  wsT['!cols']=[{wch:40},{wch:22},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,wsT,'Tasks');
+
+  // Download
+  const fname=cfg.hosp.replace(/\s+/g,'_')+'_Report_'+repDate+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showToast2('Downloaded: '+fname);
+}
+
+function shareReportWA(){downloadExcel();setTimeout(()=>window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(`📊 *${cfg.hosp} — Facility Report*\n📅 ${fmtDate(document.getElementById('rep-date').value||todayStr())}\n\nExcel report downloaded. Please find the attached file.\n\n_Hospital FM_`),'_blank'),1500);}
+function shareReportEmail(){
+  const d=document.getElementById('rep-date').value||todayStr();
+  downloadExcel();
+  setTimeout(()=>{window.location.href='mailto:'+cfg.email+'?subject='+encodeURIComponent(cfg.hosp+' Report '+fmtDate(d))+'&body='+encodeURIComponent('Hi,\n\nPlease find the attached Hospital FM report for '+fmtDate(d)+'.\n\nRegards,\nHospital FM System');},1500);
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#2E7D32';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',1800);}
+function showToast2(msg){const t=document.getElementById('toast2');t.textContent=msg;t.style.background='#1565C0';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);}
+
+// ══════════════════════════════════════════════════════
+// FIREBASE REALTIME DATABASE — LIVE TRACKING
+// Plain fetch() REST API — no SDK — works on iPhone/Android/Desktop
+// ══════════════════════════════════════════════════════
+let _pollTimer=null;
+
+function getDbUrl(){
+  return (cfg.dbUrl||cfg.convexUrl||'').replace(/\/+$/,'');
+}
+// Legacy alias
+function getConvexUrl(){return getDbUrl();}
+
+// ── Universal HTTP helper using XMLHttpRequest ──────────
+// XHR works on ALL browsers including iOS WKWebView (WhatsApp in-app browser)
+// fetch() fails in WKWebView cross-origin; XHR does not.
+function xhrRequest(url,method,data,ms){
+  return new Promise(function(resolve,reject){
+    var xhr=new XMLHttpRequest();
+    xhr.open(method,url,true);
+    if(data!==null&&data!==undefined) xhr.setRequestHeader('Content-Type','application/json');
+    xhr.timeout=ms||8000;
+    xhr.onreadystatechange=function(){
+      if(xhr.readyState!==4)return;
+      if(xhr.status>=200&&xhr.status<300){
+        var body=null;try{body=JSON.parse(xhr.responseText||'null');}catch(e){}
+        resolve({ok:true,status:xhr.status,data:body});
+      } else if(xhr.status===0){
+        reject(new Error('Network error — check internet connection'));
+      } else {
+        resolve({ok:false,status:xhr.status,data:null});
+      }
+    };
+    xhr.onerror=function(){reject(new Error('Network error'));};
+    xhr.ontimeout=function(){reject(new Error('Request timed out'));};
+    xhr.send(data!==null&&data!==undefined?JSON.stringify(data):null);
+  });
+}
+// Keep fetchWithTimeout alias for testDbConnection
+function fetchWithTimeout(url,options,ms){
+  var method=(options&&options.method?options.method:'GET').toUpperCase();
+  var body=null;
+  if(options&&options.body){try{body=JSON.parse(options.body);}catch(e){body=options.body;}}
+  return xhrRequest(url,method,body,ms).then(function(r){
+    return {ok:r.ok,status:r.status,json:function(){return Promise.resolve(r.data);}};
+  });
+}
+
+// Firebase REST helpers — all via XHR (works on iOS, Android, Desktop, WKWebView)
+async function fbPatch(path,data){
+  const base=getDbUrl();
+  if(!base){console.warn('Firebase URL not set — data saved locally only');return;}
+  try{
+    const r=await xhrRequest(base+path+'.json','PATCH',data,8000);
+    if(!r.ok) console.warn('FB PATCH failed:',r.status,'Path:',path);
+  }catch(e){console.warn('FB PATCH',path,'failed:',e.message);}
+}
+async function fbPut(path,data){
+  const base=getDbUrl();if(!base)return;
+  try{
+    const r=await xhrRequest(base+path+'.json','PUT',data,8000);
+    if(!r.ok) console.warn('FB PUT failed:',r.status);
+  }catch(e){console.warn('FB PUT',path,'failed:',e.message);}
+}
+async function fbGet(path){
+  const base=getDbUrl();if(!base)return null;
+  try{
+    const r=await xhrRequest(base+path+'.json','GET',null,8000);
+    if(!r.ok){console.warn('FB GET failed:',r.status);return null;}
+    return r.data;
+  }catch(e){console.warn('FB GET',path,'failed:',e.message);return null;}
+}
+async function fbDelete(path){
+  const base=getDbUrl();if(!base)return;
+  try{await xhrRequest(base+path+'.json','DELETE',null,5000);}
+  catch(e){console.warn('FB DELETE',path,'failed:',e.message);}
+}
+
+function updateLiveBadge(on){
+  const b=document.getElementById('live-badge');
+  if(b) b.style.display=on?'inline':'none';
+}
+
+async function testDbConnection(){
+  const url=(document.getElementById('s-db')||{}).value.trim()||getDbUrl()||'';
+  const res=document.getElementById('fb-test-result');
+  if(!url){res.style.display='block';res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Please enter your Firebase Database URL first.';return;}
+  res.style.display='block';res.style.background='#E3F2FD';res.style.color='#1565C0';res.textContent='🔄 Testing connection...';
+  try{
+    const r=await fetchWithTimeout(url.replace(/\/+$/,'')+'/ping.json',{},8000);
+    if(r.ok||r.status===200){
+      res.style.background='#E8F5E9';res.style.color='#1B5E20';
+      res.textContent='✅ Connected! Firebase is working. You can now save and share.';}
+    else{res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Error '+r.status+'. Check your Firebase URL and make sure database rules allow read/write.';}
+  }catch(e){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='❌ Could not connect: '+e.message+'. Check your Firebase URL.';}
+}
+
+function initConvex(){updateLiveBadge(!!getDbUrl());}
+
+function setFbStatus(type,msg){
+  const el=document.getElementById('fb-status-bar');if(!el)return;
+  el.style.display='block';
+  if(type==='ok'){el.style.background='#E8F5E9';el.style.color='#1B5E20';el.textContent='🟢 '+msg;}
+  else if(type==='warn'){el.style.background='#FFF8E1';el.style.color='#E65100';el.textContent='⚠️ '+msg;}
+  else{el.style.background='#FFEBEE';el.style.color='#C62828';el.textContent='❌ '+msg;}
+}
+
+function startLiveTracking(){
+  if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}
+  renderAdmin();
+  const base=getDbUrl();
+  // Show Firebase URL in dashboard for verification
+  const urlInfo=document.getElementById('fb-url-info');
+  if(urlInfo) urlInfo.textContent=base?'Firebase: '+base:'⚠️ No Firebase URL set — go to setup to add it.';
+  if(!base){
+    setFbStatus('error','Firebase URL not set. Go to setup page and enter your Firebase Database URL.');
+    return;
+  }
+  updateLiveBadge(true);
+  let pollCount=0;
+  async function poll(){
+    pollCount++;
+    try{
+      // Fetch today's employee data from Firebase
+      const r=await fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},8000);
+      if(!r.ok){
+        setFbStatus('error','Firebase error '+r.status+'. Go to Firebase Console → Realtime Database → Rules and set read/write to true.');
+        return;
+      }
+      const data=await r.json();
+      if(data&&typeof data==='object'&&!Array.isArray(data)){
+        const emps=Object.values(data).filter(Boolean);
+        emps.forEach(emp=>{
+          if(emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));
+        });
+        setFbStatus('ok','Live · '+emps.length+' employee(s) synced · Last update: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+        renderAdmin();
+      } else {
+        setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+      }
+      // Sync tasks too
+      const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
+      if(tr.ok){
+        const tasks=await tr.json();
+        if(tasks&&typeof tasks==='object'){
+          const arr=Object.values(tasks).filter(Boolean);
+          if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
+        }
+      }
+    }catch(e){
+      setFbStatus('error','Cannot reach Firebase: '+e.message+'. Check internet connection and Firebase URL.');
+    }
+  }
+  poll();
+  _pollTimer=setInterval(poll,5000);
+}
+
+// Pull latest tasks from Firebase when employee logs in
+function syncTasksFromConvex(cb){
+  fbGet('/tasks').then(tasks=>{
+    if(tasks&&typeof tasks==='object'){
+      const arr=Object.values(tasks).filter(Boolean);
+      if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
+    }
+    cb();
+  }).catch(()=>cb());
+}
+
+
+// ══════════════════════════════════════════════════════
+// CONFIG EXPORT / IMPORT  (cross-device sync)
+// ══════════════════════════════════════════════════════
+function exportConfig(){
+  // Export hospital info + employees + dbUrl (NO admin password for security)
+  const data={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:cfg.convexUrl||cfg.dbUrl||'',convexUrl:cfg.convexUrl||cfg.dbUrl||''};
+  try{return btoa(unescape(encodeURIComponent(JSON.stringify(data))));}
+  catch(e){return btoa(JSON.stringify(data));}
+}
+
+function importConfig(){
+  const rawInput=document.getElementById('import-code').value;
+  const manualDbUrl=(document.getElementById('import-db')||{}).value||'';
+  // Strip ALL whitespace/newlines (WhatsApp breaks long codes across lines)
+  const raw=rawInput.replace(/\s+/g,'').trim();
+  if(!raw){alert('Please paste the setup code from admin first.');return;}
+  try{
+    let data;
+    try{data=JSON.parse(decodeURIComponent(escape(atob(raw))));}
+    catch(e2){
+      try{data=JSON.parse(atob(raw));}
+      catch(e3){throw new Error('Could not decode');}
+    }
+    if(!data.hosp||!Array.isArray(data.employees)){throw new Error('Invalid format');}
+    const savedPwd=cfg.adminPwd;
+    Object.assign(cfg,data);
+    if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
+    // Manual Convex URL overrides whatever was in the config code
+    const manualUrl=manualDbUrl.trim();
+    if(manualUrl){cfg.convexUrl=manualUrl;cfg.dbUrl=manualUrl;}
+    saveCfg();
+    initConvex(); // refresh live badge
+    document.getElementById('import-panel').style.display='none';
+    document.getElementById('import-code').value='';
+    if(document.getElementById('import-db')) document.getElementById('import-db').value='';
+    document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
+    document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const liveOn=!!getDbUrl();
+    alert('✅ Setup complete!\n\nHospital: '+cfg.hosp+'\nEmployees loaded: '+cfg.employees.length+'\n'+(liveOn?'🔴 Live tracking: ON ✓ (Firebase connected)':'⚪ Live tracking: OFF — enter Firebase URL to enable')+'\n\nYou can now login.');
+  }catch(e){
+    alert('❌ Invalid setup code. The code may have been cut or changed by WhatsApp.\n\nAsk admin to resend — or try copying just the code text again carefully.');
+  }
+}
+
+function toggleImport(){
+  const p=document.getElementById('import-panel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+
+function showExportCode(){
+  document.getElementById('export-code-box').value=exportConfig();
+  document.getElementById('export-section').style.display='block';
+}
+
+function copyExportCode(){
+  const el=document.getElementById('export-code-box');
+  el.select();el.setSelectionRange(0,99999);
+  try{document.execCommand('copy');showToast2('Setup code copied ✓');}
+  catch(e){alert('Copy manually:\n\n'+el.value);}
+}
+
+function sendConfigWA(){
+  const code=exportConfig();
+  const msg=`🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at the bottom)\n3. Paste this setup code:\n\n${code}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ══════════════════════════════════════════════════════
+// TASK ARCHIVE
+// ══════════════════════════════════════════════════════
+function getTaskArchive(){return JSON.parse(localStorage.getItem('HFM4_TASKS_ARCHIVE')||'[]');}
+
+function archiveCompletedTasks(){
+  const tasks=getTasks();
+  const done=tasks.filter(t=>t.endedAt);
+  if(!done.length)return;
+  const archive=getTaskArchive();
+  done.forEach(t=>{archive.push({...t,archivedAt:Date.now(),archivedDate:todayStr()});fbDelete('/tasks/'+t.id);});
+  localStorage.setItem('HFM4_TASKS_ARCHIVE',JSON.stringify(archive));
+  const pending=tasks.filter(t=>!t.endedAt);
+  localStorage.setItem('HFM4_TASKS',JSON.stringify(pending));
+}
+
+function renderArchive(){
+  const el=document.getElementById('archive-list');if(!el)return;
+  const archive=getTaskArchive();
+  if(!archive.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;font-size:13px;padding:10px">No completed tasks in archive yet.</div>';return;}
+  // Group by date
+  const byDate={};
+  archive.forEach(t=>{(byDate[t.archivedDate]=byDate[t.archivedDate]||[]).push(t);});
+  el.innerHTML=Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).map(date=>`
+    <div style="margin-bottom:12px">
+      <div style="font-weight:800;font-size:12px;color:#607D8B;padding:6px 0;border-bottom:1px solid #F0F4F8;margin-bottom:6px">📅 ${fmtDate(date)}</div>
+      ${byDate[date].map(t=>`<div style="padding:7px 0;border-bottom:1px solid #F9F9F9;display:flex;justify-content:space-between;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:13px">${t.desc}</div>
+          <div style="font-size:11px;color:#90A4AE">👷 ${t.assignedName} · ${t.pri} · ⏱ ${duration(t.startedAt,t.endedAt)||'—'}</div>
+        </div>
+        <span style="background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:9px;font-size:11px;font-weight:700;flex-shrink:0;height:fit-content">✓ Done</span>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+function clearTaskArchive(){
+  if(!confirm('Clear all archived task records?\nThis cannot be undone.'))return;
+  localStorage.removeItem('HFM4_TASKS_ARCHIVE');
+  renderArchive();
+  showToast2('Archive cleared');
+}
+
+// ══════════════════════════════════════════════════════
+// GRAPHICAL HTML REPORT
+// ══════════════════════════════════════════════════════
+function downloadGraphicalReport(){
+  const repDate=document.getElementById('rep-date').value||todayStr();
+  const allEmpData=cfg.employees.map(emp=>({emp,data:getEmpData(emp,repDate)}));
+  const active=allEmpData.filter(e=>e.data);
+  const avgPct=active.length>0?Math.round(active.reduce((s,e)=>s+e.data.pct,0)/active.length):0;
+  const totalFaultR=active.reduce((s,e)=>s+e.data.fault,0);
+  const allProbs=[];active.forEach(({emp,data})=>{if(data.saved.problems)data.saved.problems.forEach(p=>allProbs.push({...p,emp:emp.name}));});
+  const archive=getTaskArchive().filter(t=>t.archivedDate===repDate);
+  const activeTasks=getTasks();
+
+  const empBars=allEmpData.map(({emp,data})=>{
+    const pct=data?data.pct:0;
+    const grade=data?data.grade:'—';
+    const fill=pct>=80?'#2E7D32':pct>=50?'#1976D2':'#C62828';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:700;font-size:13px">${emp.name}</span>
+        <span style="font-weight:900;color:${fill}">${pct}% <span style="background:${fill};color:#fff;padding:1px 7px;border-radius:5px;font-size:11px">${grade}</span></span>
+      </div>
+      <div style="height:14px;background:#E8EAF6;border-radius:7px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${fill};border-radius:7px;transition:width .5s"></div>
+      </div>
+      ${data&&data.fault>0?`<div style="font-size:11px;color:#C62828;margin-top:2px">⚠️ ${data.fault} fault(s) · ${data.done?'✅ Shift complete':'In progress'}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const donutOk=Math.round((active.reduce((s,e)=>s+e.data.ok,0))/(cfg.employees.length*TOTAL||1)*360);
+  const donutFault=Math.round(totalFaultR/(cfg.employees.length*TOTAL||1)*360);
+
+  const probHtml=allProbs.length?allProbs.map(p=>`<div style="padding:8px 12px;background:#FFF5F5;border-left:4px solid #C62828;border-radius:0 8px 8px 0;margin-bottom:6px">
+    <strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">by ${p.emp}</span></div>`).join('')
+    :'<div style="padding:10px;color:#2E7D32;font-weight:700">✅ No problems reported</div>';
+
+  const taskHtml=activeTasks.length?activeTasks.map(t=>{const st=taskStatus(t);const c={Pending:'#607D8B','In Progress':'#1565C0',Overdue:'#C62828'}[st]||'#607D8B';
+    return `<div style="display:flex;justify-content:space-between;padding:8px 12px;background:#F8F9FA;border-radius:8px;margin-bottom:5px;gap:8px">
+      <div><strong style="font-size:13px">${t.desc}</strong><div style="font-size:11px;color:#90A4AE">👷 ${t.assignedName} · Due: ${t.dueDate||'—'}</div></div>
+      <span style="color:${c};font-weight:700;font-size:12px;flex-shrink:0">${st}</span></div>`;}).join('')
+    :'<div style="padding:10px;color:#2E7D32;font-weight:700">✅ No pending tasks</div>';
+
+  const archHtml=archive.length?archive.map(t=>`<div style="display:flex;justify-content:space-between;padding:7px 12px;background:#F0FFF4;border-radius:8px;margin-bottom:5px;gap:8px">
+    <div><strong style="font-size:13px">${t.desc}</strong><div style="font-size:11px;color:#90A4AE">👷 ${t.assignedName} · ⏱ ${duration(t.startedAt,t.endedAt)||'—'}</div></div>
+    <span style="color:#2E7D32;font-weight:700;font-size:12px;flex-shrink:0">✓ Done</span></div>`).join('')
+    :'<div style="padding:10px;color:#90A4AE;font-size:13px">No tasks completed on this date.</div>';
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${cfg.hosp} — Report ${repDate}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0F4F8;color:#263238;padding:0}
+.hdr{background:linear-gradient(135deg,#0D1B4B,#1565C0);color:#fff;padding:20px 24px}.hdr h1{font-size:22px;font-weight:900}.hdr p{font-size:13px;opacity:.8;margin-top:4px}
+.body{max-width:800px;margin:0 auto;padding:20px 16px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:12px;padding:14px 10px;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.07)}
+.kpi .n{font-size:28px;font-weight:900;line-height:1}.kpi .l{font-size:10px;color:#607D8B;margin-top:3px;font-weight:700;text-transform:uppercase}
+h2{font-size:15px;font-weight:800;margin-bottom:12px;color:#0D1B4B}
+@media print{.hdr{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card{break-inside:avoid}}</style></head><body>
+<div class="hdr">
+  <h1>🏥 ${cfg.hosp}</h1>
+  <p>📅 Facility Management Report — ${fmtDate(repDate)} &nbsp;·&nbsp; Generated: ${new Date().toLocaleString('en-IN')}</p>
+</div>
+<div class="body">
+  <div class="kpi-row">
+    <div class="kpi"><div class="n" style="color:#1565C0">${active.length}/${cfg.employees.length}</div><div class="l">Active Today</div></div>
+    <div class="kpi"><div class="n" style="color:#2E7D32">${avgPct}%</div><div class="l">Avg Completion</div></div>
+    <div class="kpi"><div class="n" style="color:#C62828">${totalFaultR}</div><div class="l">Total Faults</div></div>
+    <div class="kpi"><div class="n" style="color:#E65100">${allProbs.length}</div><div class="l">Problems</div></div>
+    <div class="kpi"><div class="n" style="color:#FF6F00">${activeTasks.length}</div><div class="l">Pending Tasks</div></div>
+    <div class="kpi"><div class="n" style="color:#2E7D32">${archive.length}</div><div class="l">Tasks Done</div></div>
+  </div>
+  <div class="card">
+    <h2>📊 Overall Completion — Donut</h2>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="width:100px;height:100px;border-radius:50%;background:conic-gradient(#2E7D32 0deg ${donutOk}deg,#C62828 ${donutOk}deg ${donutOk+donutFault}deg,#E8EAF6 ${donutOk+donutFault}deg 360deg);flex-shrink:0"></div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:12px;height:12px;border-radius:50%;background:#2E7D32"></div><span style="font-weight:700">OK: ${active.reduce((s,e)=>s+e.data.ok,0)}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:12px;height:12px;border-radius:50%;background:#C62828"></div><span style="font-weight:700">Faults: ${totalFaultR}</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:50%;background:#E8EAF6;border:1px solid #ccc"></div><span style="font-weight:700">Pending/NA: ${active.reduce((s,e)=>s+e.data.na,0)}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><h2>👷 Employee Completion</h2>${empBars||'<p style="color:#90A4AE">No data for this date.</p>'}</div>
+  <div class="card"><h2>⚠️ Problems Reported</h2>${probHtml}</div>
+  <div class="card"><h2>📌 Pending Tasks</h2>${taskHtml}</div>
+  <div class="card"><h2>✅ Completed Tasks (Archived)</h2>${archHtml}</div>
+</div>
+<div style="text-align:center;padding:20px;color:#90A4AE;font-size:12px">Hospital FM — Generated ${new Date().toLocaleString('en-IN')}</div>
+<script>window.onload=function(){window.print&&document.querySelector('[onclick]')&&document.querySelector('[onclick]').remove();}<\/script>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=cfg.hosp.replace(/\s+/g,'_')+'_Report_'+repDate+'.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  showToast2('Graphical report downloaded ✓');
+}
+
+// ══════════════════════════════════════════════════════
+// RESET CHECKLISTS
+// ══════════════════════════════════════════════════════
+function doResetChecklists(manual=false){
+  if(manual&&!confirm('Reset ALL employee checklists for today?\n\n⚠️ All checklist progress for today will be cleared.\n✅ Assigned tasks will NOT be affected.\n\nContinue?'))return;
+  const d=todayStr();
+  const resetTs=Date.now();
+  cfg.employees.forEach(emp=>{
+    localStorage.removeItem('HFM4_'+d+'_'+emp.loginId);
+    fbDelete('/daily/'+d+'/'+emp.loginId);
+  });
+  // Push reset signal to Firebase — employees detect this and clear their local data
+  fbPut('/reset/'+d,{ts:resetTs,by:'admin'});
+  localStorage.setItem('HFM4_LAST_RESET',d+'_'+resetTs);
+  updateResetInfo();
+  if(manual){renderAdmin();showToast2('✅ All checklists reset for today! Employee devices will clear on next sync.');}
+}
+
+function updateResetInfo(){
+  const el=document.getElementById('last-reset-info');
+  if(!el)return;
+  const lr=localStorage.getItem('HFM4_LAST_RESET')||'';
+  if(!lr){el.textContent='No reset today yet. Auto-reset at 5:00 AM.';return;}
+  const ts=lr.split('_')[1];
+  if(ts){el.textContent='Last reset: '+new Date(parseInt(ts)).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+' · Auto-resets daily at 5:00 AM';}
+  else{el.textContent='Reset done today · Auto-resets daily at 5:00 AM';}
+}
+
+function checkAutoReset(){
+  const now=new Date();
+  if(now.getHours()===5&&now.getMinutes()<5){
+    const today=todayStr();
+    const lr=localStorage.getItem('HFM4_LAST_RESET')||'';
+    if(!lr.startsWith(today)){
+      // Archive any remaining completed tasks before resetting
+      archiveCompletedTasks();
+      doResetChecklists(false);
+      showToast2('🕐 5:00 AM — Checklists auto-reset for new shift!');
+    }
+  }
+}
+
+// Employee: check Firebase for admin reset signal and clear local data if needed
+async function checkResetSignal(){
+  if(!currentEmp||!getDbUrl())return;
+  const d=todayStr();
+  try{
+    const sig=await fbGet('/reset/'+d);
+    if(sig&&sig.ts){
+      const localRaw=localStorage.getItem('HFM4_'+d+'_'+currentEmp.loginId);
+      if(localRaw){
+        const local=JSON.parse(localRaw);
+        if(sig.ts>(local.updated||0)){
+          // Admin reset happened after employee last saved — clear local data
+          localStorage.removeItem('HFM4_'+d+'_'+currentEmp.loginId);
+          statuses={};values={};problems=[];
+          buildChk();updateProgress();
+          showToast('Admin reset checklists — starting fresh ✓');
+        }
+      }
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════════
+// TASK REMINDERS  (WhatsApp + SMS)
+// ══════════════════════════════════════════════════════
+function getPendingTasks(loginId){
+  return getTasks().filter(t=>t.assignedTo===loginId&&taskStatus(t)!=='Done');
+}
+
+function buildReminderMsg(emp,tasks){
+  const now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const date=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+  return `⚠️ *PENDING TASK REMINDER*\n🏥 *${cfg.hosp}*\n📅 ${date}  🕐 ${now}\n\nHi *${emp.name}*,\n\nYou have *${tasks.length} pending task(s)*:\n\n`+
+    tasks.map((t,i)=>`${i+1}. *${t.desc}*\n   📅 Due: ${t.dueDate||'—'}${t.dueTime?' at '+t.dueTime:''}\n   ${t.pri}  Status: *${taskStatus(t)}*`).join('\n\n')+
+    '\n\nPlease complete these tasks as soon as possible.\n\n_Thank you,\nAdmin — '+cfg.hosp+'_';
+}
+
+function sendPendingReminderWA(i){
+  const emp=cfg.employees[i];
+  if(!emp.phone){alert('No phone number for '+emp.name+'.\nEdit employee to add a phone number.');return;}
+  const pending=getPendingTasks(emp.loginId);
+  if(!pending.length){alert('No pending tasks for '+emp.name+' ✅');return;}
+  window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(buildReminderMsg(emp,pending)),'_blank');
+}
+
+function sendPendingReminderSMS(i){
+  const emp=cfg.employees[i];
+  if(!emp.phone){alert('No phone number for '+emp.name+'.\nEdit employee to add a phone number.');return;}
+  const pending=getPendingTasks(emp.loginId);
+  if(!pending.length){alert('No pending tasks for '+emp.name+' ✅');return;}
+  const msg=buildReminderMsg(emp,pending).replace(/\*/g,'');
+  // Works on Android (?body=) and iOS (&body=)
+  const smsUrl='sms:+'+emp.phone+'?body='+encodeURIComponent(msg);
+  window.location.href=smsUrl;
+}
+
+function sendAllPendingReminders(){
+  const withPending=cfg.employees.filter(e=>e.phone&&getPendingTasks(e.loginId).length>0);
+  if(!withPending.length){
+    const nophone=cfg.employees.filter(e=>!e.phone&&getPendingTasks(e.loginId).length>0);
+    if(nophone.length) alert('No phone numbers saved for employees with pending tasks.\nAdd phone numbers in the Staff tab.');
+    else alert('No pending tasks for any employee ✅');
+    return;
+  }
+  showToast2('Opening WhatsApp for '+withPending.length+' employee(s)...');
+  withPending.forEach((emp,idx)=>{
+    const msg=buildReminderMsg(emp,getPendingTasks(emp.loginId));
+    setTimeout(()=>window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(msg),'_blank'),idx*1000);
+  });
+}
+
+function renderReminderList(){
+  const el=document.getElementById('reminder-list');if(!el)return;
+  const rows=cfg.employees.map(e=>{
+    const pending=getPendingTasks(e.loginId);
+    if(!pending.length)return '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#FFF3E0;border-radius:8px;margin-bottom:6px;gap:8px">
+      <div>
+        <div style="font-weight:700;font-size:13px">${e.name}</div>
+        <div style="font-size:11px;color:#BF360C">${pending.length} pending task(s)</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${e.phone?`<button onclick="sendPendingReminderWA(${cfg.employees.indexOf(e)})" style="background:#25D366;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">WA</button>
+        <button onclick="sendPendingReminderSMS(${cfg.employees.indexOf(e)})" style="background:#6A1B9A;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">SMS</button>`
+        :'<span style="font-size:10px;color:#90A4AE">No phone</span>'}
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=rows||'<div style="font-size:12px;color:#2E7D32;margin-bottom:8px">✅ No pending tasks for any employee right now.</div>';
+  updateResetInfo();
+}
+
+// ══════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════
+window.onload=function(){
+  loadCfg();
+  initConvex();
+  if(cfg.waNum) showEmpLogin();
+  // else stay on setup
+  // Auto-reset check: run now + every minute
+  checkAutoReset();
+  setInterval(checkAutoReset,60000);
+};
+
+function showEmpLogin(){
+  // Update header info on employee login page
+  document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
+  document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  go('view-emp-login');
+}
+</script>
+</body>
+</html>
