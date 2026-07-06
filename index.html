@@ -942,18 +942,36 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <!-- Share App Config -->
       <div class="card" style="border-left:4px solid #00897B;background:#E0F2F1;padding:15px">
         <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:5px">📤 Share App with Employees</h3>
-        <p style="font-size:12px;color:#004D40;margin-bottom:12px;line-height:1.6">When an employee opens the app on their phone for the first time, they need a <strong>Setup Code</strong> so their phone recognises all staff accounts. Send it once per device.</p>
-        <div id="export-section" style="display:none;margin-bottom:12px">
-          <label style="font-size:11px;font-weight:700;color:#546E7A;text-transform:uppercase;display:block;margin-bottom:4px">Setup Code (send this to employees)</label>
-          <div style="display:flex;gap:7px;align-items:stretch">
-            <textarea id="export-code-box" rows="2" readonly style="font-size:11px;font-family:monospace;flex:1;resize:none;background:#F5FFFA;border-color:#80CBC4"></textarea>
-            <button onclick="copyExportCode()" style="background:#00695C;border:none;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0">Copy</button>
-          </div>
+        <p style="font-size:12px;color:#004D40;margin-bottom:10px;line-height:1.6">
+          <strong>New method:</strong> Employees just need the <strong>Firebase URL</strong> — no long setup code.<br>
+          Tap the button below first to upload config, then send the URL via WhatsApp.
+        </p>
+        <!-- Push config button -->
+        <div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border:2px solid #80CBC4">
+          <div style="font-size:12px;font-weight:700;color:#00695C;margin-bottom:6px">Step 1 — Upload Config to Firebase</div>
+          <button onclick="pushConfigToFirebase()" id="push-cfg-btn" style="width:100%;background:#00695C;border:none;color:#fff;padding:12px;border-radius:9px;font-weight:800;font-size:13px;cursor:pointer">☁️ Push Config to Firebase Now</button>
+          <div id="push-cfg-status" style="display:none;font-size:12px;font-weight:700;padding:7px 10px;border-radius:7px;margin-top:7px;text-align:center"></div>
+          <p style="font-size:11px;color:#546E7A;margin-top:6px">Do this once after any change to employees or settings. Employees can then set up with just the Firebase URL.</p>
         </div>
+        <!-- Send URL via WhatsApp -->
+        <div style="font-size:12px;font-weight:700;color:#00695C;margin-bottom:6px">Step 2 — Share Firebase URL with Employees</div>
         <div style="display:grid;gap:8px">
-          <button onclick="sendConfigWA()" style="background:#25D366;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;width:100%">📲 Send Setup Code via WhatsApp</button>
-          <button onclick="showExportCode()" style="background:#fff;border:2px solid #00897B;color:#00695C;padding:10px;border-radius:10px;font-weight:700;cursor:pointer;font-size:12px;width:100%">👁 View / Copy Setup Code</button>
+          <button onclick="sendConfigWA()" style="background:#25D366;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;cursor:pointer;font-size:13px;width:100%">📲 Send Firebase URL via WhatsApp</button>
         </div>
+        <!-- Legacy setup code (collapsible) -->
+        <details style="margin-top:10px">
+          <summary style="font-size:11px;color:#90A4AE;cursor:pointer">Old method: Setup Code (tap to expand)</summary>
+          <div style="margin-top:8px;display:grid;gap:7px">
+            <div id="export-section" style="display:none">
+              <label style="font-size:11px;font-weight:700;color:#546E7A;text-transform:uppercase;display:block;margin-bottom:4px">Setup Code</label>
+              <div style="display:flex;gap:7px;align-items:stretch">
+                <textarea id="export-code-box" rows="2" readonly style="font-size:11px;font-family:monospace;flex:1;resize:none;background:#F5FFFA;border-color:#80CBC4"></textarea>
+                <button onclick="copyExportCode()" style="background:#00695C;border:none;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0">Copy</button>
+              </div>
+            </div>
+            <button onclick="showExportCode()" style="background:#fff;border:2px solid #00897B;color:#00695C;padding:10px;border-radius:10px;font-weight:700;cursor:pointer;font-size:12px;width:100%">👁 View / Copy Setup Code</button>
+          </div>
+        </details>
       </div>
       <div class="card" style="border-left:4px solid #6A1B9A">
         <h3 style="font-size:14px;font-weight:800;margin-bottom:4px;color:#6A1B9A">➕ Add Employee</h3>
@@ -1728,6 +1746,11 @@ function adminLogin(){
   go('view-admin');
   updateLiveBadge(!!getDbUrl());
   startLiveTracking();
+  // Push config to Firebase immediately on login so employees can auto-setup
+  if(getDbUrl()){
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:getDbUrl(),convexUrl:getDbUrl()};
+    fbPut('/config',pubCfg).catch(()=>{});
+  }
   updateReqBadges();
   updateMatBadges();
 }
@@ -3160,6 +3183,34 @@ function copyExportCode(){
   el.select();el.setSelectionRange(0,99999);
   try{document.execCommand('copy');showToast2('Setup code copied ✓');}
   catch(e){alert('Copy manually:\n\n'+el.value);}
+}
+
+async function pushConfigToFirebase(){
+  const btn=document.getElementById('push-cfg-btn');
+  const statusEl=document.getElementById('push-cfg-status');
+  function setStatus(type,msg){
+    statusEl.style.display='block';
+    if(type==='loading'){statusEl.style.background='#E3F2FD';statusEl.style.color='#1565C0';statusEl.textContent=msg;}
+    else if(type==='ok'){statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';statusEl.textContent=msg;}
+    else{statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent=msg;}
+  }
+  const base=getDbUrl();
+  if(!base){setStatus('error','❌ No Firebase URL set. Go to Firebase Settings above and save your URL first.');return;}
+  btn.disabled=true;
+  setStatus('loading','☁️ Uploading config to Firebase...');
+  try{
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:base,convexUrl:base};
+    const r=await xhrRequest(base+'/config.json','PUT',pubCfg,8000);
+    if(r.ok){
+      setStatus('ok','✅ Config uploaded! Employees can now set up using just the Firebase URL.');
+      showToast2('Config pushed to Firebase ✓');
+    } else {
+      setStatus('error','❌ Upload failed (Error '+r.status+'). Check Firebase Rules allow .write:true');
+    }
+  }catch(e){
+    setStatus('error','❌ Error: '+e.message);
+  }
+  btn.disabled=false;
 }
 
 function sendConfigWA(){
