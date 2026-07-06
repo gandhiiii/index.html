@@ -240,6 +240,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn orange" id="btn-tasks" onclick="openMyTasks()" style="font-size:15px">📌 My Assigned Tasks</button>
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openMyProjects()">🏗️ My Projects</button>
     <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
+    <button class="btn" style="background:#01579B;color:#fff;font-size:15px;position:relative" onclick="openMatRequests()">📦 Material Request<span id="mat-emp-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -568,6 +569,70 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- ══ MATERIAL REQUEST (EMPLOYEE) ════════════════════ -->
+<div id="view-mat-requests" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📦 Material Request</h1><p id="mat-req-hdr-date"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+
+    <!-- Submit form -->
+    <div class="card" style="border-left:4px solid #01579B;background:#E1F5FE">
+      <h3 style="font-size:14px;font-weight:800;color:#01579B;margin-bottom:12px">📋 New Material Request</h3>
+      <div style="display:grid;gap:10px">
+        <div>
+          <label>Item / Material Name *</label>
+          <input id="mr-item" type="text" placeholder="e.g. PVC Pipe 1 inch, Paint (White), Nut-Bolt M8">
+        </div>
+        <div>
+          <label>Category *</label>
+          <select id="mr-cat">
+            <option value="">— Select Category —</option>
+            <option value="Consumable">🔩 Consumable / General Item</option>
+            <option value="Spare Part">⚙️ Spare Part / Component</option>
+            <option value="Tool">🔧 Tool / Equipment</option>
+            <option value="Electrical">⚡ Electrical Material</option>
+            <option value="Plumbing">🚰 Plumbing Material</option>
+            <option value="Civil">🧱 Civil / Construction</option>
+            <option value="Chemical">🧪 Chemical / Cleaning</option>
+            <option value="Safety">🦺 Safety / PPE</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label>Quantity *</label><input id="mr-qty" type="number" min="1" placeholder="e.g. 10"></div>
+          <div><label>Unit</label><input id="mr-unit" type="text" placeholder="pcs / kg / ltr / mtr"></div>
+        </div>
+        <div>
+          <label>Estimated Cost (₹) <span style="color:#90A4AE;font-weight:400">(if known)</span></label>
+          <input id="mr-cost" type="number" min="0" placeholder="e.g. 2500">
+        </div>
+        <div>
+          <label>Purpose / Project *</label>
+          <textarea id="mr-reason" rows="2" placeholder="Where will this material be used? Which area or project?"></textarea>
+        </div>
+        <div>
+          <label>Priority</label>
+          <select id="mr-priority">
+            <option value="normal">🟡 Normal</option>
+            <option value="urgent">🔴 Urgent — Required ASAP</option>
+          </select>
+        </div>
+        <button onclick="submitMatRequest()" style="background:#01579B;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;width:100%">📤 Submit Material Request</button>
+      </div>
+    </div>
+
+    <!-- My requests list -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px;color:#01579B">📋 My Material Requests</div>
+      <div id="emp-mat-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -610,6 +675,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('proj',this)">🏗️ Projects</div>
       <div class="tab" onclick="admTab('chk',this)">📋 Checklists</div>
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
+      <div class="tab" onclick="admTab('materials',this)" style="position:relative">📦 Materials<span id="adm-mat-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
@@ -715,6 +781,37 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="dash-projects" style="padding:0 13px 13px"></div>
       </div>
+      <!-- MATERIAL REQUESTS SNAPSHOT -->
+      <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #01579B">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">📦 Material Requests</span>
+          <button onclick="admTab('materials',document.querySelector('[onclick*=admTab]'))" style="background:#E1F5FE;border:none;color:#01579B;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px" onclick="admTab('materials',this)">View All →</button>
+        </div>
+        <div style="padding:10px 13px;display:flex;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:60px;background:#FFF3E0;border-radius:8px;padding:8px;text-align:center">
+            <div id="dash-mat-pending" style="font-size:20px;font-weight:900;color:#E65100">0</div>
+            <div style="font-size:9px;font-weight:700;color:#E65100">PENDING</div>
+          </div>
+          <div style="flex:1;min-width:60px;background:#E8F5E9;border-radius:8px;padding:8px;text-align:center">
+            <div id="dash-mat-permitted" style="font-size:20px;font-weight:900;color:#2E7D32">0</div>
+            <div style="font-size:9px;font-weight:700;color:#2E7D32">PERMITTED</div>
+          </div>
+          <div style="flex:1;min-width:60px;background:#E0F2F1;border-radius:8px;padding:8px;text-align:center">
+            <div id="dash-mat-purchased" style="font-size:20px;font-weight:900;color:#00695C">0</div>
+            <div style="font-size:9px;font-weight:700;color:#00695C">PURCHASED</div>
+          </div>
+          <div style="flex:1;min-width:60px;background:#FFEBEE;border-radius:8px;padding:8px;text-align:center">
+            <div id="dash-mat-rejected" style="font-size:20px;font-weight:900;color:#C62828">0</div>
+            <div style="font-size:9px;font-weight:700;color:#C62828">REJECTED</div>
+          </div>
+        </div>
+        <div style="padding:4px 13px 10px;display:flex;gap:12px;flex-wrap:wrap">
+          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#01579B">Est:</span> <span id="dash-mat-est">₹0</span></div>
+          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#00695C">Actual:</span> <span id="dash-mat-actual">₹0</span></div>
+          <div style="font-size:12px;color:#C62828" id="dash-mat-urgent-wrap" style="display:none"><span id="dash-mat-urgent">0</span> 🔴 Urgent</div>
+        </div>
+        <div id="dash-mat-pending-list" style="padding:0 13px 13px"></div>
+      </div>
       <!-- PURCHASE REQUESTS SNAPSHOT -->
       <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #6A1B9A">
         <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
@@ -786,8 +883,10 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">➕ Add New Admin</div>
           <div style="display:grid;gap:8px">
             <input id="na-name" type="text" placeholder="Full Name (e.g. Dr. Sharma)">
-            <input id="na-loginid" type="text" placeholder="Username (e.g. sharma)" style="text-transform:lowercase">
-            <input id="na-pwd" type="password" placeholder="Password">
+            <input id="na-loginid" type="text" placeholder="Username / Login ID (e.g. sharma)" style="text-transform:lowercase">
+            <input id="na-pwd" type="password" placeholder="Password *">
+            <input id="na-email" type="email" placeholder="Email (optional)">
+            <input id="na-phone" type="tel" placeholder="Phone (optional)">
             <button onclick="createAdminUser()" style="background:#7C4DFF;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Create Admin</button>
           </div>
         </div>
@@ -987,6 +1086,34 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </select>
         </div>
         <div id="emp-item-list" style="padding:13px"></div>
+      </div>
+    </div>
+
+    <!-- MATERIALS -->
+    <div id="tab-materials" style="display:none">
+      <!-- Stats row -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">
+        <div class="kpi" style="background:#E3F2FD"><div class="num" id="mat-kpi-pending" style="color:#01579B">0</div><div class="lbl">Pending</div></div>
+        <div class="kpi" style="background:#E8F5E9"><div class="num" id="mat-kpi-permitted" style="color:#2E7D32">0</div><div class="lbl">Permitted</div></div>
+        <div class="kpi" style="background:#E0F2F1"><div class="num" id="mat-kpi-purchased" style="color:#00695C">0</div><div class="lbl">Purchased</div></div>
+        <div class="kpi" style="background:#FFEBEE"><div class="num" id="mat-kpi-rejected" style="color:#C62828">0</div><div class="lbl">Rejected</div></div>
+      </div>
+      <!-- Spend summary -->
+      <div class="card" style="background:linear-gradient(135deg,#01579B,#0288D1);color:#fff;padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">EST. TOTAL SPEND</div><div id="mat-est-total" style="font-size:20px;font-weight:900">₹0</div></div>
+        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">ACTUAL SPEND</div><div id="mat-actual-total" style="font-size:20px;font-weight:900">₹0</div></div>
+        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">URGENT ITEMS</div><div id="mat-urgent-count" style="font-size:20px;font-weight:900">0</div></div>
+      </div>
+      <!-- Filter + List -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:10px 13px;border-bottom:1px solid #F0F4F8;display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="filterMat('all',this)" class="mat-filter-btn" style="background:#01579B;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
+          <button onclick="filterMat('pending',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>
+          <button onclick="filterMat('permitted',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Permitted</button>
+          <button onclick="filterMat('purchased',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🛒 Purchased</button>
+          <button onclick="filterMat('rejected',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">❌ Rejected</button>
+        </div>
+        <div id="adm-mat-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No material requests yet.</div></div>
       </div>
     </div>
 
@@ -1589,6 +1716,7 @@ function adminLogin(){
   updateLiveBadge(!!getDbUrl());
   startLiveTracking();
   updateReqBadges();
+  updateMatBadges();
 }
 
 function logout(){
@@ -1605,28 +1733,36 @@ function renderAdminList(){
   if(rc) rc.textContent=cfg.adminRecoveryCode?'Current code: '+cfg.adminRecoveryCode:'No recovery code set.';
   const ri=document.getElementById('recovery-code-input');
   if(ri&&cfg.adminRecoveryCode) ri.value=cfg.adminRecoveryCode;
-  el.innerHTML=admins.map(a=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #D1C4E9;gap:8px">
-      <div>
-        <div style="font-weight:800;font-size:13px;color:#263238">${a.name} ${currentAdmin&&currentAdmin.id===a.id?'<span style="background:#7C4DFF;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700">YOU</span>':''}</div>
-        <div style="font-size:11px;color:#90A4AE">@${a.loginId} · Added ${new Date(a.createdAt).toLocaleDateString('en-IN')}</div>
+  el.innerHTML=admins.map(a=>{
+    const isMe=currentAdmin&&currentAdmin.id===a.id;
+    const canDelete=admins.length>1&&!isMe;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #D1C4E9;gap:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px">
+        <div style="font-weight:800;font-size:13px;color:#263238">${a.name} ${isMe?'<span style="background:#7C4DFF;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700">YOU</span>':''}</div>
+        <div style="font-size:11px;color:#90A4AE">@${a.loginId}${a.email?' · '+a.email:''} · Added ${new Date(a.createdAt).toLocaleDateString('en-IN')}</div>
+        ${a.phone?'<div style="font-size:11px;color:#90A4AE">📞 '+a.phone+'</div>':''}
       </div>
-      ${admins.length>1&&(!currentAdmin||currentAdmin.id!==a.id)?`<button onclick="deleteAdminUser('${a.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">🗑 Remove</button>`:''}
-    </div>`).join('');
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="showEditAdminModal('${a.id}')" style="background:#E3F2FD;border:none;color:#1565C0;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✏️ Edit</button>
+        ${canDelete?`<button onclick="deleteAdminUser('${a.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">🗑</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function createAdminUser(){
-  const name=document.getElementById('na-name').value.trim();
-  const loginId=document.getElementById('na-loginid').value.trim().toLowerCase();
-  const pwd=document.getElementById('na-pwd').value.trim();
-  if(!name||!loginId||!pwd){alert('Fill in name, username, and password.');return;}
+  const name=(document.getElementById('na-name').value||'').trim();
+  const loginId=(document.getElementById('na-loginid').value||'').trim().toLowerCase();
+  const pwd=(document.getElementById('na-pwd').value||'').trim();
+  const email=(document.getElementById('na-email').value||'').trim();
+  const phone=(document.getElementById('na-phone').value||'').trim();
+  if(!name||!loginId||!pwd){alert('Name, username, and password are required.');return;}
+  if(pwd.length<4){alert('Password must be at least 4 characters.');return;}
   const admins=getAdmins();
-  if(admins.find(a=>a.loginId===loginId)){alert('Username "'+loginId+'" already exists.');return;}
-  admins.push({id:'admin_'+Date.now(),name,loginId,password:pwd,createdAt:Date.now(),createdBy:currentAdmin?currentAdmin.id:''});
+  if(admins.find(a=>a.loginId===loginId)){alert('Username "'+loginId+'" already exists. Choose a different one.');return;}
+  admins.push({id:'admin_'+Date.now(),name,loginId,password:pwd,email:email||'',phone:phone||'',createdAt:Date.now(),createdBy:currentAdmin?currentAdmin.id:''});
   cfg.admins=admins;saveCfg();
-  document.getElementById('na-name').value='';
-  document.getElementById('na-loginid').value='';
-  document.getElementById('na-pwd').value='';
+  ['na-name','na-loginid','na-pwd','na-email','na-phone'].forEach(id=>{document.getElementById(id).value='';});
   renderAdminList();
   showToast2('Admin "'+name+'" created ✓');
 }
@@ -1635,6 +1771,92 @@ function deleteAdminUser(id){
   if(!confirm('Remove this admin? They will no longer be able to log in.'))return;
   cfg.admins=getAdmins().filter(a=>a.id!==id);
   saveCfg();renderAdminList();showToast2('Admin removed ✓');
+}
+
+function showEditAdminModal(id){
+  const existing=document.getElementById('edit-admin-modal');if(existing)existing.remove();
+  const admins=getAdmins();
+  const a=admins.find(x=>x.id===id);if(!a)return;
+  const isMe=currentAdmin&&currentAdmin.id===id;
+  const modal=document.createElement('div');
+  modal.id='edit-admin-modal';
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  modal.innerHTML=`<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="background:linear-gradient(135deg,#4527A0,#7C4DFF);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="color:#fff;font-weight:900;font-size:16px">✏️ Edit Admin</div>
+        <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:2px">${isMe?'Editing your own profile':'Editing: '+a.name}</div>
+      </div>
+      <button onclick="document.getElementById('edit-admin-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:900">✕</button>
+    </div>
+    <div style="padding:20px;display:grid;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Full Name *</label>
+        <input id="ea-name" type="text" value="${a.name}" placeholder="Full name" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Login ID / Username *</label>
+        <input id="ea-loginid" type="text" value="${a.loginId}" placeholder="username (lowercase)" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px;text-transform:lowercase">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Email <span style="color:#90A4AE;font-weight:400">(optional)</span></label>
+        <input id="ea-email" type="email" value="${a.email||''}" placeholder="admin@hospital.com" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Phone <span style="color:#90A4AE;font-weight:400">(optional)</span></label>
+        <input id="ea-phone" type="tel" value="${a.phone||''}" placeholder="+91 98765 43210" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <div style="border-top:1px solid #EDE7F6;padding-top:12px">
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">New Password <span style="color:#90A4AE;font-weight:400">(leave blank to keep current)</span></label>
+        <input id="ea-pwd" type="password" placeholder="Enter new password or leave blank" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <p id="ea-err" style="color:#C62828;font-size:13px;margin:0;display:none"></p>
+      <button onclick="saveAdminEdit('${id}')" style="background:#4527A0;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;width:100%">💾 Save Changes</button>
+    </div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+  setTimeout(()=>{const f=document.getElementById('ea-name');if(f)f.focus();},100);
+}
+
+function saveAdminEdit(id){
+  const name=(document.getElementById('ea-name').value||'').trim();
+  const loginId=(document.getElementById('ea-loginid').value||'').trim().toLowerCase();
+  const email=(document.getElementById('ea-email').value||'').trim();
+  const phone=(document.getElementById('ea-phone').value||'').trim();
+  const newPwd=(document.getElementById('ea-pwd').value||'').trim();
+  const errEl=document.getElementById('ea-err');
+  const showErr=msg=>{errEl.textContent=msg;errEl.style.display='block';};
+  errEl.style.display='none';
+  if(!name){showErr('⚠️ Name is required.');return;}
+  if(!loginId){showErr('⚠️ Login ID is required.');return;}
+  if(newPwd&&newPwd.length<4){showErr('⚠️ Password must be at least 4 characters.');return;}
+  const admins=getAdmins();
+  const idx=admins.findIndex(a=>a.id===id);if(idx<0)return;
+  // Check login ID uniqueness (excluding self)
+  if(admins.find(a=>a.id!==id&&a.loginId===loginId)){showErr('⚠️ Login ID "'+loginId+'" is already used by another admin.');return;}
+  const isFirst=idx===0||admins[idx].id==='admin_default';
+  admins[idx].name=name;
+  admins[idx].loginId=loginId;
+  admins[idx].email=email||'';
+  admins[idx].phone=phone||'';
+  if(newPwd){
+    admins[idx].password=newPwd;
+    if(isFirst) cfg.adminPwd=newPwd;
+  }
+  cfg.admins=admins;
+  saveCfg();
+  // If editing self, refresh session
+  if(currentAdmin&&currentAdmin.id===id){
+    currentAdmin.name=name;
+    currentAdmin.loginId=loginId;
+    const stored=JSON.parse(sessionStorage.getItem('HFM4_ADMIN_SESSION')||'{}');
+    stored.name=name;stored.loginId=loginId;
+    sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify(stored));
+  }
+  document.getElementById('edit-admin-modal').remove();
+  renderAdminList();
+  showToast2('✅ Admin details updated!');
 }
 
 function changeMyPassword(){
@@ -1704,6 +1926,7 @@ function loadEmployeeHome(){
   _empPollTimer=setInterval(empPoll,15000);
   empPoll(); // run immediately
   updateReqBadges();
+  updateMatBadges();
   go('view-home');
 }
 
@@ -2083,7 +2306,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','materials','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -2092,6 +2315,7 @@ function admTab(tab,el){
   if(tab==='proj') initProjectTab();
   if(tab==='chk') renderChecklistAdmin();
   if(tab==='staff'){renderStaff();renderAdminList();}
+  if(tab==='materials'){renderMatAdmin();}
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
@@ -2196,6 +2420,7 @@ function renderAdmin(){
   renderProjectKPIs();
   renderEmpProjectKPIs();
   renderDashRequests();
+  renderDashMaterials();
   renderReminderList();
 }
 
@@ -3385,6 +3610,332 @@ function _saveProjectState(p){
 }
 
 // ══════════════════════════════════════════════════════
+// MATERIAL REQUEST & BUY PERMISSION
+// ══════════════════════════════════════════════════════
+function getMatReqs(){
+  try{return JSON.parse(localStorage.getItem('HFM4_MAT_REQS')||'[]');}catch(e){return[];}
+}
+function saveMatReqs(arr){
+  localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(arr));
+  updateMatBadges();
+}
+
+function nextBPNumber(){
+  const all=getMatReqs();
+  const yr=new Date().getFullYear();
+  const existing=all.filter(r=>r.bpNo&&r.bpNo.startsWith('BP-'+yr+'-')).map(r=>parseInt(r.bpNo.split('-')[2])||0);
+  const next=(existing.length?Math.max(...existing):0)+1;
+  return 'BP-'+yr+'-'+String(next).padStart(3,'0');
+}
+
+function updateMatBadges(){
+  const all=getMatReqs();
+  const pending=all.filter(r=>r.status==='pending').length;
+  // Admin badge
+  const ab=document.getElementById('adm-mat-badge');
+  if(ab){ab.style.display=pending>0?'inline-block':'none';ab.textContent=pending;}
+  // Employee badge — permitted (awaiting purchase) items
+  if(currentEmp){
+    const myAction=all.filter(r=>r.empLoginId===currentEmp.loginId&&r.status==='permitted'&&!r.empSeen).length;
+    const eb=document.getElementById('mat-emp-badge');
+    if(eb){eb.style.display=myAction>0?'inline-block':'none';eb.textContent=myAction;}
+  }
+}
+
+// ── EMPLOYEE SIDE ──────────────────────────────────────
+function openMatRequests(){
+  const d=document.getElementById('mat-req-hdr-date');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  renderEmpMatList();
+  go('view-mat-requests');
+}
+
+function submitMatRequest(){
+  const item=(document.getElementById('mr-item').value||'').trim();
+  const cat=document.getElementById('mr-cat').value;
+  const qty=parseFloat(document.getElementById('mr-qty').value)||0;
+  const unit=(document.getElementById('mr-unit').value||'').trim()||'pcs';
+  const cost=parseFloat(document.getElementById('mr-cost').value)||0;
+  const reason=(document.getElementById('mr-reason').value||'').trim();
+  const priority=document.getElementById('mr-priority').value||'normal';
+  if(!item){showToast('⚠️ Enter item/material name');return;}
+  if(!cat){showToast('⚠️ Select a category');return;}
+  if(!qty||qty<1){showToast('⚠️ Enter valid quantity');return;}
+  if(!reason){showToast('⚠️ Enter purpose/project');return;}
+  const req={
+    id:'mat_'+Date.now()+'_'+Math.floor(Math.random()*9000+1000),
+    empLoginId:currentEmp.loginId, empName:currentEmp.name,
+    itemName:item, category:cat, qty, unit,
+    estCost:cost, actualCost:null,
+    reason, priority,
+    status:'pending',  // pending → permitted → purchased  OR  rejected
+    bpNo:null,
+    permittedBy:null, permittedAt:null, permittedNote:'',
+    purchasedAt:null, purchaseVendor:'', purchaseNote:'', actualCost:null,
+    rejectedBy:null, rejectedAt:null, rejectNote:'',
+    empSeen:true,
+    createdAt:Date.now()
+  };
+  const all=getMatReqs();
+  all.unshift(req);
+  saveMatReqs(all);
+  sendNotif('📦 Material Request',''+currentEmp.name+' requested '+qty+' '+unit+' of "'+item+'"','mat-new-'+req.id);
+  // clear form
+  ['mr-item','mr-qty','mr-unit','mr-cost','mr-reason'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('mr-cat').value='';
+  document.getElementById('mr-priority').value='normal';
+  renderEmpMatList();
+  showToast('✅ Material request submitted!');
+}
+
+function renderEmpMatList(){
+  if(!currentEmp)return;
+  const list=getMatReqs().filter(r=>r.empLoginId===currentEmp.loginId);
+  const el=document.getElementById('emp-mat-list');if(!el)return;
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div>';return;}
+  // Mark permitted items as seen
+  let changed=false;
+  const all=getMatReqs();
+  all.forEach(r=>{if(r.empLoginId===currentEmp.loginId&&r.status==='permitted'&&!r.empSeen){r.empSeen=true;changed=true;}});
+  if(changed)saveMatReqs(all);
+
+  el.innerHTML=list.map(r=>{
+    const sc={pending:{color:'#E65100',bg:'#FFF3E0',icon:'⏳',label:'Pending Admin Approval'},
+               permitted:{color:'#2E7D32',bg:'#E8F5E9',icon:'✅',label:'Buy Permission Granted'},
+               purchased:{color:'#00695C',bg:'#E0F2F1',icon:'🛒',label:'Purchased'},
+               rejected:{color:'#C62828',bg:'#FFEBEE',icon:'❌',label:'Rejected'}}[r.status]||{color:'#90A4AE',bg:'#F5F5F5',icon:'❓',label:r.status};
+    const urgTag=r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px">🔴 URGENT</span>':'';
+    let extraSection='';
+    if(r.status==='permitted'){
+      extraSection=`<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:10px;border:1px solid #A5D6A7">
+        <div style="font-weight:800;font-size:12px;color:#2E7D32">✅ Buy Permission Granted</div>
+        <div style="font-size:12px;color:#388E3C;margin-top:3px">Permission No: <strong>${r.bpNo}</strong> · By: ${r.permittedBy||'Admin'}</div>
+        ${r.permittedNote?'<div style="font-size:11px;color:#555;margin-top:3px">Note: '+r.permittedNote+'</div>':''}
+        <div style="margin-top:8px;display:grid;gap:6px">
+          <input id="pur-vendor-${r.id}" type="text" placeholder="Vendor / Shop name (optional)" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
+          <input id="pur-cost-${r.id}" type="number" placeholder="Actual cost paid (₹) *" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
+          <input id="pur-note-${r.id}" type="text" placeholder="Additional note (optional)" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
+          <button onclick="markPurchased('${r.id}')" style="background:#2E7D32;border:none;color:#fff;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🛒 Mark as Purchased</button>
+        </div>
+      </div>`;
+    } else if(r.status==='purchased'){
+      extraSection=`<div style="margin-top:8px;background:#E0F2F1;border-radius:8px;padding:9px">
+        <div style="font-size:12px;font-weight:700;color:#00695C">🛒 Purchased — Actual Cost: ₹${(r.actualCost||0).toLocaleString('en-IN')}</div>
+        ${r.purchaseVendor?'<div style="font-size:11px;color:#555;margin-top:2px">Vendor: '+r.purchaseVendor+'</div>':''}
+        ${r.purchaseNote?'<div style="font-size:11px;color:#555;margin-top:2px">Note: '+r.purchaseNote+'</div>':''}
+        <div style="font-size:11px;color:#00796B;margin-top:3px">Permission No: ${r.bpNo}</div>
+      </div>`;
+    } else if(r.status==='rejected'){
+      extraSection=`<div style="margin-top:8px;background:#FFEBEE;border-radius:8px;padding:9px">
+        <div style="font-size:12px;font-weight:700;color:#C62828">❌ Rejected by ${r.rejectedBy||'Admin'}</div>
+        ${r.rejectNote?'<div style="font-size:11px;color:#B71C1C;margin-top:3px">Reason: '+r.rejectNote+'</div>':''}
+      </div>`;
+    }
+    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
+          <div style="font-size:11px;color:#90A4AE;margin-top:2px">${r.category} · ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+        </div>
+        <span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${sc.label}</span>
+      </div>
+      <div style="font-size:12px;color:#546E7A;margin-top:5px">${r.reason}</div>
+      ${extraSection}
+      <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+}
+
+function markPurchased(id){
+  const all=getMatReqs();
+  const i=all.findIndex(r=>r.id===id);if(i<0)return;
+  const actualCost=parseFloat((document.getElementById('pur-cost-'+id)||{}).value)||0;
+  if(!actualCost){showToast('⚠️ Enter actual cost paid');return;}
+  const vendor=((document.getElementById('pur-vendor-'+id)||{}).value||'').trim();
+  const note=((document.getElementById('pur-note-'+id)||{}).value||'').trim();
+  all[i].status='purchased';
+  all[i].actualCost=actualCost;
+  all[i].purchaseVendor=vendor;
+  all[i].purchaseNote=note;
+  all[i].purchasedAt=Date.now();
+  saveMatReqs(all);
+  sendNotif('🛒 Material Purchased',currentEmp.name+' purchased "'+all[i].itemName+'" for ₹'+actualCost.toLocaleString('en-IN'),'mat-pur-'+id);
+  renderEmpMatList();
+  showToast('✅ Marked as purchased!');
+}
+
+// ── ADMIN SIDE ─────────────────────────────────────────
+let _matFilter='all';
+
+function filterMat(f,btn){
+  _matFilter=f;
+  document.querySelectorAll('.mat-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});
+  if(btn){btn.style.background='#01579B';btn.style.color='#fff';}
+  renderMatAdmin();
+}
+
+function renderMatAdmin(){
+  const all=getMatReqs();
+  const list=_matFilter==='all'?all:all.filter(r=>r.status===_matFilter);
+  // Update KPIs
+  const p=all.filter(r=>r.status==='pending').length;
+  const pe=all.filter(r=>r.status==='permitted').length;
+  const pu=all.filter(r=>r.status==='purchased').length;
+  const rj=all.filter(r=>r.status==='rejected').length;
+  const estTotal=all.reduce((s,r)=>s+(r.estCost||0),0);
+  const actualTotal=all.filter(r=>r.status==='purchased').reduce((s,r)=>s+(r.actualCost||0),0);
+  const urgentCount=all.filter(r=>r.priority==='urgent'&&r.status==='pending').length;
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('mat-kpi-pending',p);setEl('mat-kpi-permitted',pe);setEl('mat-kpi-purchased',pu);setEl('mat-kpi-rejected',rj);
+  setEl('mat-est-total','₹'+estTotal.toLocaleString('en-IN'));
+  setEl('mat-actual-total','₹'+actualTotal.toLocaleString('en-IN'));
+  setEl('mat-urgent-count',urgentCount);
+  const el=document.getElementById('adm-mat-list');if(!el)return;
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:24px">No requests found.</div>';return;}
+  el.innerHTML=list.map(r=>{
+    const sc={pending:{color:'#E65100',bg:'#FFF3E0',icon:'⏳'},
+               permitted:{color:'#2E7D32',bg:'#E8F5E9',icon:'✅'},
+               purchased:{color:'#00695C',bg:'#E0F2F1',icon:'🛒'},
+               rejected:{color:'#C62828',bg:'#FFEBEE',icon:'❌'}}[r.status]||{color:'#90A4AE',bg:'#F5F5F5',icon:'❓'};
+    const urgTag=r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px">🔴 URGENT</span>':'';
+    let actionArea='';
+    if(r.status==='pending'){
+      actionArea=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="showGrantBP('${r.id}')" style="flex:1;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">✅ Grant Buy Permission</button>
+        <button onclick="promptMatReject('${r.id}')" style="flex:1;padding:10px;background:#C62828;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
+      </div>`;
+    } else if(r.status==='permitted'){
+      actionArea=`<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:9px">
+        <div style="font-size:12px;font-weight:800;color:#2E7D32">Permission No: <span style="font-size:14px">${r.bpNo}</span></div>
+        <div style="font-size:11px;color:#555;margin-top:2px">Granted by ${r.permittedBy||'Admin'} · ${r.permittedAt?new Date(r.permittedAt).toLocaleString('en-IN'):''}</div>
+        ${r.permittedNote?'<div style="font-size:11px;color:#388E3C;margin-top:2px">Note: '+r.permittedNote+'</div>':''}
+        <div style="font-size:12px;color:#01579B;margin-top:4px;font-style:italic">Waiting for employee to confirm purchase...</div>
+      </div>`;
+    } else if(r.status==='purchased'){
+      actionArea=`<div style="margin-top:8px;background:#E0F2F1;border-radius:8px;padding:9px">
+        <div style="font-size:13px;font-weight:800;color:#00695C">🛒 Purchased — ₹${(r.actualCost||0).toLocaleString('en-IN')} <span style="font-size:11px;color:#78909C;font-weight:400">(Est: ₹${(r.estCost||0).toLocaleString('en-IN')})</span></div>
+        ${r.purchaseVendor?'<div style="font-size:11px;color:#555;margin-top:2px">Vendor: '+r.purchaseVendor+'</div>':''}
+        <div style="font-size:11px;color:#555;margin-top:2px">BP No: ${r.bpNo} · ${r.purchasedAt?new Date(r.purchasedAt).toLocaleString('en-IN'):''}</div>
+      </div>`;
+    } else if(r.status==='rejected'){
+      actionArea=`<div style="margin-top:8px;background:#FFEBEE;border-radius:8px;padding:8px">
+        <div style="font-size:11px;color:#C62828">Rejected by ${r.rejectedBy||'Admin'}${r.rejectNote?' — "'+r.rejectNote+'"':''}</div>
+      </div>`;
+    }
+    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
+          <div style="font-size:11px;color:#607D8B;margin-top:2px">👷 ${r.empName} · ${r.category} · ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+        </div>
+        <span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
+      </div>
+      <div style="font-size:12px;color:#546E7A;margin-top:5px"><strong>Purpose:</strong> ${r.reason}</div>
+      ${actionArea}
+      <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+}
+
+function showGrantBP(id){
+  const existing=document.getElementById('bp-modal');if(existing)existing.remove();
+  const all=getMatReqs();
+  const r=all.find(x=>x.id===id);if(!r)return;
+  const bpNo=nextBPNumber();
+  const modal=document.createElement('div');
+  modal.id='bp-modal';
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML=`<div style="background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);padding:16px 20px">
+      <div style="color:#fff;font-weight:900;font-size:16px">✅ Grant Buy Permission</div>
+      <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:3px">Item: ${r.itemName} · ${r.qty} ${r.unit}${r.estCost?' · Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+    </div>
+    <div style="padding:18px;display:grid;gap:12px">
+      <div style="background:#E8F5E9;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#388E3C;font-weight:700">BUY PERMISSION NUMBER</div>
+        <div style="font-size:26px;font-weight:900;color:#1B5E20;letter-spacing:2px">${bpNo}</div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#2E7D32;display:block;margin-bottom:4px">Note / Instruction (optional)</label>
+        <textarea id="bp-note" rows="2" placeholder="e.g. Buy from ABC Hardware only. Budget limit ₹500." style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #A5D6A7;border-radius:9px;font-size:13px;resize:none"></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('bp-modal').remove()" style="flex:1;padding:11px;background:#F5F5F5;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-size:13px">Cancel</button>
+        <button onclick="grantBuyPermission('${id}','${bpNo}')" style="flex:2;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">✅ Issue Permission</button>
+      </div>
+    </div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+}
+
+function grantBuyPermission(id,bpNo){
+  const note=((document.getElementById('bp-note')||{}).value||'').trim();
+  const all=getMatReqs();
+  const i=all.findIndex(r=>r.id===id);if(i<0)return;
+  all[i].status='permitted';
+  all[i].bpNo=bpNo;
+  all[i].permittedBy=currentAdmin?currentAdmin.name:'Admin';
+  all[i].permittedAt=Date.now();
+  all[i].permittedNote=note;
+  all[i].empSeen=false;
+  saveMatReqs(all);
+  sendNotif('✅ Buy Permission Granted',all[i].empName+': "'+all[i].itemName+'" — Permission No: '+bpNo,'mat-bp-'+id);
+  const m=document.getElementById('bp-modal');if(m)m.remove();
+  renderMatAdmin();
+  showToast2('Buy Permission '+bpNo+' issued ✓');
+}
+
+function promptMatReject(id){
+  const note=prompt('Rejection reason (optional):');
+  if(note===null)return;
+  const all=getMatReqs();
+  const i=all.findIndex(r=>r.id===id);if(i<0)return;
+  all[i].status='rejected';
+  all[i].rejectedBy=currentAdmin?currentAdmin.name:'Admin';
+  all[i].rejectedAt=Date.now();
+  all[i].rejectNote=note||'';
+  all[i].empSeen=false;
+  saveMatReqs(all);
+  sendNotif('❌ Material Request Rejected','Your request for "'+all[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'mat-rej-'+id);
+  renderMatAdmin();
+  showToast2('Request rejected');
+}
+
+// ── DASHBOARD ──────────────────────────────────────────
+function renderDashMaterials(){
+  const all=getMatReqs();
+  const pending=all.filter(r=>r.status==='pending');
+  const permitted=all.filter(r=>r.status==='permitted');
+  const purchased=all.filter(r=>r.status==='purchased');
+  const rejected=all.filter(r=>r.status==='rejected');
+  const est=all.reduce((s,r)=>s+(r.estCost||0),0);
+  const actual=purchased.reduce((s,r)=>s+(r.actualCost||0),0);
+  const urgent=pending.filter(r=>r.priority==='urgent').length;
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('dash-mat-pending',pending.length);
+  setEl('dash-mat-permitted',permitted.length);
+  setEl('dash-mat-purchased',purchased.length);
+  setEl('dash-mat-rejected',rejected.length);
+  setEl('dash-mat-est','₹'+est.toLocaleString('en-IN'));
+  setEl('dash-mat-actual','₹'+actual.toLocaleString('en-IN'));
+  setEl('dash-mat-urgent',urgent);
+  const uw=document.getElementById('dash-mat-urgent-wrap');
+  if(uw)uw.style.display=urgent>0?'block':'none';
+  // Pending list in dashboard
+  const listEl=document.getElementById('dash-mat-pending-list');if(!listEl)return;
+  if(!pending.length){listEl.innerHTML='<div style="text-align:center;color:#2E7D32;font-size:13px;padding:6px 0">✅ No pending material requests</div>';return;}
+  listEl.innerHTML=pending.slice(0,4).map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5;flex-wrap:wrap;gap:4px">
+      <div>
+        <span style="font-weight:700;font-size:13px">${r.itemName}</span>${r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:5px">URGENT</span>':''}
+        <div style="font-size:11px;color:#90A4AE">👷 ${r.empName} · ${r.qty} ${r.unit}${r.estCost?'  ·  ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+      </div>
+      <button onclick="showGrantBP('${r.id}')" style="padding:5px 10px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✅ Grant</button>
+    </div>`).join('')+(pending.length>4?`<div style="text-align:center;font-size:12px;color:#01579B;padding:6px;font-weight:700">+ ${pending.length-4} more — see Materials tab</div>`:'');
+}
+
+// ══════════════════════════════════════════════════════
 // PURCHASE REQUESTS
 // ══════════════════════════════════════════════════════
 function getRequests(){
@@ -4255,7 +4806,33 @@ function downloadCurrentExcel(){
     workItemRows.push([]);
   });
 
-  // Sheet 6 — Purchase Requests
+  // Sheet 6 — Material Requests & Buy Permissions
+  const allMat=getMatReqs();
+  const matRows=[
+    ['MATERIAL REQUEST & BUY PERMISSION REGISTER','','','','','','','','','','',''],
+    ['Report Period',`${from} to ${to}`,'','','','','','','','','',''],
+    [''],
+    ['Summary','Pending',allMat.filter(r=>r.status==='pending').length,'Permitted',allMat.filter(r=>r.status==='permitted').length,'Purchased',allMat.filter(r=>r.status==='purchased').length,'Rejected',allMat.filter(r=>r.status==='rejected').length,'','',''],
+    ['Est. Total Spend','₹'+allMat.reduce((s,r)=>s+(r.estCost||0),0).toLocaleString('en-IN'),'Actual Spend','₹'+allMat.filter(r=>r.status==='purchased').reduce((s,r)=>s+(r.actualCost||0),0).toLocaleString('en-IN'),'','','','','','','',''],
+    [''],
+    ['#','Date','Employee','Item / Material','Category','Qty','Unit','Est.Cost(₹)','Priority','Status','BP Number','Permitted By','Permission Note','Actual Cost(₹)','Vendor','Purchase Note','Reject Reason'],
+  ];
+  let matNo=1;
+  allMat.forEach(r=>{
+    matRows.push([
+      matNo++,
+      new Date(r.createdAt).toLocaleDateString('en-IN'),
+      r.empName, r.itemName, r.category, r.qty, r.unit,
+      r.estCost||0, r.priority==='urgent'?'URGENT':'Normal',
+      r.status.toUpperCase(),
+      r.bpNo||'', r.permittedBy||'', r.permittedNote||'',
+      r.actualCost||'', r.purchaseVendor||'', r.purchaseNote||'',
+      r.rejectNote||''
+    ]);
+  });
+  if(matRows.length===7) matRows.push(['No material requests found','','','','','','','','','','','','','','','','']);
+
+  // Sheet 7 — Purchase Requests
   const allReqs=getRequests();
   const reqRows=[
     ['PURCHASE REQUESTS','','','','','','',''],
@@ -4284,6 +4861,7 @@ function downloadCurrentExcel(){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(taskRows),'Completed Tasks');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(projKpiRows),'Project KPIs');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(workItemRows),'Project Work Items');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(matRows),'Material Requests');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(reqRows),'Purchase Requests');
     XLSX.writeFile(wb,`FM_Report_${from}_to_${to}.xlsx`);
     showToast2('Excel downloaded ✓');
