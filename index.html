@@ -195,13 +195,15 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <div class="login-box">
       <div class="login-logo">🔐</div>
       <div class="login-title">Admin Login</div>
-      <div class="login-sub">Enter admin password</div>
+      <div class="login-sub">Enter your admin credentials</div>
       <div style="display:grid;gap:12px">
-        <div><label>Admin Password</label><input id="al-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+        <div><label>Username</label><input id="al-user" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+        <div><label>Password</label><input id="al-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
         <button class="btn purple" style="margin-top:6px" onclick="adminLogin()">Login →</button>
         <button class="btn outline" onclick="showEmpLogin()" style="padding:10px">← Back</button>
+        <div style="text-align:center"><span onclick="showForgotPassword()" style="font-size:12px;color:#7C4DFF;cursor:pointer;text-decoration:underline">Forgot Password?</span></div>
       </div>
-      <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect password</p>
+      <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect username or password</p>
     </div>
   </div>
 </div>
@@ -211,7 +213,10 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   <div class="hdr">
     <div class="hdr-row">
       <div><h1 id="home-hosp">🏥 Hospital FM</h1><p id="home-date"></p></div>
-      <button class="hbtn" onclick="logout()">Logout</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="hbtn" onclick="showNotifPanel()" style="position:relative">🔔<span id="emp-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center"></span></button>
+        <button class="hbtn" onclick="logout()">Logout</button>
+      </div>
     </div>
   </div>
   <div class="wrap" style="padding-bottom:20px">
@@ -234,6 +239,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn blue" id="btn-checklist" onclick="startChecklist()" style="font-size:16px;padding:16px">📋 Start / Continue Checklist</button>
     <button class="btn orange" id="btn-tasks" onclick="openMyTasks()" style="font-size:15px">📌 My Assigned Tasks</button>
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openMyProjects()">🏗️ My Projects</button>
+    <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -508,6 +514,60 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- ══ MY PURCHASE REQUESTS ═══════════════════════════ -->
+<div id="view-my-requests" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>🛒 Purchase Requests</h1><p id="req-date-hdr"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <!-- Submit form -->
+    <div class="card" style="border-left:4px solid #6A1B9A;background:#F3E5F5">
+      <h3 style="font-size:14px;font-weight:800;color:#6A1B9A;margin-bottom:12px">📦 Submit New Request</h3>
+      <div style="display:grid;gap:10px">
+        <div>
+          <label>Item / Material Name *</label>
+          <input id="rq-item" type="text" placeholder="e.g. Screwdriver set, Paint brushes, Pipe fittings">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label>Quantity *</label>
+            <input id="rq-qty" type="number" min="1" placeholder="e.g. 5">
+          </div>
+          <div>
+            <label>Unit</label>
+            <input id="rq-unit" type="text" placeholder="pcs / kg / ltr / set">
+          </div>
+        </div>
+        <div>
+          <label>Estimated Cost (₹) <span style="color:#90A4AE;font-weight:400">(optional)</span></label>
+          <input id="rq-cost" type="number" min="0" placeholder="e.g. 1500">
+        </div>
+        <div>
+          <label>Reason / Purpose *</label>
+          <textarea id="rq-reason" rows="2" placeholder="Why is this item needed? Which area or project?"></textarea>
+        </div>
+        <div>
+          <label>Urgency</label>
+          <select id="rq-urgency">
+            <option value="normal">🟡 Normal</option>
+            <option value="urgent">🔴 Urgent</option>
+          </select>
+        </div>
+        <button class="btn" style="background:#6A1B9A;color:#fff;padding:13px;font-size:15px;font-weight:800" onclick="submitPurchaseRequest()">📤 Submit Request</button>
+      </div>
+    </div>
+
+    <!-- My requests list -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 My Requests</div>
+      <div id="my-req-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -535,7 +595,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   <div class="hdr">
     <div class="hdr-row">
       <div><h1>📊 Admin Panel</h1><p id="adm-date"></p></div>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="hbtn" onclick="showNotifPanel()" style="position:relative">🔔<span id="adm-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center"></span></button>
+        <button class="hbtn" onclick="showChangePwdModal()" title="Change my password">🔑</button>
         <button class="hbtn" onclick="downloadExcel()">📥 Excel</button>
         <button class="hbtn" onclick="adminLogout()">Logout</button>
       </div>
@@ -548,6 +610,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('proj',this)">🏗️ Projects</div>
       <div class="tab" onclick="admTab('chk',this)">📋 Checklists</div>
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
+      <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
@@ -652,6 +715,28 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="dash-projects" style="padding:0 13px 13px"></div>
       </div>
+      <!-- PURCHASE REQUESTS SNAPSHOT -->
+      <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #6A1B9A">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">🛒 Purchase Requests</span>
+          <button onclick="admTab('requests',document.querySelectorAll('.tab')[5])" style="background:#EDE7F6;border:none;color:#6A1B9A;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px">View All →</button>
+        </div>
+        <div style="padding:10px 13px;display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:70px;background:#FFF3E0;border-radius:8px;padding:10px;text-align:center">
+            <div id="dash-req-pending" style="font-size:22px;font-weight:900;color:#E65100">0</div>
+            <div style="font-size:10px;font-weight:700;color:#E65100">PENDING</div>
+          </div>
+          <div style="flex:1;min-width:70px;background:#E8F5E9;border-radius:8px;padding:10px;text-align:center">
+            <div id="dash-req-approved" style="font-size:22px;font-weight:900;color:#2E7D32">0</div>
+            <div style="font-size:10px;font-weight:700;color:#2E7D32">APPROVED</div>
+          </div>
+          <div style="flex:1;min-width:70px;background:#FFEBEE;border-radius:8px;padding:10px;text-align:center">
+            <div id="dash-req-rejected" style="font-size:22px;font-weight:900;color:#C62828">0</div>
+            <div style="font-size:10px;font-weight:700;color:#C62828">REJECTED</div>
+          </div>
+        </div>
+        <div id="dash-req-list" style="padding:0 13px 13px"></div>
+      </div>
       <!-- RESET + REMINDERS -->
       <div class="card" style="border-left:4px solid #E65100;background:#FFF3E0">
         <div style="font-weight:800;font-size:14px;color:#BF360C;margin-bottom:4px">🔁 Shift Reset &amp; Reminders</div>
@@ -693,6 +778,38 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
 
     <!-- STAFF -->
     <div id="tab-staff" style="display:none">
+      <!-- ADMIN MANAGEMENT -->
+      <div class="card" style="border-left:4px solid #7C4DFF;background:#EDE7F6">
+        <h3 style="font-size:14px;font-weight:800;color:#4527A0;margin-bottom:8px">🔐 Admin Users</h3>
+        <div id="admin-list" style="margin-bottom:12px"></div>
+        <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #D1C4E9">
+          <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">➕ Add New Admin</div>
+          <div style="display:grid;gap:8px">
+            <input id="na-name" type="text" placeholder="Full Name (e.g. Dr. Sharma)">
+            <input id="na-loginid" type="text" placeholder="Username (e.g. sharma)" style="text-transform:lowercase">
+            <input id="na-pwd" type="password" placeholder="Password">
+            <button onclick="createAdminUser()" style="background:#7C4DFF;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Create Admin</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;background:#fff;border-radius:10px;padding:12px;border:1px solid #D1C4E9">
+          <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">🔑 Change My Password</div>
+          <div style="display:grid;gap:8px">
+            <input id="cp-old" type="password" placeholder="Current password">
+            <input id="cp-new" type="password" placeholder="New password">
+            <input id="cp-conf" type="password" placeholder="Confirm new password">
+            <button onclick="changeMyPassword()" style="background:#4527A0;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">🔑 Change Password</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;background:#fff;border-radius:10px;padding:12px;border:1px solid #D1C4E9">
+          <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">🆘 Master Recovery Code</div>
+          <div style="font-size:12px;color:#607D8B;margin-bottom:6px">This code lets anyone reset a forgotten admin password. Keep it safe.</div>
+          <div style="display:flex;gap:8px">
+            <input id="recovery-code-input" type="text" placeholder="Recovery code" style="flex:1" value="">
+            <button onclick="saveRecoveryCode()" style="background:#7C4DFF;border:none;color:#fff;padding:10px 14px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">Save</button>
+          </div>
+          <div id="recovery-code-display" style="margin-top:8px;font-size:12px;color:#4527A0;font-weight:700"></div>
+        </div>
+      </div>
       <!-- FIREBASE SETTINGS -->
       <div class="card" style="border-left:4px solid #F57C00;background:#FFF3E0">
         <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:8px">🔌 Firebase Live Tracking URL</h3>
@@ -870,6 +987,22 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </select>
         </div>
         <div id="emp-item-list" style="padding:13px"></div>
+      </div>
+    </div>
+
+    <!-- REQUESTS -->
+    <div id="tab-requests" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:800;font-size:15px">🛒 Purchase Requests</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="filterReqs('all',this)" class="req-filter-btn" style="background:#6A1B9A;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
+            <button onclick="filterReqs('pending',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>
+            <button onclick="filterReqs('approved',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Approved</button>
+            <button onclick="filterReqs('rejected',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">❌ Rejected</button>
+          </div>
+        </div>
+        <div id="adm-req-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No requests yet.</div></div>
       </div>
     </div>
 
@@ -1220,8 +1353,12 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{}};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{}};
 let currentEmp=null; // {name,loginId,password}
+let currentAdmin=null; // {id,name,loginId} — active admin session
+let _notifHistory=[]; // in-app notification history
+let _empKnownTaskIds=[]; // for detecting new task assignments
+let _empKnownProjIds=[]; // for detecting new project assignments
 let statuses={},values={},problems=[];
 
 function pad(n){return String(n).padStart(2,'0');}
@@ -1232,6 +1369,150 @@ function duration(s,e){if(!s||!e)return '';const m=Math.round((e-s)/60000);retur
 function bar(pct,len=20){const f=Math.round(pct/100*len);return '▓'.repeat(f)+'░'.repeat(len-f);}
 function loadCfg(){try{const c=JSON.parse(localStorage.getItem('HFM4_CFG')||'{}');Object.assign(cfg,c);}catch(e){}}
 function saveCfg(){localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));}
+
+// ══════════════════════════════════════════════════════
+// NOTIFICATION SYSTEM
+// ══════════════════════════════════════════════════════
+let _notifUnread=0;
+
+function initNotifications(){
+  try{
+    _notifHistory=JSON.parse(localStorage.getItem('HFM4_NOTIFS')||'[]');
+    _notifUnread=parseInt(localStorage.getItem('HFM4_NOTIF_UNREAD')||'0')||0;
+    updateNotifBadge();
+    if('Notification' in window&&Notification.permission==='default'){
+      Notification.requestPermission().catch(()=>{});
+    }
+  }catch(e){}
+}
+
+function sendNotif(title,body,tag){
+  // Browser notification
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{new Notification(title,{body,icon:'',tag:tag||'hfm-'+Date.now(),requireInteraction:false});}catch(e){}
+  }
+  // In-app notification
+  _notifHistory.unshift({title,body,time:Date.now(),read:false});
+  if(_notifHistory.length>60)_notifHistory=_notifHistory.slice(0,60);
+  _notifUnread++;
+  localStorage.setItem('HFM4_NOTIFS',JSON.stringify(_notifHistory));
+  localStorage.setItem('HFM4_NOTIF_UNREAD',String(_notifUnread));
+  updateNotifBadge();
+  showToast(title+': '+body);
+}
+
+function updateNotifBadge(){
+  ['adm-notif-badge','emp-notif-badge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(_notifUnread>0){el.style.display='block';el.textContent=_notifUnread>9?'9+':_notifUnread;}
+    else{el.style.display='none';}
+  });
+}
+
+function showNotifPanel(){
+  _notifUnread=0;
+  localStorage.setItem('HFM4_NOTIF_UNREAD','0');
+  _notifHistory=_notifHistory.map(n=>({...n,read:true}));
+  localStorage.setItem('HFM4_NOTIFS',JSON.stringify(_notifHistory));
+  updateNotifBadge();
+  const html=_notifHistory.length?_notifHistory.map(n=>`
+    <div style="padding:10px 0;border-bottom:1px solid #F0F4F8">
+      <div style="font-weight:700;font-size:13px">${n.title}</div>
+      <div style="font-size:12px;color:#607D8B;margin-top:2px">${n.body}</div>
+      <div style="font-size:10px;color:#B0BEC5;margin-top:3px">${new Date(n.time).toLocaleString('en-IN')}</div>
+    </div>`).join('')
+    :'<div style="text-align:center;color:#90A4AE;padding:20px">No notifications yet</div>';
+  const modal=document.createElement('div');
+  modal.id='notif-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:75vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:900;font-size:16px">🔔 Notifications</span>
+      <div style="display:flex;gap:8px">
+        <button onclick="clearAllNotifs()" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">Clear All</button>
+        <button onclick="document.getElementById('notif-modal').remove()" style="background:#F0F4F8;border:none;color:#607D8B;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">Close ✕</button>
+      </div>
+    </div>
+    <div style="overflow-y:auto;padding:0 20px;flex:1">${html}</div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+}
+
+function clearAllNotifs(){
+  _notifHistory=[];_notifUnread=0;
+  localStorage.setItem('HFM4_NOTIFS','[]');
+  localStorage.setItem('HFM4_NOTIF_UNREAD','0');
+  updateNotifBadge();
+  const m=document.getElementById('notif-modal');if(m)m.remove();
+}
+
+function showChangePwdModal(){
+  const existing=document.getElementById('chpwd-modal');if(existing)existing.remove();
+  const adminName=currentAdmin?currentAdmin.name:'Admin';
+  const modal=document.createElement('div');
+  modal.id='chpwd-modal';
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML=`<div style="background:#fff;border-radius:16px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="background:linear-gradient(135deg,#4527A0,#6A1B9A);padding:18px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="color:#fff;font-weight:900;font-size:16px">🔑 Change Password</div>
+        <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:2px">Logged in as: ${adminName}</div>
+      </div>
+      <button onclick="document.getElementById('chpwd-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:900">✕</button>
+    </div>
+    <div style="padding:20px;display:grid;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Current Password</label>
+        <input id="modal-cp-old" type="password" placeholder="Enter current password" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">New Password</label>
+        <input id="modal-cp-new" type="password" placeholder="Enter new password (min 4 chars)" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Confirm New Password</label>
+        <input id="modal-cp-conf" type="password" placeholder="Re-enter new password" onkeydown="if(event.key==='Enter')changeMyPasswordModal()" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
+      </div>
+      <p id="modal-cp-err" style="color:#C62828;font-size:13px;margin:0;display:none"></p>
+      <button onclick="changeMyPasswordModal()" style="background:#4527A0;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;width:100%">🔑 Update Password</button>
+    </div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+  setTimeout(()=>{const f=document.getElementById('modal-cp-old');if(f)f.focus();},100);
+}
+
+function changeMyPasswordModal(){
+  const oldPwd=(document.getElementById('modal-cp-old').value||'').trim();
+  const newPwd=(document.getElementById('modal-cp-new').value||'').trim();
+  const conf=(document.getElementById('modal-cp-conf').value||'').trim();
+  const errEl=document.getElementById('modal-cp-err');
+  const showErr=msg=>{errEl.textContent=msg;errEl.style.display='block';};
+  errEl.style.display='none';
+  if(!oldPwd||!newPwd||!conf){showErr('⚠️ Please fill all three fields.');return;}
+  if(newPwd!==conf){showErr('⚠️ New passwords do not match.');return;}
+  if(newPwd.length<4){showErr('⚠️ Password must be at least 4 characters.');return;}
+  const admins=getAdmins();
+  // Find the currently logged-in admin by id OR by loginId as fallback
+  let me=admins.find(a=>currentAdmin&&a.id===currentAdmin.id);
+  if(!me&&currentAdmin) me=admins.find(a=>a.loginId===currentAdmin.loginId);
+  if(!me){showErr('⚠️ Session error. Please log out and back in.');return;}
+  if(me.password!==oldPwd){showErr('⚠️ Current password is incorrect.');return;}
+  me.password=newPwd;
+  // Also update legacy adminPwd (super admin backward compat)
+  if(me.id==='admin_default'||admins.indexOf(me)===0) cfg.adminPwd=newPwd;
+  cfg.admins=admins;
+  saveCfg();
+  // Update session so further password changes work in same session
+  currentAdmin.password=newPwd; // keep session in sync
+  const stored=JSON.parse(sessionStorage.getItem('HFM4_ADMIN_SESSION')||'{}');
+  stored.password=newPwd;
+  sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify(stored));
+  document.getElementById('chpwd-modal').remove();
+  showToast2('✅ Password changed successfully!');
+}
 
 // ══════════════════════════════════════════════════════
 // SETUP
@@ -1277,14 +1558,37 @@ function empLogin(){
   loadEmployeeHome();
 }
 
+// ══════════════════════════════════════════════════════
+// MULTI-ADMIN SYSTEM
+// ══════════════════════════════════════════════════════
+function getAdmins(){
+  // Ensure default admin always exists (backward compat)
+  if(!cfg.admins||!cfg.admins.length){
+    cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd||'admin',createdAt:Date.now()}];
+  }
+  return cfg.admins;
+}
+
 function adminLogin(){
+  const user=(document.getElementById('al-user').value.trim()||'admin').toLowerCase();
   const pwd=document.getElementById('al-pwd').value.trim();
-  if(pwd!==cfg.adminPwd){document.getElementById('al-err').style.display='block';return;}
+  const admins=getAdmins();
+  // Check admins array first
+  let found=admins.find(a=>a.loginId.toLowerCase()===user&&a.password===pwd);
+  // Backward compat: if no username typed, try old single-password
+  if(!found&&(user==='admin'||user==='')&&pwd===cfg.adminPwd){
+    found=admins[0]||{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd};
+  }
+  if(!found){document.getElementById('al-err').style.display='block';return;}
   document.getElementById('al-err').style.display='none';
+  document.getElementById('al-user').value='';
   document.getElementById('al-pwd').value='';
+  currentAdmin=found;
+  sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:found.id,name:found.name,loginId:found.loginId}));
   go('view-admin');
   updateLiveBadge(!!getDbUrl());
   startLiveTracking();
+  updateReqBadges();
 }
 
 function logout(){
@@ -1292,7 +1596,91 @@ function logout(){
   if(_empPollTimer){clearInterval(_empPollTimer);_empPollTimer=null;}
   showEmpLogin();
 }
-function adminLogout(){showEmpLogin();}
+function adminLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showEmpLogin();}
+
+function renderAdminList(){
+  const el=document.getElementById('admin-list');if(!el)return;
+  const admins=getAdmins();
+  const rc=document.getElementById('recovery-code-display');
+  if(rc) rc.textContent=cfg.adminRecoveryCode?'Current code: '+cfg.adminRecoveryCode:'No recovery code set.';
+  const ri=document.getElementById('recovery-code-input');
+  if(ri&&cfg.adminRecoveryCode) ri.value=cfg.adminRecoveryCode;
+  el.innerHTML=admins.map(a=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #D1C4E9;gap:8px">
+      <div>
+        <div style="font-weight:800;font-size:13px;color:#263238">${a.name} ${currentAdmin&&currentAdmin.id===a.id?'<span style="background:#7C4DFF;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700">YOU</span>':''}</div>
+        <div style="font-size:11px;color:#90A4AE">@${a.loginId} · Added ${new Date(a.createdAt).toLocaleDateString('en-IN')}</div>
+      </div>
+      ${admins.length>1&&(!currentAdmin||currentAdmin.id!==a.id)?`<button onclick="deleteAdminUser('${a.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">🗑 Remove</button>`:''}
+    </div>`).join('');
+}
+
+function createAdminUser(){
+  const name=document.getElementById('na-name').value.trim();
+  const loginId=document.getElementById('na-loginid').value.trim().toLowerCase();
+  const pwd=document.getElementById('na-pwd').value.trim();
+  if(!name||!loginId||!pwd){alert('Fill in name, username, and password.');return;}
+  const admins=getAdmins();
+  if(admins.find(a=>a.loginId===loginId)){alert('Username "'+loginId+'" already exists.');return;}
+  admins.push({id:'admin_'+Date.now(),name,loginId,password:pwd,createdAt:Date.now(),createdBy:currentAdmin?currentAdmin.id:''});
+  cfg.admins=admins;saveCfg();
+  document.getElementById('na-name').value='';
+  document.getElementById('na-loginid').value='';
+  document.getElementById('na-pwd').value='';
+  renderAdminList();
+  showToast2('Admin "'+name+'" created ✓');
+}
+
+function deleteAdminUser(id){
+  if(!confirm('Remove this admin? They will no longer be able to log in.'))return;
+  cfg.admins=getAdmins().filter(a=>a.id!==id);
+  saveCfg();renderAdminList();showToast2('Admin removed ✓');
+}
+
+function changeMyPassword(){
+  const oldPwd=document.getElementById('cp-old').value.trim();
+  const newPwd=document.getElementById('cp-new').value.trim();
+  const conf=document.getElementById('cp-conf').value.trim();
+  if(!oldPwd||!newPwd||!conf){alert('Fill all three fields.');return;}
+  if(newPwd!==conf){alert('New passwords do not match.');return;}
+  if(newPwd.length<4){alert('Password must be at least 4 characters.');return;}
+  const admins=getAdmins();
+  const me=admins.find(a=>currentAdmin&&a.id===currentAdmin.id);
+  if(!me){alert('Session error. Please log out and log in again.');return;}
+  if(me.password!==oldPwd){alert('Current password is incorrect.');return;}
+  me.password=newPwd;
+  // Also update legacy adminPwd if this is the default admin
+  if(me.id==='admin_default') cfg.adminPwd=newPwd;
+  cfg.admins=admins;saveCfg();
+  document.getElementById('cp-old').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-conf').value='';
+  showToast2('Password changed successfully ✓');
+}
+
+function saveRecoveryCode(){
+  const code=document.getElementById('recovery-code-input').value.trim();
+  if(!code){alert('Enter a recovery code.');return;}
+  cfg.adminRecoveryCode=code;saveCfg();
+  renderAdminList();showToast2('Recovery code saved ✓');
+}
+
+function showForgotPassword(){
+  const code=prompt('Enter the master recovery code set by your admin:');
+  if(!code)return;
+  if(code!==cfg.adminRecoveryCode){alert('Incorrect recovery code.');return;}
+  const loginId=prompt('Enter the admin username to reset:');
+  if(!loginId)return;
+  const admins=getAdmins();
+  const found=admins.find(a=>a.loginId.toLowerCase()===loginId.toLowerCase());
+  if(!found){alert('Admin username "'+loginId+'" not found.');return;}
+  const newPwd=prompt('Enter new password for "'+found.name+'":');
+  if(!newPwd||newPwd.length<4){alert('Password must be at least 4 characters.');return;}
+  found.password=newPwd;
+  if(found.id==='admin_default') cfg.adminPwd=newPwd;
+  cfg.admins=admins;saveCfg();
+  alert('Password reset for "'+found.name+'". New password: '+newPwd);
+}
 
 // ══════════════════════════════════════════════════════
 // EMPLOYEE HOME
@@ -1315,6 +1703,7 @@ function loadEmployeeHome(){
   if(_empPollTimer)clearInterval(_empPollTimer);
   _empPollTimer=setInterval(empPoll,15000);
   empPoll(); // run immediately
+  updateReqBadges();
   go('view-home');
 }
 
@@ -1365,21 +1754,48 @@ async function testFirebaseEmployee(){
 async function empPoll(){
   if(!currentEmp||!getDbUrl())return;
   try{
-    // Check for admin reset signal
     await checkResetSignal();
-    // Sync latest tasks from Firebase
+    // Sync tasks — detect NEW assignments
     const tasks=await fbGet('/tasks');
     if(tasks&&typeof tasks==='object'){
       const arr=Object.values(tasks).filter(Boolean);
       if(arr.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(arr));
+      // Notify on new tasks assigned to me
+      const myTasks=arr.filter(t=>t.assignedTo===currentEmp.loginId);
+      if(_empKnownTaskIds.length>0){
+        myTasks.forEach(t=>{
+          if(!_empKnownTaskIds.includes(t.id)){
+            sendNotif('📌 New Task Assigned','Task: "'+t.desc+'"'+(t.dueDate?' · Due: '+t.dueDate:''),'task-'+t.id);
+          }
+        });
+        // Notify overdue tasks
+        myTasks.filter(t=>taskStatus(t)==='Overdue'&&!_empKnownTaskIds.includes('overdue-'+t.id)).forEach(t=>{
+          _empKnownTaskIds.push('overdue-'+t.id);
+          sendNotif('⏰ Task Overdue','Your task "'+t.desc+'" is past its due date!','overdue-'+t.id);
+        });
+      }
+      _empKnownTaskIds=myTasks.map(t=>t.id);
     }
-    // Sync custom checklist items from Firebase
     const ci=await fbGet('/customItems');
     if(ci&&Array.isArray(ci)){cfg.customItems=ci;saveCfg();}
     const ec=await fbGet('/empChecklists');
     if(ec&&typeof ec==='object'){cfg.empChecklists=ec;saveCfg();}
-    // Sync projects
+    // Sync projects — detect NEW assignments
+    const prevProjIds=[..._empKnownProjIds];
     await syncProjectsFromFirebase();
+    const myProjs=getProjects().filter(p=>p.assignedTo===currentEmp.loginId);
+    if(prevProjIds.length>0){
+      myProjs.forEach(p=>{
+        if(!prevProjIds.includes(p.id)){
+          sendNotif('🏗️ New Project Assigned','Project: "'+p.name+'"'+(p.dueDate?' · Due: '+p.dueDate:''),'proj-'+p.id);
+        }
+      });
+      // Notify overdue projects
+      myProjs.filter(p=>p.status!=='completed'&&p.dueDate&&new Date(p.dueDate+'T23:59:59')<new Date()&&!prevProjIds.includes('proj-overdue-'+p.id)).forEach(p=>{
+        sendNotif('⏰ Project Overdue','Your project "'+p.name+'" is past its due date!','projov-'+p.id);
+      });
+    }
+    _empKnownProjIds=myProjs.map(p=>p.id);
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -1578,6 +1994,7 @@ function completeShift(){
   const pct=vals.length>0?Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
+  sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-'+Date.now());
   // Auto-send WhatsApp
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
@@ -1656,6 +2073,8 @@ function endTask(id){
   fbPatch('/tasks/'+id,{endedAt:tasks[i].endedAt,status:'done',doneBy:tasks[i].doneBy});
   // Auto-delete from Firebase after 2 minutes (admin has seen it by then)
   setTimeout(()=>fbDelete('/tasks/'+id),120000);
+  const _doneTask=tasks[i];
+  sendNotif('✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','done-'+id);
   renderMyTasks();
   showToast('Task done ✓ — admin notified');
 }
@@ -1664,7 +2083,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -1672,7 +2091,8 @@ function admTab(tab,el){
   if(tab==='tasks') renderAdminTasks();
   if(tab==='proj') initProjectTab();
   if(tab==='chk') renderChecklistAdmin();
-  if(tab==='staff') renderStaff();
+  if(tab==='staff'){renderStaff();renderAdminList();}
+  if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
@@ -1775,7 +2195,31 @@ function renderAdmin(){
   }
   renderProjectKPIs();
   renderEmpProjectKPIs();
+  renderDashRequests();
   renderReminderList();
+}
+
+function renderDashRequests(){
+  const reqs=getRequests();
+  const pending=reqs.filter(r=>r.status==='pending');
+  const approved=reqs.filter(r=>r.status==='approved');
+  const rejected=reqs.filter(r=>r.status==='rejected');
+  const pel=document.getElementById('dash-req-pending');if(pel)pel.textContent=pending.length;
+  const ael=document.getElementById('dash-req-approved');if(ael)ael.textContent=approved.length;
+  const rel=document.getElementById('dash-req-rejected');if(rel)rel.textContent=rejected.length;
+  const listEl=document.getElementById('dash-req-list');if(!listEl)return;
+  if(!pending.length){listEl.innerHTML='<div style="text-align:center;color:#2E7D32;font-size:13px;padding:6px 0">✅ No pending requests</div>';return;}
+  listEl.innerHTML=pending.slice(0,4).map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5;flex-wrap:wrap;gap:4px">
+      <div>
+        <span style="font-weight:700;font-size:13px">${r.itemName}</span>${r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:5px">URGENT</span>':''}
+        <div style="font-size:11px;color:#90A4AE">👷 ${r.empName} · ${r.qty} ${r.unit}${r.estCost?'  ·  ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button onclick="approveRequest('${r.id}');renderDashRequests();renderAdmin();" style="padding:5px 10px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✅</button>
+        <button onclick="promptRejectRequest('${r.id}');renderDashRequests();renderAdmin();" style="padding:5px 10px;background:#C62828;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">❌</button>
+      </div>
+    </div>`).join('')+(pending.length>4?`<div style="text-align:center;font-size:12px;color:#6A1B9A;padding:6px;font-weight:700">+ ${pending.length-4} more — see Requests tab</div>`:'');
 }
 
 function renderEmpProjectKPIs(){
@@ -2824,10 +3268,23 @@ function openProjectFill(id){
   _currentProjectId=id;
   document.getElementById('pf-name').textContent='🏗️ '+p.name;
   document.getElementById('pf-loc').textContent=(p.location||'')+(p.dueDate?' · Due: '+p.dueDate:'');
+  // Calculate employee-visible KPI
+  const _reqK=Object.keys(p.scope||{}).filter(k=>p.scope[k]&&p.scope[k].required);
+  const _tot=_reqK.length+(p.customScope||[]).length;
+  const _done=_reqK.filter(k=>(p.scope[k].status||'pending')==='completed').length+(p.customScope||[]).filter(c=>c.status==='completed').length;
+  const _inP=_reqK.filter(k=>(p.scope[k].status||'pending')==='in-progress').length+(p.customScope||[]).filter(c=>c.status==='in-progress').length;
+  const _pct=_tot>0?Math.round(_done/_tot*100):0;
   document.getElementById('pf-meta').innerHTML=`
     <strong>Description:</strong> ${p.description||'—'}<br>
     <strong>Priority:</strong> ${p.priority} &nbsp;|&nbsp; <strong>Start:</strong> ${p.startDate||'—'} &nbsp;|&nbsp; <strong>Due:</strong> ${p.dueDate||'—'}<br>
-    <strong>Budget:</strong> ₹${(p.costs?.grandTotal||0).toLocaleString('en-IN')}&nbsp;(Subtotal ₹${(p.costs?.subtotal||0).toLocaleString('en-IN')} + Contingency + GST)`;
+    <strong>My Progress:</strong>
+    <span style="display:inline-flex;gap:10px;margin-left:6px">
+      <span style="color:#2E7D32;font-weight:800">✅ Done: ${_done}</span>
+      <span style="color:#FF8F00;font-weight:800">🔄 Active: ${_inP}</span>
+      <span style="color:#90A4AE;font-weight:800">⏳ Pending: ${_tot-_done-_inP}</span>
+    </span><br>
+    <div style="margin-top:6px;background:#E8EAF6;border-radius:5px;height:8px;overflow:hidden"><div style="width:${_pct}%;height:100%;background:${_pct>=80?'#2E7D32':'#1976D2'};border-radius:5px"></div></div>
+    <div style="font-size:11px;color:#607D8B;margin-top:3px">${_pct}% complete · ${_done}/${_tot} work items done</div>`;
   document.getElementById('pf-notes').value=p.progressNotes||'';
   // Render scope items for filling
   const scopeEl=document.getElementById('pf-scope-form');
@@ -2915,6 +3372,7 @@ function markProjectDone(){
   (p.customScope||[]).forEach(c=>{if(c.status!=='completed'){c.status='completed';c.completedAt=Date.now();}});
   p.status='completed';p.completedAt=Date.now();
   _saveProjectState(p);
+  sendNotif('🏗️ Project Completed',(currentEmp?currentEmp.name:'Employee')+' completed project: "'+(p.name||'').substring(0,40)+'"','projdone-'+p.id);
   showToast('Project marked completed ✓');
   go('view-my-projects');renderMyProjects();
 }
@@ -2924,6 +3382,194 @@ function _saveProjectState(p){
   const idx=projects.findIndex(x=>x.id===p.id);
   if(idx>=0) projects[idx]=p;
   saveProjects(projects);
+}
+
+// ══════════════════════════════════════════════════════
+// PURCHASE REQUESTS
+// ══════════════════════════════════════════════════════
+function getRequests(){
+  try{return JSON.parse(localStorage.getItem('HFM4_REQUESTS')||'[]');}catch(e){return[];}
+}
+function saveRequests(arr){
+  localStorage.setItem('HFM4_REQUESTS',JSON.stringify(arr));
+  updateReqBadges();
+}
+
+function updateReqBadges(){
+  const reqs=getRequests();
+  // Admin badge — pending count
+  const pendingCount=reqs.filter(r=>r.status==='pending').length;
+  const admBadge=document.getElementById('adm-req-badge');
+  if(admBadge){
+    admBadge.style.display=pendingCount>0?'inline-block':'none';
+    admBadge.textContent=pendingCount;
+  }
+  // Employee badge — approved/rejected (unread) for current employee
+  if(currentEmp){
+    const myNew=reqs.filter(r=>r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&!r.empRead).length;
+    const empBadge=document.getElementById('req-pending-badge');
+    if(empBadge){
+      empBadge.style.display=myNew>0?'inline-block':'none';
+      empBadge.textContent=myNew;
+    }
+  }
+}
+
+// ── EMPLOYEE SIDE ──────────────────────────────────────
+function openMyRequests(){
+  const d=document.getElementById('req-date-hdr');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  renderMyRequests();
+  go('view-my-requests');
+}
+
+function submitPurchaseRequest(){
+  const item=(document.getElementById('rq-item').value||'').trim();
+  const qty=parseFloat(document.getElementById('rq-qty').value)||0;
+  const unit=(document.getElementById('rq-unit').value||'').trim()||'pcs';
+  const cost=parseFloat(document.getElementById('rq-cost').value)||0;
+  const reason=(document.getElementById('rq-reason').value||'').trim();
+  const urgency=document.getElementById('rq-urgency').value||'normal';
+  if(!item){showToast('⚠️ Enter item name');return;}
+  if(!qty||qty<1){showToast('⚠️ Enter valid quantity');return;}
+  if(!reason){showToast('⚠️ Enter reason/purpose');return;}
+  const req={
+    id:'req_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    empLoginId:currentEmp.loginId,
+    empName:currentEmp.name,
+    itemName:item,qty,unit,estCost:cost,
+    reason,urgency,
+    status:'pending',
+    createdAt:Date.now(),
+    reviewedBy:null,reviewedAt:null,reviewNote:'',empRead:false
+  };
+  const reqs=getRequests();
+  reqs.unshift(req);
+  saveRequests(reqs);
+  // Notify admin
+  sendNotif('📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
+  // Clear form
+  document.getElementById('rq-item').value='';
+  document.getElementById('rq-qty').value='';
+  document.getElementById('rq-unit').value='';
+  document.getElementById('rq-cost').value='';
+  document.getElementById('rq-reason').value='';
+  document.getElementById('rq-urgency').value='normal';
+  renderMyRequests();
+  showToast('✅ Request submitted!');
+}
+
+function renderMyRequests(){
+  if(!currentEmp)return;
+  const reqs=getRequests().filter(r=>r.empLoginId===currentEmp.loginId);
+  const el=document.getElementById('my-req-list');
+  if(!el)return;
+  if(!reqs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div>';return;}
+  el.innerHTML=reqs.map(r=>{
+    const statusColor=r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':'#F57F17';
+    const statusIcon=r.status==='approved'?'✅':r.status==='rejected'?'❌':'⏳';
+    const urgBadge=r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px">🔴 URGENT</span>':'';
+    const reviewSection=r.status!=='pending'?`
+      <div style="margin-top:8px;padding:8px;background:${r.status==='approved'?'#E8F5E9':'#FFEBEE'};border-radius:8px;font-size:12px">
+        <strong>${r.status==='approved'?'✅ Approved':'❌ Rejected'}</strong> by ${r.reviewedBy||'Admin'}
+        ${r.reviewNote?'<br>Note: '+r.reviewNote:''}
+      </div>`:'';
+    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgBadge}
+          <div style="font-size:12px;color:#607D8B;margin-top:2px">Qty: ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:${statusColor};white-space:nowrap">${statusIcon} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
+      </div>
+      <div style="font-size:12px;color:#546E7A;margin-top:6px">${r.reason}</div>
+      ${reviewSection}
+      <div style="font-size:11px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+  // Mark admin-reviewed ones as read
+  let changed=false;
+  const all=getRequests();
+  all.forEach(r=>{if(r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&!r.empRead){r.empRead=true;changed=true;}});
+  if(changed)saveRequests(all);
+}
+
+// ── ADMIN SIDE ─────────────────────────────────────────
+let _reqFilter='all';
+function filterReqs(f,btn){
+  _reqFilter=f;
+  document.querySelectorAll('.req-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});
+  if(btn){btn.style.background='#6A1B9A';btn.style.color='#fff';}
+  renderRequestsAdmin();
+}
+
+function renderRequestsAdmin(){
+  const all=getRequests();
+  const list=_reqFilter==='all'?all:all.filter(r=>r.status===_reqFilter);
+  const el=document.getElementById('adm-req-list');
+  if(!el)return;
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests found.</div>';return;}
+  el.innerHTML=list.map(r=>{
+    const statusColor=r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':'#E65100';
+    const statusBg=r.status==='approved'?'#E8F5E9':r.status==='rejected'?'#FFEBEE':'#FFF3E0';
+    const urgBadge=r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px">🔴 URGENT</span>':'';
+    const actionBtns=r.status==='pending'?`
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="approveRequest('${r.id}')" style="flex:1;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">✅ Approve</button>
+        <button onclick="promptRejectRequest('${r.id}')" style="flex:1;padding:9px;background:#C62828;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
+      </div>`:'';
+    const reviewLine=r.status!=='pending'?`<div style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:700">${r.status==='approved'?'✅':'❌'} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)} by ${r.reviewedBy||'Admin'}${r.reviewNote?' — "'+r.reviewNote+'"':''}</div>`:'';
+    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgBadge}
+          <div style="font-size:12px;color:#607D8B;margin-top:2px">
+            👷 ${r.empName}  ·  Qty: ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}
+          </div>
+        </div>
+        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:${statusBg};color:${statusColor};white-space:nowrap">${r.status.toUpperCase()}</span>
+      </div>
+      <div style="font-size:12px;color:#546E7A;margin-top:6px"><strong>Reason:</strong> ${r.reason}</div>
+      ${reviewLine}
+      ${actionBtns}
+      <div style="font-size:11px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+}
+
+function approveRequest(id){
+  const reqs=getRequests();
+  const i=reqs.findIndex(r=>r.id===id);
+  if(i<0)return;
+  reqs[i].status='approved';
+  reqs[i].reviewedBy=currentAdmin?currentAdmin.name:'Admin';
+  reqs[i].reviewedAt=Date.now();
+  reqs[i].empRead=false;
+  saveRequests(reqs);
+  sendNotif('✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
+  renderRequestsAdmin();
+  showToast('Request approved ✓');
+}
+
+function promptRejectRequest(id){
+  const note=prompt('Rejection reason (optional):');
+  if(note===null)return; // cancelled
+  rejectRequest(id,note||'');
+}
+
+function rejectRequest(id,note){
+  const reqs=getRequests();
+  const i=reqs.findIndex(r=>r.id===id);
+  if(i<0)return;
+  reqs[i].status='rejected';
+  reqs[i].reviewedBy=currentAdmin?currentAdmin.name:'Admin';
+  reqs[i].reviewedAt=Date.now();
+  reqs[i].reviewNote=note||'';
+  reqs[i].empRead=false;
+  saveRequests(reqs);
+  sendNotif('❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'req-rej-'+id);
+  renderRequestsAdmin();
+  showToast('Request rejected');
 }
 
 // ── PROJECT DOWNLOADS ─────────────────────────────────
@@ -3609,6 +4255,27 @@ function downloadCurrentExcel(){
     workItemRows.push([]);
   });
 
+  // Sheet 6 — Purchase Requests
+  const allReqs=getRequests();
+  const reqRows=[
+    ['PURCHASE REQUESTS','','','','','','',''],
+    ['Report Period',`${from} to ${to}`,'','','','','',''],
+    [''],
+    ['#','Employee','Item / Material','Qty','Unit','Est. Cost (₹)','Reason','Urgency','Status','Reviewed By','Review Note','Submitted On'],
+  ];
+  let reqNo=1;
+  allReqs.forEach(r=>{
+    const d=new Date(r.createdAt);
+    const ds=d.toLocaleDateString('en-IN');
+    reqRows.push([
+      reqNo++, r.empName, r.itemName, r.qty, r.unit, r.estCost||'',
+      r.reason, r.urgency==='urgent'?'URGENT':'Normal',
+      r.status.toUpperCase(),
+      r.reviewedBy||'', r.reviewNote||'', ds
+    ]);
+  });
+  if(reqRows.length===4) reqRows.push(['No purchase requests found','','','','','','','','','','','']);
+
   // Build workbook
   try{
     const wb=XLSX.utils.book_new();
@@ -3617,6 +4284,7 @@ function downloadCurrentExcel(){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(taskRows),'Completed Tasks');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(projKpiRows),'Project KPIs');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(workItemRows),'Project Work Items');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(reqRows),'Purchase Requests');
     XLSX.writeFile(wb,`FM_Report_${from}_to_${to}.xlsx`);
     showToast2('Excel downloaded ✓');
   }catch(e){alert('Excel export failed: '+e.message);}
@@ -3987,6 +4655,7 @@ function renderReminderList(){
 // ══════════════════════════════════════════════════════
 window.onload=function(){
   loadCfg();
+  initNotifications();
   initConvex();
   if(cfg.waNum) showEmpLogin();
   // else stay on setup
