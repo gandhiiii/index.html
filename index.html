@@ -166,18 +166,24 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div onclick="toggleImport()" style="text-align:center;font-size:12px;color:#42A5F5;cursor:pointer;padding:4px;font-weight:700">
           📱 First time on this device? Tap here to set up
         </div>
-        <div id="import-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:10px;padding:12px">
+        <div id="import-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:10px;text-align:center">🔗 Quick Setup — Just paste the Firebase URL</div>
           <div style="display:grid;gap:10px">
             <div>
-              <label style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;display:block;margin-bottom:4px">Step 1 — Paste Setup Code from Admin</label>
-              <textarea id="import-code" rows="3" placeholder="Paste the setup code sent by admin via WhatsApp..." style="margin-top:0;font-size:12px;font-family:monospace;resize:none;background:#fff;border-color:#90CAF9"></textarea>
+              <label style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;display:block;margin-bottom:4px">Firebase Database URL (from your Admin)</label>
+              <input id="import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+              <p style="font-size:11px;color:#1565C0;margin-top:5px;line-height:1.5">Paste the Firebase URL your admin shared. The app will connect and load everything automatically.</p>
             </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#E65100;text-transform:uppercase;display:block;margin-bottom:4px">Step 2 — Enter Firebase URL (for live tracking)</label>
-              <input id="import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#FFAB91;font-size:13px">
-              <p style="font-size:11px;color:#BF360C;margin-top:4px">Admin will give you this URL (looks like: hospital-fm-12345-default-rtdb.firebaseio.com). Required for live tracking.</p>
+            <!-- Legacy: setup code (hidden, shown only if needed) -->
+            <div id="legacy-code-section" style="display:none">
+              <label style="font-size:11px;font-weight:700;color:#607D8B;text-transform:uppercase;display:block;margin-bottom:4px">Or paste Setup Code (old method)</label>
+              <textarea id="import-code" rows="3" placeholder="Paste setup code from admin..." style="margin-top:0;font-size:12px;font-family:monospace;resize:none;background:#fff;border-color:#B0BEC5"></textarea>
             </div>
-            <button onclick="importConfig()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer">✓ Apply &amp; Enable Login</button>
+            <button onclick="importFromFirebase()" id="import-btn" style="width:100%;background:#1565C0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🔌 Connect &amp; Set Up</button>
+            <div id="import-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;text-align:center"></div>
+            <div style="text-align:center">
+              <span onclick="document.getElementById('legacy-code-section').style.display=document.getElementById('legacy-code-section').style.display==='none'?'block':'none'" style="font-size:11px;color:#90A4AE;cursor:pointer;text-decoration:underline">Have a setup code instead? Tap here</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1495,7 +1501,14 @@ function fmtTS(ms){if(!ms)return '—';return new Date(ms).toLocaleTimeString('e
 function duration(s,e){if(!s||!e)return '';const m=Math.round((e-s)/60000);return m<60?m+'min':Math.floor(m/60)+'h '+(m%60)+'m';}
 function bar(pct,len=20){const f=Math.round(pct/100*len);return '▓'.repeat(f)+'░'.repeat(len-f);}
 function loadCfg(){try{const c=JSON.parse(localStorage.getItem('HFM4_CFG')||'{}');Object.assign(cfg,c);}catch(e){}}
-function saveCfg(){localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));}
+function saveCfg(){
+  localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+  // Push employee-safe config to Firebase so new devices can auto-setup
+  if(getDbUrl()){
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:getDbUrl(),convexUrl:getDbUrl()};
+    fbPut('/config',pubCfg).catch(()=>{});
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // NOTIFICATION SYSTEM
@@ -2145,7 +2158,15 @@ function saveProgress(extra={}){
   if(getDbUrl()){
     fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
       .then(()=>updateEmpSyncBadge('ok'))
-      .catch(e=>updateEmpSyncBadge('error',e.message));
+      .catch(e=>{
+        updateEmpSyncBadge('error',e.message);
+        // Retry once after 5 seconds (handles brief mobile network blips)
+        setTimeout(()=>{
+          fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
+            .then(()=>updateEmpSyncBadge('ok'))
+            .catch(()=>{});
+        },5000);
+      });
   } else {
     console.warn('No Firebase URL set on this device. Data saved locally only.');
   }
@@ -3040,8 +3061,58 @@ function exportConfig(){
   catch(e){return btoa(JSON.stringify(data));}
 }
 
+// New simplified import: just enter Firebase URL, fetch config from /config node
+async function importFromFirebase(){
+  const urlRaw=(document.getElementById('import-db').value||'').trim().replace(/\/+$/,'');
+  const statusEl=document.getElementById('import-status');
+  const btn=document.getElementById('import-btn');
+  function setStatus(type,msg){
+    statusEl.style.display='block';
+    if(type==='loading'){statusEl.style.background='#E3F2FD';statusEl.style.color='#1565C0';statusEl.textContent=msg;}
+    else if(type==='ok'){statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';statusEl.textContent=msg;}
+    else{statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent=msg;}
+  }
+  // Check if they pasted a setup code instead
+  const codeInput=(document.getElementById('import-code')||{}).value||'';
+  const hasCode=codeInput.trim().replace(/\s+/g,'').length>20;
+  // If no URL but has code, fall back to old import
+  if(!urlRaw&&hasCode){importConfig();return;}
+  if(!urlRaw){setStatus('error','❌ Please paste the Firebase URL from your admin.');return;}
+  if(!urlRaw.includes('firebaseio.com')&&!urlRaw.includes('firebase')){setStatus('error','❌ That does not look like a Firebase URL. It should end with firebaseio.com');return;}
+  btn.disabled=true;
+  setStatus('loading','🔄 Connecting to Firebase...');
+  try{
+    // Step 1: test connection
+    const ping=await xhrRequest(urlRaw+'/hfm_ping.json','PUT',{ts:Date.now()},8000);
+    if(!ping.ok){setStatus('error','❌ Firebase connection failed (Error '+ping.status+'). Check Rules: go to Firebase Console → Realtime Database → Rules → set read/write to true.');btn.disabled=false;return;}
+    // Step 2: fetch employee-safe config from /config
+    setStatus('loading','🔄 Loading hospital config...');
+    const r=await xhrRequest(urlRaw+'/config.json','GET',null,8000);
+    if(!r.ok||!r.data){setStatus('error','❌ No config found at this Firebase URL. Ask your admin to log in once so the config is uploaded, then try again.');btn.disabled=false;return;}
+    const data=r.data;
+    if(!data.hosp||!Array.isArray(data.employees)){setStatus('error','❌ Config found but looks incomplete. Ask admin to log in to the app and try again.');btn.disabled=false;return;}
+    // Step 3: save to local storage
+    const savedPwd=cfg.adminPwd;const savedAdmins=cfg.admins;
+    Object.assign(cfg,data);
+    if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
+    if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
+    cfg.dbUrl=urlRaw;cfg.convexUrl=urlRaw;
+    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg)); // save without triggering another Firebase push
+    initConvex();
+    document.getElementById('import-panel').style.display='none';
+    document.getElementById('import-db').value='';
+    document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
+    document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    setStatus('ok','✅ Connected! '+cfg.employees.length+' employees loaded.');
+    alert('✅ Setup complete!\n\nHospital: '+cfg.hosp+'\nEmployees loaded: '+cfg.employees.length+'\n🔴 Live tracking: ON ✓\n\nYou can now login with your Employee ID & Password.');
+  }catch(e){
+    setStatus('error','❌ Error: '+e.message+'. Check your internet connection and the Firebase URL.');
+  }
+  btn.disabled=false;
+}
+
 function importConfig(){
-  const rawInput=document.getElementById('import-code').value;
+  const rawInput=(document.getElementById('import-code')||{}).value||'';
   const manualDbUrl=(document.getElementById('import-db')||{}).value||'';
   // Strip ALL whitespace/newlines (WhatsApp breaks long codes across lines)
   const raw=rawInput.replace(/\s+/g,'').trim();
@@ -3063,7 +3134,7 @@ function importConfig(){
     saveCfg();
     initConvex(); // refresh live badge
     document.getElementById('import-panel').style.display='none';
-    document.getElementById('import-code').value='';
+    if(document.getElementById('import-code')) document.getElementById('import-code').value='';
     if(document.getElementById('import-db')) document.getElementById('import-db').value='';
     document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
     document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -3092,8 +3163,10 @@ function copyExportCode(){
 }
 
 function sendConfigWA(){
-  const code=exportConfig();
-  const msg=`🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at the bottom)\n3. Paste this setup code:\n\n${code}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
+  const dbUrl=getDbUrl();
+  const msg=dbUrl
+    ? `🏥 *${cfg.hosp} — App Setup (New Method)*\n\n📱 *To set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this Firebase URL:\n\n*${dbUrl}*\n\n4. Tap *"🔌 Connect & Set Up"*\n5. Then login with your Employee ID & Password\n\n_Just the URL — no long setup code needed!_`
+    : `🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this setup code:\n\n${exportConfig()}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
@@ -5227,6 +5300,46 @@ function renderReminderList(){
   el.innerHTML=rows||'<div style="font-size:12px;color:#2E7D32;margin-bottom:8px">✅ No pending tasks for any employee right now.</div>';
   updateResetInfo();
 }
+
+// ══════════════════════════════════════════════════════
+// MOBILE SYNC FIX — visibilitychange + focus handlers
+// On iOS/Android, setInterval is throttled when the browser
+// goes to background. When the user returns to the app,
+// we immediately re-run polls and restart the timers.
+// ══════════════════════════════════════════════════════
+function onAppFocus(){
+  // Re-sync employee side
+  if(currentEmp){
+    // Restart employee poll timer (interval may have been throttled)
+    if(_empPollTimer){clearInterval(_empPollTimer);_empPollTimer=null;}
+    empPoll(); // immediate sync
+    _empPollTimer=setInterval(empPoll,15000);
+    // Re-push any locally saved data that may not have reached Firebase
+    if(getDbUrl()){
+      const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
+      if(saved){
+        fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,saved)
+          .then(()=>updateEmpSyncBadge('ok'))
+          .catch(e=>updateEmpSyncBadge('error',e.message));
+      }
+    }
+  }
+  // Re-sync admin side
+  if(currentAdmin){
+    if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}
+    startLiveTracking();
+  }
+}
+
+// Page Visibility API — fires on Android Chrome + iOS Safari when app goes background/foreground
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible') onAppFocus();
+});
+
+// window focus — fires when user switches back to browser tab (desktop + some mobile)
+window.addEventListener('focus',function(){
+  onAppFocus();
+});
 
 // ══════════════════════════════════════════════════════
 // BOOT
