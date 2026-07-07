@@ -1560,7 +1560,7 @@ function saveCfg(){
   // Employee devices must NOT push config back — they would overwrite the
   // admin's authoritative employee list with a stale copy.
   if(url && currentAdmin){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
     fbPut('/config',pubCfg).catch(()=>{});
   }
 }
@@ -1864,7 +1864,7 @@ function adminLogin(){
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
   if(url){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
     fbPut('/config',pubCfg).catch(()=>{});
   }
   updateReqBadges();
@@ -3420,7 +3420,7 @@ async function pushConfigToFirebase(){
   btn.disabled=true;
   setStatus('loading','☁️ Uploading config to Firebase...');
   try{
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||''};
     const r=await xhrRequest(base+'/config.json','PUT',pubCfg,8000);
     if(r.ok){
       setStatus('ok','✅ Config uploaded! Employees can now set up using just the Firebase URL.');
