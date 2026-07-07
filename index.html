@@ -108,6 +108,18 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
       </div>
       <div style="margin-top:18px"><button class="btn blue" onclick="saveSetup()">✓ Save and Continue</button></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #E8EAF6">
+        <div onclick="toggleSetupRestore()" style="text-align:center;font-size:12px;color:#42A5F5;cursor:pointer;padding:4px;font-weight:700">
+          🔄 Already have a Firebase URL? Restore your settings here
+        </div>
+        <div id="setup-restore-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:6px;text-align:center">🔗 Enter your Firebase URL</div>
+          <p style="font-size:11px;color:#1565C0;margin-bottom:10px">This will restore your hospital name, employees, and recovery code. Admin password is NOT stored in Firebase — use recovery code to reset it.</p>
+          <input id="setup-restore-url" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+          <button onclick="quickSetupRestore()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:8px">🔄 Restore &amp; Continue</button>
+          <div id="setup-restore-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center"></div>
+        </div>
+      </div>
       <details style="margin-top:14px">
         <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1565C0;padding:8px 0">📖 How to get your free Firebase URL (5 minutes, no terminal)</summary>
         <div style="background:#F8F9FA;border-radius:8px;padding:12px;margin-top:8px;font-size:12px;line-height:2;color:#37474F">
@@ -1703,6 +1715,37 @@ function saveSetup(){
   saveCfg();
   updateLiveBadge(!!getDbUrl());
   showLanding();
+}
+
+function toggleSetupRestore(){
+  const p=document.getElementById('setup-restore-panel');
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+}
+
+async function quickSetupRestore(){
+  const urlEl=document.getElementById('setup-restore-url');
+  const statusEl=document.getElementById('setup-restore-status');
+  const url=(urlEl.value||'').trim().replace(/\/+$/,'');
+  statusEl.style.display='block';
+  if(!url||!url.includes('firebaseio.com')){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ Enter a valid Firebase Database URL (ends in firebaseio.com)';return;}
+  statusEl.style.background='#E3F2FD';statusEl.style.color='#1565C0';statusEl.textContent='🔄 Connecting...';
+  try{
+    const r=await xhrRequest(url+'/config.json','GET',null,8000);
+    if(!r.ok||!r.data||!r.data.hosp){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ No config found. Ask admin to log in once so config is uploaded.';return;}
+    Object.assign(cfg,r.data);
+    cfg.dbUrl=url;cfg.convexUrl=url;
+    if(!cfg.adminPwd) cfg.adminPwd='admin';
+    if(!cfg.admins||!cfg.admins.length) cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd,createdAt:Date.now()}];
+    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+    if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+    statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
+    statusEl.innerHTML='✅ Restored! <strong>'+cfg.hosp+'</strong> — '+cfg.employees.length+' employees.<br>Recovery code: <strong>'+(cfg.adminRecoveryCode||'not set')+'</strong><br><br>Tap below to continue →';
+    document.getElementById('setup-restore-panel').querySelector('button').textContent='✅ Continue to Login';
+    document.getElementById('setup-restore-panel').querySelector('button').onclick=()=>{showLanding();};
+  }catch(e){
+    statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
+    statusEl.textContent='❌ Error: '+e.message;
+  }
 }
 
 // ══════════════════════════════════════════════════════
