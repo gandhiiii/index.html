@@ -87,57 +87,70 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
 
 <!-- ══ SETUP ════════════════════════════════════════ -->
 <div id="view-setup" class="view active">
-  <div class="hdr"><h1>🏥 Hospital FM — First Setup</h1><p>Admin setup — one time only</p></div>
+  <div class="hdr"><h1>🏥 Hospital Facility Management</h1><p>Connect to your hospital — works on all devices</p></div>
   <div style="max-width:580px;margin:0 auto;padding:18px 13px 40px">
-    <div class="card">
-      <h2 style="font-size:16px;margin-bottom:5px">Setup your system</h2>
-      <p style="color:#607D8B;font-size:13px;margin-bottom:18px">Works on Android, iPhone &amp; Desktop. Live tracking via Firebase (free, no credit card).</p>
-      <div style="display:grid;gap:13px">
-        <div><label>Hospital Name</label><input id="s-hosp" type="text" placeholder="e.g. City General Hospital"></div>
-        <div><label>Admin Password (you will use this to login)</label><input id="s-pwd" type="password" placeholder="Set a password"></div>
-        <div><label>Admin WhatsApp Number (country code + number, no +)</label><input id="s-wa" type="tel" placeholder="e.g. 919876543210"></div>
-        <div><label>Admin Email (for email reports)</label><input id="s-email" type="email" placeholder="admin@hospital.com"></div>
-        <div style="background:#E8F5E9;border-radius:10px;padding:12px;border:2px solid #A5D6A7">
-          <label style="color:#2E7D32">🔴 LIVE TRACKING — Firebase Database URL (free)</label>
-          <input id="s-db" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-top:6px;border-color:#A5D6A7">
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button onclick="testDbConnection()" type="button" style="background:#2E7D32;border:none;color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex:1">🔌 Test Connection</button>
+    <!-- Employee path — shown FIRST, most common -->
+    <div class="card" style="border-left:4px solid #1565C0;background:#F5F9FF">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:28px">👷</span>
+        <div>
+          <div style="font-weight:900;font-size:16px;color:#0D1B4B">I'm an Employee</div>
+          <div style="font-size:12px;color:#607D8B">Already have a Firebase URL from your admin? Connect below.</div>
+        </div>
+      </div>
+      <div style="background:#E3F2FD;border-radius:12px;padding:14px">
+        <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:6px">🔗 Enter your Hospital's Firebase URL</div>
+        <p style="font-size:11px;color:#1565C0;margin-bottom:10px">Paste the Firebase URL shared by your admin. The app will connect and load everything automatically.</p>
+        <input id="setup-restore-url" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+        <button onclick="quickSetupRestore()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px">🔌 Connect &amp; Continue →</button>
+        <div id="setup-restore-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center"></div>
+      </div>
+    </div>
+    <!-- Admin path — collapsed by default -->
+    <div style="margin-top:10px">
+      <div onclick="toggleSetupAdmin()" style="text-align:center;font-size:12px;color:#90A4AE;cursor:pointer;padding:8px;font-weight:600;user-select:none">
+        🔐 I'm the Admin — First-time system setup (click to expand)
+      </div>
+      <div id="setup-admin-panel" style="display:none;margin-top:6px">
+        <div class="card">
+          <h2 style="font-size:16px;margin-bottom:5px">Admin Setup</h2>
+          <p style="color:#607D8B;font-size:13px;margin-bottom:18px">One-time setup. Works on Android, iPhone &amp; Desktop. Live tracking via Firebase (free, no credit card).</p>
+          <div style="display:grid;gap:13px">
+            <div><label>Hospital Name</label><input id="s-hosp" type="text" placeholder="e.g. City General Hospital"></div>
+            <div><label>Admin Password (you will use this to login)</label><input id="s-pwd" type="password" placeholder="Set a password"></div>
+            <div><label>Admin WhatsApp Number (country code + number, no +)</label><input id="s-wa" type="tel" placeholder="e.g. 919876543210"></div>
+            <div><label>Admin Email (for email reports)</label><input id="s-email" type="email" placeholder="admin@hospital.com"></div>
+            <div style="background:#E8F5E9;border-radius:10px;padding:12px;border:2px solid #A5D6A7">
+              <label style="color:#2E7D32">🔴 LIVE TRACKING — Firebase Database URL (free)</label>
+              <input id="s-db" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-top:6px;border-color:#A5D6A7">
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button onclick="testDbConnection()" type="button" style="background:#2E7D32;border:none;color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex:1">🔌 Test Connection</button>
+              </div>
+              <p id="fb-test-result" style="font-size:12px;margin-top:7px;display:none;padding:6px 10px;border-radius:7px;font-weight:700"></p>
+              <p style="font-size:11px;color:#388E3C;margin-top:6px;line-height:1.6">Get free URL at <strong>console.firebase.google.com</strong> — see guide below.</p>
+            </div>
           </div>
-          <p id="fb-test-result" style="font-size:12px;margin-top:7px;display:none;padding:6px 10px;border-radius:7px;font-weight:700"></p>
-          <p style="font-size:11px;color:#388E3C;margin-top:6px;line-height:1.6">Get free URL at <strong>console.firebase.google.com</strong> — see guide below (no terminal needed, 5 minutes).</p>
+          <div style="margin-top:18px"><button class="btn blue" onclick="saveSetup()">✓ Save and Continue</button></div>
+          <details style="margin-top:14px">
+            <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1565C0;padding:8px 0">📖 How to get your free Firebase URL (5 minutes, no terminal)</summary>
+            <div style="background:#F8F9FA;border-radius:8px;padding:12px;margin-top:8px;font-size:12px;line-height:2;color:#37474F">
+              <strong>Step 1:</strong> Go to <strong>console.firebase.google.com</strong> (login with Google account)<br>
+              <strong>Step 2:</strong> Click <strong>"Add project"</strong> → type any name e.g. <em>hospital-fm</em> → Continue → Continue → Create project<br>
+              <strong>Step 3:</strong> Click <strong>"Build"</strong> in left menu → <strong>"Realtime Database"</strong><br>
+              <strong>Step 4:</strong> Click <strong>"Create Database"</strong> → choose any location → select <strong>"Start in test mode"</strong> → Enable<br>
+              <strong>Step 5:</strong> You will see your database URL at the top — it looks like:<br>
+              <em style="color:#1565C0">https://hospital-fm-12345-default-rtdb.firebaseio.com</em><br>
+              Copy that URL and paste it in the field above<br><br>
+              <strong>Step 6:</strong> Tap <strong>"🔌 Test Connection"</strong> — it should say ✅ Connected<br><br>
+              <strong>⚠️ If live data is not showing on dashboard:</strong><br>
+              Go to Firebase Console → Realtime Database → <strong>Rules</strong> tab → Change rules to:<br>
+              <code style="background:#E8EAF6;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{"rules":{".read":true,".write":true}}</code>
+              Click <strong>Publish</strong>. Test mode rules expire after 30 days — this makes them permanent.<br><br>
+              <strong>✅ Free forever. No credit card. No terminal. No code. Works on iPhone, Android &amp; Desktop.</strong>
+            </div>
+          </details>
         </div>
       </div>
-      <div style="margin-top:18px"><button class="btn blue" onclick="saveSetup()">✓ Save and Continue</button></div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #E8EAF6">
-        <div onclick="toggleSetupRestore()" style="text-align:center;font-size:12px;color:#42A5F5;cursor:pointer;padding:4px;font-weight:700">
-          🔄 Already have a Firebase URL? Restore your settings here
-        </div>
-        <div id="setup-restore-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
-          <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:6px;text-align:center">🔗 Enter your Firebase URL</div>
-          <p style="font-size:11px;color:#1565C0;margin-bottom:10px">This will restore your hospital name, employees, and recovery code. Admin password is NOT stored in Firebase — use recovery code to reset it.</p>
-          <input id="setup-restore-url" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
-          <button onclick="quickSetupRestore()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:8px">🔄 Restore &amp; Continue</button>
-          <div id="setup-restore-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center"></div>
-        </div>
-      </div>
-      <details style="margin-top:14px">
-        <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1565C0;padding:8px 0">📖 How to get your free Firebase URL (5 minutes, no terminal)</summary>
-        <div style="background:#F8F9FA;border-radius:8px;padding:12px;margin-top:8px;font-size:12px;line-height:2;color:#37474F">
-          <strong>Step 1:</strong> Go to <strong>console.firebase.google.com</strong> (login with Google account)<br>
-          <strong>Step 2:</strong> Click <strong>"Add project"</strong> → type any name e.g. <em>hospital-fm</em> → Continue → Continue → Create project<br>
-          <strong>Step 3:</strong> Click <strong>"Build"</strong> in left menu → <strong>"Realtime Database"</strong><br>
-          <strong>Step 4:</strong> Click <strong>"Create Database"</strong> → choose any location → select <strong>"Start in test mode"</strong> → Enable<br>
-          <strong>Step 5:</strong> You will see your database URL at the top — it looks like:<br>
-          <em style="color:#1565C0">https://hospital-fm-12345-default-rtdb.firebaseio.com</em><br>
-          Copy that URL and paste it in the field above<br><br>
-          <strong>Step 6:</strong> Tap <strong>"🔌 Test Connection"</strong> — it should say ✅ Connected<br><br>
-          <strong>⚠️ If live data is not showing on dashboard:</strong><br>
-          Go to Firebase Console → Realtime Database → <strong>Rules</strong> tab → Change rules to:<br>
-          <code style="background:#E8EAF6;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{"rules":{".read":true,".write":true}}</code>
-          Click <strong>Publish</strong>. Test mode rules expire after 30 days — this makes them permanent.<br><br>
-          <strong>✅ Free forever. No credit card. No terminal. No code. Works on iPhone, Android &amp; Desktop.</strong>
-        </div>
-      </details>
     </div>
   </div>
 </div>
@@ -1721,30 +1734,36 @@ function toggleSetupRestore(){
   const p=document.getElementById('setup-restore-panel');
   if(p) p.style.display=p.style.display==='none'?'block':'none';
 }
+function toggleSetupAdmin(){
+  const p=document.getElementById('setup-admin-panel');
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+}
 
 async function quickSetupRestore(){
   const urlEl=document.getElementById('setup-restore-url');
   const statusEl=document.getElementById('setup-restore-status');
+  const btn=statusEl.parentElement.querySelector('button');
   const url=(urlEl.value||'').trim().replace(/\/+$/,'');
   statusEl.style.display='block';
   if(!url||!url.includes('firebaseio.com')){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ Enter a valid Firebase Database URL (ends in firebaseio.com)';return;}
   statusEl.style.background='#E3F2FD';statusEl.style.color='#1565C0';statusEl.textContent='🔄 Connecting...';
+  btn.disabled=true;
   try{
     const r=await xhrRequest(url+'/config.json','GET',null,8000);
-    if(!r.ok||!r.data||!r.data.hosp){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ No config found. Ask admin to log in once so config is uploaded.';return;}
+    if(!r.ok||!r.data||!r.data.hosp){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ No config found. Ask admin to log in once so config is uploaded.';btn.disabled=false;return;}
     Object.assign(cfg,r.data);
     cfg.dbUrl=url;cfg.convexUrl=url;
     if(!cfg.adminPwd) cfg.adminPwd='admin';
     if(!cfg.admins||!cfg.admins.length) cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd,createdAt:Date.now()}];
     localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
-    if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+    sessionStorage.setItem('HFM4_DB_URL',url);
     statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
-    statusEl.innerHTML='✅ Restored! <strong>'+cfg.hosp+'</strong> — '+cfg.employees.length+' employees.<br>Recovery code: <strong>'+(cfg.adminRecoveryCode||'not set')+'</strong><br><br>Tap below to continue →';
-    document.getElementById('setup-restore-panel').querySelector('button').textContent='✅ Continue to Login';
-    document.getElementById('setup-restore-panel').querySelector('button').onclick=()=>{showLanding();};
+    statusEl.innerHTML='✅ Connected to <strong>'+cfg.hosp+'</strong>! '+cfg.employees.length+' employees loaded.<br>Redirecting to login...';
+    setTimeout(()=>showLanding(),800);
   }catch(e){
     statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
     statusEl.textContent='❌ Error: '+e.message;
+    btn.disabled=false;
   }
 }
 
