@@ -3274,6 +3274,7 @@ async function importFromFirebase(){
     if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
     cfg.dbUrl=urlRaw;cfg.convexUrl=urlRaw;
     localStorage.setItem('HFM4_CFG',JSON.stringify(cfg)); // local save only — no Firebase push
+    sessionStorage.setItem('HFM4_DB_URL',urlRaw);
     initConvex();
     document.getElementById('import-panel').style.display='none';
     document.getElementById('import-db').value='';
@@ -3368,10 +3369,15 @@ async function pushConfigToFirebase(){
 
 function sendConfigWA(){
   const dbUrl=getDbUrl();
-  const msg=dbUrl
-    ? `🏥 *${cfg.hosp} — App Setup (New Method)*\n\n📱 *To set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this Firebase URL:\n\n*${dbUrl}*\n\n4. Tap *"🔌 Connect & Set Up"*\n5. Then login with your Employee ID & Password\n\n_Just the URL — no long setup code needed!_`
-    : `🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this setup code:\n\n${exportConfig()}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
-  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  const pageUrl=window.location.href.split('#')[0].split('?')[0];
+  if(dbUrl){
+    const autoUrl=pageUrl+'#url='+encodeURIComponent(dbUrl);
+    const msg=`🏥 *${cfg.hosp} — One-Tap Setup* 📱\n\nTap this link to auto-configure Hospital FM on your phone:\n${autoUrl}\n\nAfter opening, you'll see the login screen directly — just enter your Employee ID & Password.\n\n_No manual URL entry needed. Works on Android, iPhone & Desktop._`;
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  } else {
+    const msg=`🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this setup code:\n\n${exportConfig()}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -5565,6 +5571,18 @@ window.addEventListener('focus',function(){
   onAppFocus();
 });
 
+// Parse #url=... from URL hash for one-tap auto-config
+function parseAutoConfigUrl(){
+  try{
+    const hash=window.location.hash;
+    if(!hash||!hash.includes('url=')) return '';
+    const params=new URLSearchParams(hash.substring(1));
+    const raw=params.get('url');
+    if(raw&&raw.includes('firebaseio.com')) return raw.replace(/\/+$/,'');
+  }catch(e){}
+  return '';
+}
+
 // ══════════════════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════════════════
@@ -5594,6 +5612,26 @@ window.onload=function(){
       // Session no longer valid — clear it
       sessionStorage.removeItem('HFM4_ADMIN_SESSION');
     }
+  }
+  // Check for auto-config URL hash (#url=...) — enables one-tap setup via shared link
+  const hashUrl=parseAutoConfigUrl();
+  if(hashUrl && (!cfg.waNum||!cfg.employees||!cfg.employees.length)){
+    (async ()=>{
+      try{
+        const r=await xhrRequest(hashUrl+'/config.json','GET',null,8000);
+        if(r.ok&&r.data&&r.data.hosp&&Array.isArray(r.data.employees)){
+          Object.assign(cfg,r.data);
+          cfg.dbUrl=hashUrl;cfg.convexUrl=hashUrl;
+          if(!cfg.adminPwd) cfg.adminPwd='admin';
+          if(!cfg.admins||!cfg.admins.length) cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd,createdAt:Date.now()}];
+          localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+          sessionStorage.setItem('HFM4_DB_URL',hashUrl);
+          window.location.hash=''; // clean the hash
+        }
+      }catch(e){/* fall through to normal flow */ }
+      if(cfg.waNum) showEmpLogin();
+    })();
+    return;
   }
   // If localStorage has minimal/no config but we have a saved Firebase URL, try restoring
   if((!cfg.waNum||!cfg.employees||!cfg.employees.length) && !savedSession){
