@@ -3162,7 +3162,7 @@ function importConfig(){
     // Manual Convex URL overrides whatever was in the config code
     const manualUrl=manualDbUrl.trim();
     if(manualUrl){cfg.convexUrl=manualUrl;cfg.dbUrl=manualUrl;}
-    saveCfg();
+    saveCfgLocal(); // employee device — never push config to Firebase
     initConvex(); // refresh live badge
     document.getElementById('import-panel').style.display='none';
     if(document.getElementById('import-code')) document.getElementById('import-code').value='';
@@ -5282,7 +5282,10 @@ async function checkResetSignal(){
           // Admin reset happened after employee last saved — clear local data
           localStorage.removeItem('HFM4_'+d+'_'+currentEmp.loginId);
           statuses={};values={};problems=[];
-          buildChk();updateProgress();
+          // Only rebuild checklist if employee is on the checklist view
+          if(document.getElementById('view-checklist')&&document.getElementById('view-checklist').classList.contains('active')){
+            buildChk();updateCounts();
+          }
           showToast('Admin reset checklists — starting fresh ✓');
         }
       }
