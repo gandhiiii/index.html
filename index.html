@@ -2936,6 +2936,35 @@ function downloadExcel(){
   wsT['!cols']=[{wch:40},{wch:22},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:14}];
   XLSX.utils.book_append_sheet(wb,wsT,'Tasks');
 
+  // ── PURCHASE REQUESTS SHEET ───────────────────────
+  const allReqs=getRequests();
+  const reqEstTotal=allReqs.reduce((s,r)=>s+(r.estCost||0),0);
+  const reqApprovedEst=allReqs.filter(r=>r.status==='approved').reduce((s,r)=>s+(r.estCost||0),0);
+  const reqRows=[
+    ['PURCHASE REQUESTS — '+cfg.hosp,'','','','','','','','','','',''],
+    ['Report Date',repDate,'','','','','','','','','',''],
+    [''],
+    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending').length,'','',''],
+    ['Est. Total Spend','₹'+reqEstTotal.toLocaleString('en-IN'),'Approved Est. Spend','₹'+reqApprovedEst.toLocaleString('en-IN'),'','','','','','','',''],
+    [''],
+    ['#','Employee','Item / Material','Qty','Unit','Est. Cost (₹)','Reason','Urgency','Status','Reviewed By','Review Note','Submitted On'],
+  ];
+  let reqNo=1;
+  allReqs.forEach(r=>{
+    const d=new Date(r.createdAt);
+    const ds=d.toLocaleDateString('en-IN');
+    reqRows.push([
+      reqNo++, r.empName, r.itemName, r.qty, r.unit, r.estCost||'',
+      r.reason, r.urgency==='urgent'?'URGENT':'Normal',
+      r.status.toUpperCase(),
+      r.reviewedBy||'', r.reviewNote||'', ds
+    ]);
+  });
+  if(reqRows.length===7) reqRows.push(['No purchase requests found','','','','','','','','','','','']);
+  const wsR=XLSX.utils.aoa_to_sheet(reqRows);
+  wsR['!cols']=[{wch:6},{wch:18},{wch:24},{wch:8},{wch:8},{wch:14},{wch:28},{wch:10},{wch:12},{wch:18},{wch:22},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,wsR,'Purchase Requests');
+
   // Download
   const fname=cfg.hosp.replace(/\s+/g,'_')+'_Report_'+repDate+'.xlsx';
   XLSX.writeFile(wb,fname);
