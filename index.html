@@ -164,7 +164,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="login-sub" id="land-date"></div>
       <div style="display:grid;gap:10px;margin-top:10px">
         <button class="btn blue" style="padding:16px;font-size:16px" onclick="go('view-emp-login')">👷 Employee Login</button>
-        <button class="btn purple" style="padding:16px;font-size:16px" onclick="go('view-admin-login')">🔐 Admin Login</button>
+        <button class="btn purple" style="padding:16px;font-size:16px" onclick="openAdminLogin()">🔐 Admin Login</button>
       </div>
     </div>
   </div>
@@ -214,7 +214,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
       <!-- Small admin link at the bottom — not obvious to employees -->
       <div style="margin-top:16px;text-align:center;border-top:1px solid #F0F4F8;padding-top:14px">
-        <span onclick="go('view-admin-login')" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">Admin Access</span>
+        <span onclick="openAdminLogin()" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">Admin Access</span>
       </div>
     </div>
   </div>
@@ -226,7 +226,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <div class="login-box">
       <div class="login-logo">🔐</div>
       <div class="login-title">Admin Login</div>
-      <div class="login-sub">Enter your admin credentials</div>
+      <div class="login-sub" id="admin-login-sub">Enter your admin credentials</div>
       <div style="display:grid;gap:12px">
         <div><label>Username</label><input id="al-user" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')adminLogin()"></div>
         <div><label>Password</label><input id="al-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
@@ -1757,14 +1757,29 @@ async function quickSetupRestore(){
     if(!cfg.admins||!cfg.admins.length) cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd,createdAt:Date.now()}];
     localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
     sessionStorage.setItem('HFM4_DB_URL',url);
-    statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
-    statusEl.innerHTML='✅ Connected to <strong>'+cfg.hosp+'</strong>! '+cfg.employees.length+' employees loaded.<br>Redirecting to login...';
-    setTimeout(()=>showLanding(),800);
+    // Pre-load all existing data from Firebase so it's visible immediately
+    statusEl.innerHTML='✅ Connected to <strong>'+cfg.hosp+'</strong>! '+cfg.employees.length+' employees loaded.<br>Loading data...';
+    await preloadAllFromFirebase();
+    statusEl.innerHTML='✅ Connected to <strong>'+cfg.hosp+'</strong>!<br>Redirecting to login...';
+    setTimeout(()=>showLanding(),500);
   }catch(e){
     statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
     statusEl.textContent='❌ Error: '+e.message;
     btn.disabled=false;
   }
+}
+
+// After connecting to Firebase, pre-load all existing data so it's visible immediately
+async function preloadAllFromFirebase(){
+  const base=getDbUrl(); if(!base) return;
+  const fetches=[
+    fetchWithTimeout(base+'/purchaseReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d)) localStorage.setItem('HFM4_REQUESTS',JSON.stringify(d));}).catch(()=>{}),
+    fetchWithTimeout(base+'/matReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d)) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(d));}).catch(()=>{}),
+    fetchWithTimeout(base+'/tasks.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(a));}}).catch(()=>{}),
+    fetchWithTimeout(base+'/projects.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_PROJECTS',JSON.stringify(a));}}).catch(()=>{}),
+  ];
+  await Promise.all(fetches);
+  updateReqBadges();updateMatBadges();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1776,8 +1791,26 @@ function go(id){
   window.scrollTo(0,0);
 }
 
+function openAdminLogin(){
+  const sub=document.getElementById('admin-login-sub');
+  const url=getDbUrl();
+  if(sub){
+    if(url && cfg.adminRecoveryCode){
+      sub.innerHTML='🔗 Connected to '+cfg.hosp+'<br><span style="font-size:11px;color:#E65100">⚠️ Your admin password is not stored on this device. Use <strong>"Forgot Password?"</strong> below with your recovery code to set a new one.</span>';
+    } else if(url){
+      sub.textContent='🔗 Connected to '+cfg.hosp+' — enter your admin credentials';
+    } else {
+      sub.textContent='Enter your admin credentials';
+    }
+  }
+  go('view-admin-login');
+}
+
 function showLanding(){
-  showEmpLogin();
+  const d=document.getElementById('land-date');
+  if(d) d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('land-hosp').textContent='🏥 '+cfg.hosp;
+  go('view-landing');
 }
 
 // ══════════════════════════════════════════════════════
@@ -2023,7 +2056,14 @@ function showForgotPassword(){
 
 function toggleAdminRecovery(){
   const p=document.getElementById('admin-recovery-panel');
-  if(p) p.style.display=p.style.display==='none'?'block':'none';
+  if(!p) return;
+  const show=p.style.display==='none';
+  p.style.display=show?'block':'none';
+  if(show){
+    const url=getDbUrl();
+    const urlInput=document.getElementById('admin-recover-url');
+    if(urlInput && url) urlInput.value=url;
+  }
 }
 
 async function tryAdminRecovery(){
@@ -2046,10 +2086,12 @@ async function tryAdminRecovery(){
     if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
     cfg.dbUrl=url;cfg.convexUrl=url;
     localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
-    if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+    sessionStorage.setItem('HFM4_DB_URL',url);
+    await preloadAllFromFirebase();
     statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
     statusEl.innerHTML='✅ Restored! Hospital: <strong>'+cfg.hosp+'</strong> · '+cfg.employees.length+' employees loaded.<br><br>Your admin password was <strong>not</strong> restored (never stored in Firebase).<br>• Use <strong>"Forgot Password?"</strong> above with your recovery code to reset.<br>• Your recovery code is: <strong>'+(cfg.adminRecoveryCode||'not set — ask another admin')+'</strong><br><br><span style="font-size:11px">Write down the recovery code above. Close this panel and try logging in, or use Forgot Password.</span>';
-    if(document.getElementById('view-admin-login')) document.getElementById('view-admin-login').querySelector('.login-sub').textContent='✅ Settings restored! Use "Forgot Password?" to reset admin password.';
+    const alSub=document.getElementById('admin-login-sub');
+    if(alSub) alSub.textContent='✅ Settings restored! Use "Forgot Password?" to reset admin password.';
     setTimeout(()=>{statusEl.scrollIntoView({behavior:'smooth',block:'center'});},100);
   }catch(e){
     statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
@@ -5645,10 +5687,11 @@ window.onload=function(){
           if(!cfg.admins||!cfg.admins.length) cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd,createdAt:Date.now()}];
           localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
           sessionStorage.setItem('HFM4_DB_URL',hashUrl);
+          await preloadAllFromFirebase();
           window.location.hash=''; // clean the hash
         }
       }catch(e){/* fall through to normal flow */ }
-      if(cfg.waNum) showEmpLogin();
+      if(cfg.waNum) showLanding();
     })();
     return;
   }
