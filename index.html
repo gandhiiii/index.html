@@ -1777,6 +1777,8 @@ async function preloadAllFromFirebase(){
     fetchWithTimeout(base+'/matReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{const a=fbToArray(d);if(a.length) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(a));}).catch(()=>{}),
     fetchWithTimeout(base+'/tasks.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(a));}}).catch(()=>{}),
     fetchWithTimeout(base+'/projects.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_PROJECTS',JSON.stringify(a));}}).catch(()=>{}),
+    // Preload today's daily employee progress so admin dashboard shows all employees immediately
+    fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&!Array.isArray(d)){Object.values(d).filter(Boolean).forEach(emp=>{if(emp&&emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));});}}).catch(()=>{}),
   ];
   await Promise.all(fetches);
   updateReqBadges();updateMatBadges();
@@ -2109,11 +2111,11 @@ async function loadEmployeeHome(){
   document.getElementById('home-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('emp-name-display').textContent=currentEmp.name;
   document.getElementById('emp-id-display').textContent='ID: '+currentEmp.loginId;
-  // Check if shift already completed today — try Firebase first for cross-device sync
+  // Load from Firebase first (even mid-shift) so progress syncs across devices
   let saved=null;
   try{
     const fb=await fbGet('/daily/'+todayStr()+'/'+currentEmp.loginId);
-    if(fb&&fb.shiftCompleted){saved=fb;localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(fb));}
+    if(fb&&(fb.statuses||fb.shiftCompleted)){saved=fb;localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(fb));}
   }catch(e){}
   if(!saved) saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
   const done=saved&&saved.shiftCompleted;
