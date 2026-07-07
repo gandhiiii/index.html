@@ -3212,70 +3212,70 @@ function startLiveTracking(){
   let pollCount=0;
   async function poll(){
     pollCount++;
+    let anyOk=false;
+    // Fetch today's employee data from Firebase
     try{
-      // Fetch today's employee data from Firebase
       const r=await fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},8000);
-      if(!r.ok){
-        setFbStatus('error','Firebase error '+r.status+'. Go to Firebase Console → Realtime Database → Rules and set read/write to true.');
-        return;
+      if(r.ok){
+        const data=await r.json();
+        if(data&&typeof data==='object'&&!Array.isArray(data)){
+          const emps=Object.values(data).filter(Boolean);
+          emps.forEach(emp=>{
+            if(emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));
+          });
+          setFbStatus('ok','Live · '+emps.length+' employee(s) synced · Last update: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+          renderAdmin();anyOk=true;
+        } else {setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));anyOk=true;}
       }
-      const data=await r.json();
-      if(data&&typeof data==='object'&&!Array.isArray(data)){
-        const emps=Object.values(data).filter(Boolean);
-        emps.forEach(emp=>{
-          if(emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));
-        });
-        setFbStatus('ok','Live · '+emps.length+' employee(s) synced · Last update: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
-        renderAdmin();
-      } else {
-        setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
-      }
-      // Sync tasks — always replace local with Firebase truth (catches done + deleted tasks)
+    }catch(e){/* daily fetch failed — non-blocking */}
+    // Sync tasks — always replace local with Firebase truth
+    try{
       const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
       if(tr.ok){
         const tasks=await tr.json();
         if(tasks&&typeof tasks==='object'&&!Array.isArray(tasks)){
-          const arr=Object.values(tasks).filter(Boolean);
-          localStorage.setItem('HFM4_TASKS',JSON.stringify(arr)); // replace even if empty
+          localStorage.setItem('HFM4_TASKS',JSON.stringify(Object.values(tasks).filter(Boolean)));
         } else if(!tasks){
-          localStorage.setItem('HFM4_TASKS','[]'); // Firebase returned null = all tasks gone
+          localStorage.setItem('HFM4_TASKS','[]');
         }
-        // Sync purchase requests from Firebase — merge by ID to catch status changes
-        const pr=await fetchWithTimeout(base+'/purchaseReqs.json',{},5000);
-        if(pr.ok){
-          const preqs=fbToArray(await pr.json());
-          const localReqs=getRequests();
-          const merged=preqs.length?mergeReqArrays(preqs,localReqs):localReqs;
-          localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));
-          if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)) fbPut('/purchaseReqs',merged).catch(()=>{});
-          const rTab=document.getElementById('tab-requests');
-          if(rTab&&rTab.style.display!=='none') renderRequestsAdmin();
-          updateReqBadges();
-        }
-        // Sync material requests from Firebase — merge by ID
-        const mr=await fetchWithTimeout(base+'/matReqs.json',{},5000);
-        if(mr.ok){
-          const mreqs=fbToArray(await mr.json());
-          const localMat=getMatReqs();
-          const merged=mreqs.length?mergeReqArrays(mreqs,localMat):localMat;
-          localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));
-          if(merged.length!==localMat.length||JSON.stringify(merged)!==JSON.stringify(localMat)) fbPut('/matReqs',merged).catch(()=>{});
-          const mTab=document.getElementById('tab-materials');
-          if(mTab&&mTab.style.display!=='none') renderMatAdmin();
-          updateMatBadges();
-        }
-        // Refresh Tasks tab if it is currently visible
-        const tasksTab=document.getElementById('tab-tasks');
-        if(tasksTab&&tasksTab.style.display!=='none') renderAdminTasks();
-        // Refresh Projects tab if visible
-        const projTab=document.getElementById('tab-proj');
-        if(projTab&&projTab.style.display!=='none'){renderAdminProjects();renderProjectKPIs();}
-        // Always update project KPIs in dashboard
-        renderProjectKPIs();
+        anyOk=true;
       }
-    }catch(e){
-      setFbStatus('error','Cannot reach Firebase: '+e.message+'. Check internet connection and Firebase URL.');
-    }
+    }catch(e){/* tasks fetch failed — non-blocking */}
+    // Sync purchase requests from Firebase — merge by ID
+    try{
+      const pr=await fetchWithTimeout(base+'/purchaseReqs.json',{},5000);
+      if(pr.ok){
+        const preqs=fbToArray(await pr.json());
+        const localReqs=getRequests();
+        const merged=preqs.length?mergeReqArrays(preqs,localReqs):localReqs;
+        if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)){localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));fbPut('/purchaseReqs',merged).catch(()=>{});}
+        const rTab=document.getElementById('tab-requests');
+        if(rTab&&rTab.style.display!=='none') renderRequestsAdmin();
+        updateReqBadges();anyOk=true;
+      }
+    }catch(e){/* purchaseReqs fetch failed — non-blocking */}
+    // Sync material requests from Firebase — merge by ID
+    try{
+      const mr=await fetchWithTimeout(base+'/matReqs.json',{},5000);
+      if(mr.ok){
+        const mreqs=fbToArray(await mr.json());
+        const localMat=getMatReqs();
+        const merged=mreqs.length?mergeReqArrays(mreqs,localMat):localMat;
+        if(merged.length!==localMat.length||JSON.stringify(merged)!==JSON.stringify(localMat)){localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));fbPut('/matReqs',merged).catch(()=>{});}
+        const mTab=document.getElementById('tab-materials');
+        if(mTab&&mTab.style.display!=='none') renderMatAdmin();
+        updateMatBadges();anyOk=true;
+      }
+    }catch(e){/* matReqs fetch failed — non-blocking */}
+    // Refresh visible tabs
+    try{
+      const tasksTab=document.getElementById('tab-tasks');
+      if(tasksTab&&tasksTab.style.display!=='none') renderAdminTasks();
+      const projTab=document.getElementById('tab-proj');
+      if(projTab&&projTab.style.display!=='none'){renderAdminProjects();renderProjectKPIs();}
+      renderProjectKPIs();
+    }catch(e){/* render failed — non-blocking */}
+    if(!anyOk) setFbStatus('warn','Checking Firebase... no data yet. Ensure employees have logged in and Firebase Rules allow read/write.');
   }
   poll();
   _pollTimer=setInterval(poll,5000);
