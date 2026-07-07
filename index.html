@@ -2368,17 +2368,18 @@ function saveProgress(extra={}){
   const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
   const data={...saved,statuses,values,problems,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
   localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
-  // Push to Firebase for live admin tracking
+  // Push to Firebase for live admin tracking — use PUT (more reliable than PATCH on mobile)
   if(getDbUrl()){
-    fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
+    fbPut('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
       .then(()=>updateEmpSyncBadge('ok'))
       .catch(e=>{
-        updateEmpSyncBadge('error',e.message);
+        updateEmpSyncBadge('error','Sync failed: '+e.message+'. Retrying...');
+        showToast('⚠️ Sync failed. Will retry...','#C62828');
         // Retry once after 5 seconds (handles brief mobile network blips)
         setTimeout(()=>{
-          fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
-            .then(()=>updateEmpSyncBadge('ok'))
-            .catch(()=>{});
+          fbPut('/daily/'+todayStr()+'/'+currentEmp.loginId,data)
+            .then(()=>{updateEmpSyncBadge('ok');showToast('✅ Synced to admin','#2E7D32');})
+            .catch(()=>{updateEmpSyncBadge('error','Still failing. Check Firebase Rules → set .write: true');});
         },5000);
       });
   } else {
@@ -3138,17 +3139,13 @@ function fetchWithTimeout(url,options,ms){
 async function fbPatch(path,data){
   const base=getDbUrl();
   if(!base){console.warn('Firebase URL not set — data saved locally only');return;}
-  try{
-    const r=await xhrRequest(base+path+'.json','PATCH',data,8000);
-    if(!r.ok) console.warn('FB PATCH failed:',r.status,'Path:',path);
-  }catch(e){console.warn('FB PATCH',path,'failed:',e.message);}
+  const r=await xhrRequest(base+path+'.json','PATCH',data,8000);
+  if(!r.ok){const err=new Error('HTTP '+r.status);err.status=r.status;throw err;}
 }
 async function fbPut(path,data){
   const base=getDbUrl();if(!base)return;
-  try{
-    const r=await xhrRequest(base+path+'.json','PUT',data,8000);
-    if(!r.ok) console.warn('FB PUT failed:',r.status);
-  }catch(e){console.warn('FB PUT',path,'failed:',e.message);}
+  const r=await xhrRequest(base+path+'.json','PUT',data,8000);
+  if(!r.ok){const err=new Error('HTTP '+r.status);err.status=r.status;throw err;}
 }
 async function fbGet(path){
   const base=getDbUrl();if(!base)return null;
@@ -4663,7 +4660,7 @@ function addCustomItem(){
   cfg.customItems.push({id:Date.now().toString(),sectionIdx:secIdx,text,unit,mn:mn!==''?parseFloat(mn):null,mx:mx!==''?parseFloat(mx):null});
   saveCfg();
   // Push to Firebase so employees get it
-  fbPut('/customItems',cfg.customItems);
+  fbPut('/customItems',cfg.customItems).catch(()=>{});
   document.getElementById('ci-text').value='';
   document.getElementById('ci-unit').value='';
   document.getElementById('ci-min').value='';
@@ -4674,7 +4671,7 @@ function addCustomItem(){
 
 function removeCustomItem(id){
   cfg.customItems=(cfg.customItems||[]).filter(i=>i.id!==id);
-  saveCfg();fbPut('/customItems',cfg.customItems);
+  saveCfg();fbPut('/customItems',cfg.customItems).catch(()=>{});
   renderCustomItems();showToast2('Item removed');
 }
 
@@ -5618,7 +5615,7 @@ function onAppFocus(){
     if(getDbUrl()){
       const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
       if(saved){
-        fbPatch('/daily/'+todayStr()+'/'+currentEmp.loginId,saved)
+        fbPut('/daily/'+todayStr()+'/'+currentEmp.loginId,saved)
           .then(()=>updateEmpSyncBadge('ok'))
           .catch(e=>updateEmpSyncBadge('error',e.message));
       }
