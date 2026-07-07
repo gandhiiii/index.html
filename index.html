@@ -1773,8 +1773,8 @@ async function quickSetupRestore(){
 async function preloadAllFromFirebase(){
   const base=getDbUrl(); if(!base) return;
   const fetches=[
-    fetchWithTimeout(base+'/purchaseReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d)) localStorage.setItem('HFM4_REQUESTS',JSON.stringify(d));}).catch(()=>{}),
-    fetchWithTimeout(base+'/matReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(Array.isArray(d)) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(d));}).catch(()=>{}),
+    fetchWithTimeout(base+'/purchaseReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{const a=fbToArray(d);if(a.length) localStorage.setItem('HFM4_REQUESTS',JSON.stringify(a));}).catch(()=>{}),
+    fetchWithTimeout(base+'/matReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{const a=fbToArray(d);if(a.length) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(a));}).catch(()=>{}),
     fetchWithTimeout(base+'/tasks.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(a));}}).catch(()=>{}),
     fetchWithTimeout(base+'/projects.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_PROJECTS',JSON.stringify(a));}}).catch(()=>{}),
   ];
@@ -2199,8 +2199,8 @@ async function empPoll(){
       }
       _empKnownTaskIds=myTasks.map(t=>t.id);
     }
-    const ci=await fbGet('/customItems');
-    if(ci&&Array.isArray(ci)){cfg.customItems=ci;saveCfgLocal();}
+    const ci=fbToArray(await fbGet('/customItems'));
+    if(ci.length){cfg.customItems=ci;saveCfgLocal();}
     const ec=await fbGet('/empChecklists');
     if(ec&&typeof ec==='object'){cfg.empChecklists=ec;saveCfgLocal();}
     // Sync projects — detect NEW assignments
@@ -2220,16 +2220,16 @@ async function empPoll(){
     }
     _empKnownProjIds=myProjs.map(p=>p.id);
     // Sync purchase requests from Firebase — merge by ID to catch status changes
-    const fbReqs=await fbGet('/purchaseReqs');
-    if(Array.isArray(fbReqs)){
+    const fbReqs=fbToArray(await fbGet('/purchaseReqs'));
+    if(fbReqs.length){
       const localReqs=getRequests();
       const merged=mergeReqArrays(fbReqs,localReqs);
       localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));
       if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)) fbPut('/purchaseReqs',merged).catch(()=>{});
     }
     // Sync material requests from Firebase — merge by ID
-    const fbMat=await fbGet('/matReqs');
-    if(Array.isArray(fbMat)){
+    const fbMat=fbToArray(await fbGet('/matReqs'));
+    if(fbMat.length){
       const localMat=getMatReqs();
       const merged=mergeReqArrays(fbMat,localMat);
       localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));
@@ -3161,6 +3161,13 @@ async function fbDelete(path){
   try{await xhrRequest(base+path+'.json','DELETE',null,5000);}
   catch(e){console.warn('FB DELETE',path,'failed:',e.message);}
 }
+// Firebase REST API stores arrays as objects with numeric keys.
+// This helper normalizes back to a JS array regardless of storage format.
+function fbToArray(obj){
+  if(Array.isArray(obj)) return obj;
+  if(obj&&typeof obj==='object') return Object.values(obj).filter(Boolean);
+  return [];
+}
 
 function updateLiveBadge(on){
   const b=document.getElementById('live-badge');
@@ -3237,9 +3244,9 @@ function startLiveTracking(){
         // Sync purchase requests from Firebase — merge by ID to catch status changes
         const pr=await fetchWithTimeout(base+'/purchaseReqs.json',{},5000);
         if(pr.ok){
-          const preqs=await pr.json();
+          const preqs=fbToArray(await pr.json());
           const localReqs=getRequests();
-          const merged=Array.isArray(preqs)?mergeReqArrays(preqs,localReqs):localReqs;
+          const merged=preqs.length?mergeReqArrays(preqs,localReqs):localReqs;
           localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));
           if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)) fbPut('/purchaseReqs',merged).catch(()=>{});
           const rTab=document.getElementById('tab-requests');
@@ -3249,9 +3256,9 @@ function startLiveTracking(){
         // Sync material requests from Firebase — merge by ID
         const mr=await fetchWithTimeout(base+'/matReqs.json',{},5000);
         if(mr.ok){
-          const mreqs=await mr.json();
+          const mreqs=fbToArray(await mr.json());
           const localMat=getMatReqs();
-          const merged=Array.isArray(mreqs)?mergeReqArrays(mreqs,localMat):localMat;
+          const merged=mreqs.length?mergeReqArrays(mreqs,localMat):localMat;
           localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));
           if(merged.length!==localMat.length||JSON.stringify(merged)!==JSON.stringify(localMat)) fbPut('/matReqs',merged).catch(()=>{});
           const mTab=document.getElementById('tab-materials');
