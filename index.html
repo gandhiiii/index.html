@@ -279,7 +279,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn orange" id="btn-tasks" onclick="openMyTasks()" style="font-size:15px">📌 My Assigned Tasks</button>
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openMyProjects()">🏗️ My Projects</button>
     <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
-    <button class="btn" style="background:#01579B;color:#fff;font-size:15px;position:relative" onclick="openMatRequests()">📦 Material Request<span id="mat-emp-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -608,70 +607,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
-<!-- ══ MATERIAL REQUEST (EMPLOYEE) ════════════════════ -->
-<div id="view-mat-requests" class="view">
-  <div class="hdr">
-    <div class="hdr-row">
-      <div><h1>📦 Material Request</h1><p id="mat-req-hdr-date"></p></div>
-      <button class="hbtn" onclick="go('view-home')">← Home</button>
-    </div>
-  </div>
-  <div class="wrap" style="padding-bottom:20px">
-
-    <!-- Submit form -->
-    <div class="card" style="border-left:4px solid #01579B;background:#E1F5FE">
-      <h3 style="font-size:14px;font-weight:800;color:#01579B;margin-bottom:12px">📋 New Material Request</h3>
-      <div style="display:grid;gap:10px">
-        <div>
-          <label>Item / Material Name *</label>
-          <input id="mr-item" type="text" placeholder="e.g. PVC Pipe 1 inch, Paint (White), Nut-Bolt M8">
-        </div>
-        <div>
-          <label>Category *</label>
-          <select id="mr-cat">
-            <option value="">— Select Category —</option>
-            <option value="Consumable">🔩 Consumable / General Item</option>
-            <option value="Spare Part">⚙️ Spare Part / Component</option>
-            <option value="Tool">🔧 Tool / Equipment</option>
-            <option value="Electrical">⚡ Electrical Material</option>
-            <option value="Plumbing">🚰 Plumbing Material</option>
-            <option value="Civil">🧱 Civil / Construction</option>
-            <option value="Chemical">🧪 Chemical / Cleaning</option>
-            <option value="Safety">🦺 Safety / PPE</option>
-            <option value="Other">📦 Other</option>
-          </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label>Quantity *</label><input id="mr-qty" type="number" min="1" placeholder="e.g. 10"></div>
-          <div><label>Unit</label><input id="mr-unit" type="text" placeholder="pcs / kg / ltr / mtr"></div>
-        </div>
-        <div>
-          <label>Estimated Cost (₹) <span style="color:#90A4AE;font-weight:400">(if known)</span></label>
-          <input id="mr-cost" type="number" min="0" placeholder="e.g. 2500">
-        </div>
-        <div>
-          <label>Purpose / Project *</label>
-          <textarea id="mr-reason" rows="2" placeholder="Where will this material be used? Which area or project?"></textarea>
-        </div>
-        <div>
-          <label>Priority</label>
-          <select id="mr-priority">
-            <option value="normal">🟡 Normal</option>
-            <option value="urgent">🔴 Urgent — Required ASAP</option>
-          </select>
-        </div>
-        <button onclick="submitMatRequest()" style="background:#01579B;border:none;color:#fff;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;width:100%">📤 Submit Material Request</button>
-      </div>
-    </div>
-
-    <!-- My requests list -->
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px;color:#01579B">📋 My Material Requests</div>
-      <div id="emp-mat-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div></div>
-    </div>
-  </div>
-</div>
-
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -714,7 +649,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('proj',this)">🏗️ Projects</div>
       <div class="tab" onclick="admTab('chk',this)">📋 Checklists</div>
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
-      <div class="tab" onclick="admTab('materials',this)" style="position:relative">📦 Materials<span id="adm-mat-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
@@ -820,37 +754,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="dash-projects" style="padding:0 13px 13px"></div>
       </div>
-      <!-- MATERIAL REQUESTS SNAPSHOT -->
-      <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #01579B">
-        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:800;font-size:14px">📦 Material Requests</span>
-          <button onclick="admTab('materials',document.querySelector('[onclick*=admTab]'))" style="background:#E1F5FE;border:none;color:#01579B;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px" onclick="admTab('materials',this)">View All →</button>
-        </div>
-        <div style="padding:10px 13px;display:flex;gap:8px;flex-wrap:wrap">
-          <div style="flex:1;min-width:60px;background:#FFF3E0;border-radius:8px;padding:8px;text-align:center">
-            <div id="dash-mat-pending" style="font-size:20px;font-weight:900;color:#E65100">0</div>
-            <div style="font-size:9px;font-weight:700;color:#E65100">PENDING</div>
-          </div>
-          <div style="flex:1;min-width:60px;background:#E8F5E9;border-radius:8px;padding:8px;text-align:center">
-            <div id="dash-mat-permitted" style="font-size:20px;font-weight:900;color:#2E7D32">0</div>
-            <div style="font-size:9px;font-weight:700;color:#2E7D32">PERMITTED</div>
-          </div>
-          <div style="flex:1;min-width:60px;background:#E0F2F1;border-radius:8px;padding:8px;text-align:center">
-            <div id="dash-mat-purchased" style="font-size:20px;font-weight:900;color:#00695C">0</div>
-            <div style="font-size:9px;font-weight:700;color:#00695C">PURCHASED</div>
-          </div>
-          <div style="flex:1;min-width:60px;background:#FFEBEE;border-radius:8px;padding:8px;text-align:center">
-            <div id="dash-mat-rejected" style="font-size:20px;font-weight:900;color:#C62828">0</div>
-            <div style="font-size:9px;font-weight:700;color:#C62828">REJECTED</div>
-          </div>
-        </div>
-        <div style="padding:4px 13px 10px;display:flex;gap:12px;flex-wrap:wrap">
-          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#01579B">Est:</span> <span id="dash-mat-est">₹0</span></div>
-          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#00695C">Actual:</span> <span id="dash-mat-actual">₹0</span></div>
-          <div style="font-size:12px;color:#C62828" id="dash-mat-urgent-wrap" style="display:none"><span id="dash-mat-urgent">0</span> 🔴 Urgent</div>
-        </div>
-        <div id="dash-mat-pending-list" style="padding:0 13px 13px"></div>
-      </div>
       <!-- PURCHASE REQUESTS SNAPSHOT -->
       <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #6A1B9A">
         <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
@@ -870,6 +773,10 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             <div id="dash-req-rejected" style="font-size:22px;font-weight:900;color:#C62828">0</div>
             <div style="font-size:10px;font-weight:700;color:#C62828">REJECTED</div>
           </div>
+        </div>
+        <div style="padding:4px 13px 10px;display:flex;gap:12px;flex-wrap:wrap">
+          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#6A1B9A">Est:</span> <span id="dash-req-est">₹0</span></div>
+          <div style="font-size:12px;color:#555"><span style="font-weight:700;color:#00695C">Actual:</span> <span id="dash-req-actual">₹0</span></div>
         </div>
         <div id="dash-req-list" style="padding:0 13px 13px"></div>
       </div>
@@ -1143,34 +1050,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </select>
         </div>
         <div id="emp-item-list" style="padding:13px"></div>
-      </div>
-    </div>
-
-    <!-- MATERIALS -->
-    <div id="tab-materials" style="display:none">
-      <!-- Stats row -->
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">
-        <div class="kpi" style="background:#E3F2FD"><div class="num" id="mat-kpi-pending" style="color:#01579B">0</div><div class="lbl">Pending</div></div>
-        <div class="kpi" style="background:#E8F5E9"><div class="num" id="mat-kpi-permitted" style="color:#2E7D32">0</div><div class="lbl">Permitted</div></div>
-        <div class="kpi" style="background:#E0F2F1"><div class="num" id="mat-kpi-purchased" style="color:#00695C">0</div><div class="lbl">Purchased</div></div>
-        <div class="kpi" style="background:#FFEBEE"><div class="num" id="mat-kpi-rejected" style="color:#C62828">0</div><div class="lbl">Rejected</div></div>
-      </div>
-      <!-- Spend summary -->
-      <div class="card" style="background:linear-gradient(135deg,#01579B,#0288D1);color:#fff;padding:12px 16px;display:flex;gap:16px;flex-wrap:wrap">
-        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">EST. TOTAL SPEND</div><div id="mat-est-total" style="font-size:20px;font-weight:900">₹0</div></div>
-        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">ACTUAL SPEND</div><div id="mat-actual-total" style="font-size:20px;font-weight:900">₹0</div></div>
-        <div style="flex:1;min-width:120px"><div style="font-size:10px;opacity:.8;font-weight:700">URGENT ITEMS</div><div id="mat-urgent-count" style="font-size:20px;font-weight:900">0</div></div>
-      </div>
-      <!-- Filter + List -->
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:10px 13px;border-bottom:1px solid #F0F4F8;display:flex;gap:6px;flex-wrap:wrap">
-          <button onclick="filterMat('all',this)" class="mat-filter-btn" style="background:#01579B;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
-          <button onclick="filterMat('pending',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>
-          <button onclick="filterMat('permitted',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Permitted</button>
-          <button onclick="filterMat('purchased',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🛒 Purchased</button>
-          <button onclick="filterMat('rejected',this)" class="mat-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">❌ Rejected</button>
-        </div>
-        <div id="adm-mat-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No material requests yet.</div></div>
       </div>
     </div>
 
@@ -1774,14 +1653,13 @@ async function preloadAllFromFirebase(){
   const base=getDbUrl(); if(!base) return;
   const fetches=[
     fetchWithTimeout(base+'/purchaseReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{const a=fbToArray(d);if(a.length) localStorage.setItem('HFM4_REQUESTS',JSON.stringify(a));}).catch(()=>{}),
-    fetchWithTimeout(base+'/matReqs.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{const a=fbToArray(d);if(a.length) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(a));}).catch(()=>{}),
     fetchWithTimeout(base+'/tasks.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_TASKS',JSON.stringify(a));}}).catch(()=>{}),
     fetchWithTimeout(base+'/projects.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){const a=Object.values(d).filter(Boolean);if(a.length) localStorage.setItem('HFM4_PROJECTS',JSON.stringify(a));}}).catch(()=>{}),
     // Preload today's daily employee progress so admin dashboard shows all employees immediately
     fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},5000).then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&!Array.isArray(d)){Object.values(d).filter(Boolean).forEach(emp=>{if(emp&&emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));});}}).catch(()=>{}),
   ];
   await Promise.all(fetches);
-  updateReqBadges();updateMatBadges();
+  updateReqBadges();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1868,7 +1746,6 @@ function adminLogin(){
     fbPut('/config',pubCfg).catch(()=>{});
   }
   updateReqBadges();
-  updateMatBadges();
 }
 
 function logout(){
@@ -2128,7 +2005,6 @@ async function loadEmployeeHome(){
   _empPollTimer=setInterval(empPoll,15000);
   empPoll(); // run immediately
   updateReqBadges();
-  updateMatBadges();
   go('view-home');
 }
 
@@ -2229,17 +2105,8 @@ async function empPoll(){
       localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));
       if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)) fbPut('/purchaseReqs',merged).catch(()=>{});
     }
-    // Sync material requests from Firebase — merge by ID
-    const fbMat=fbToArray(await fbGet('/matReqs'));
-    if(fbMat.length){
-      const localMat=getMatReqs();
-      const merged=mergeReqArrays(fbMat,localMat);
-      localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));
-      if(merged.length!==localMat.length||JSON.stringify(merged)!==JSON.stringify(localMat)) fbPut('/matReqs',merged).catch(()=>{});
-    }
-    updateReqBadges();updateMatBadges();
+    updateReqBadges();
     if(document.getElementById('view-my-requests').classList.contains('active')) renderMyRequests();
-    if(document.getElementById('view-mat-requests').classList.contains('active')) renderEmpMatList();
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -2542,7 +2409,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','materials','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -2551,7 +2418,6 @@ function admTab(tab,el){
   if(tab==='proj') initProjectTab();
   if(tab==='chk') renderChecklistAdmin();
   if(tab==='staff'){renderStaff();renderAdminList();}
-  if(tab==='materials'){_matFilter='all';document.querySelectorAll('.mat-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});const ab=document.querySelector('.mat-filter-btn');if(ab){ab.style.background='#01579B';ab.style.color='#fff';}renderMatAdmin();}
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
@@ -2656,7 +2522,6 @@ function renderAdmin(){
   renderProjectKPIs();
   renderEmpProjectKPIs();
   renderDashRequests();
-  renderDashMaterials();
   renderReminderList();
 }
 
@@ -2668,6 +2533,8 @@ function renderDashRequests(){
   const pel=document.getElementById('dash-req-pending');if(pel)pel.textContent=pending.length;
   const ael=document.getElementById('dash-req-approved');if(ael)ael.textContent=approved.length;
   const rel=document.getElementById('dash-req-rejected');if(rel)rel.textContent=rejected.length;
+  const estEl=document.getElementById('dash-req-est');if(estEl)estEl.textContent='₹'+reqs.reduce((s,r)=>s+(r.estCost||0),0).toLocaleString('en-IN');
+  const actEl=document.getElementById('dash-req-actual');if(actEl)actEl.textContent='₹'+approved.reduce((s,r)=>s+(r.estCost||0),0).toLocaleString('en-IN');
   const listEl=document.getElementById('dash-req-list');if(!listEl)return;
   if(!pending.length){listEl.innerHTML='<div style="text-align:center;color:#2E7D32;font-size:13px;padding:6px 0">✅ No pending requests</div>';return;}
   listEl.innerHTML=pending.slice(0,4).map(r=>`
@@ -3254,19 +3121,6 @@ function startLiveTracking(){
         updateReqBadges();anyOk=true;
       }
     }catch(e){/* purchaseReqs fetch failed — non-blocking */}
-    // Sync material requests from Firebase — merge by ID
-    try{
-      const mr=await fetchWithTimeout(base+'/matReqs.json',{},5000);
-      if(mr.ok){
-        const mreqs=fbToArray(await mr.json());
-        const localMat=getMatReqs();
-        const merged=mreqs.length?mergeReqArrays(mreqs,localMat):localMat;
-        if(merged.length!==localMat.length||JSON.stringify(merged)!==JSON.stringify(localMat)){localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(merged));fbPut('/matReqs',merged).catch(()=>{});}
-        const mTab=document.getElementById('tab-materials');
-        if(mTab&&mTab.style.display!=='none') renderMatAdmin();
-        updateMatBadges();anyOk=true;
-      }
-    }catch(e){/* matReqs fetch failed — non-blocking */}
     // Refresh visible tabs
     try{
       const tasksTab=document.getElementById('tab-tasks');
@@ -3957,351 +3811,6 @@ function _saveProjectState(p){
   const idx=projects.findIndex(x=>x.id===p.id);
   if(idx>=0) projects[idx]=p;
   saveProjects(projects);
-}
-
-// ══════════════════════════════════════════════════════
-// MATERIAL REQUEST & BUY PERMISSION
-// ══════════════════════════════════════════════════════
-function getMatReqs(){
-  try{return JSON.parse(localStorage.getItem('HFM4_MAT_REQS')||'[]');}catch(e){return[];}
-}
-function saveMatReqs(arr){
-  try{
-    localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(arr));
-  }catch(e){console.error('saveMatReqs localStorage error:',e);showToast('❌ Storage error: '+e.message,true);return;}
-  if(getDbUrl()) fbPut('/matReqs',arr).catch(e=>console.error('saveMatReqs fbPut error:',e));
-  updateMatBadges();
-}
-
-function nextBPNumber(){
-  const all=getMatReqs();
-  const yr=new Date().getFullYear();
-  const existing=all.filter(r=>r.bpNo&&r.bpNo.startsWith('BP-'+yr+'-')).map(r=>parseInt(r.bpNo.split('-')[2])||0);
-  const next=(existing.length?Math.max(...existing):0)+1;
-  return 'BP-'+yr+'-'+String(next).padStart(3,'0');
-}
-
-function updateMatBadges(){
-  const all=getMatReqs();
-  const pending=all.filter(r=>r.status==='pending').length;
-  // Admin badge
-  const ab=document.getElementById('adm-mat-badge');
-  if(ab){ab.style.display=pending>0?'inline-block':'none';ab.textContent=pending;}
-  // Employee badge — permitted (awaiting purchase) items
-  if(currentEmp){
-    const myAction=all.filter(r=>r.empLoginId===currentEmp.loginId&&r.status==='permitted'&&!r.empSeen).length;
-    const eb=document.getElementById('mat-emp-badge');
-    if(eb){eb.style.display=myAction>0?'inline-block':'none';eb.textContent=myAction;}
-  }
-}
-
-// ── EMPLOYEE SIDE ──────────────────────────────────────
-function openMatRequests(){
-  const d=document.getElementById('mat-req-hdr-date');
-  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-  renderEmpMatList();
-  go('view-mat-requests');
-}
-
-function submitMatRequest(){
-  const item=(document.getElementById('mr-item').value||'').trim();
-  const cat=document.getElementById('mr-cat').value;
-  const qty=parseFloat(document.getElementById('mr-qty').value)||0;
-  const unit=(document.getElementById('mr-unit').value||'').trim()||'pcs';
-  const cost=parseFloat(document.getElementById('mr-cost').value)||0;
-  const reason=(document.getElementById('mr-reason').value||'').trim();
-  const priority=document.getElementById('mr-priority').value||'normal';
-  if(!item){showToast('⚠️ Enter item/material name');return;}
-  if(!cat){showToast('⚠️ Select a category');return;}
-  if(!qty||qty<1){showToast('⚠️ Enter valid quantity');return;}
-  if(!reason){showToast('⚠️ Enter purpose/project');return;}
-  const req={
-    id:'mat_'+Date.now()+'_'+Math.floor(Math.random()*9000+1000),
-    empLoginId:currentEmp.loginId, empName:currentEmp.name,
-    itemName:item, category:cat, qty, unit,
-    estCost:cost, actualCost:null,
-    reason, priority,
-    status:'pending',  // pending → permitted → purchased  OR  rejected
-    bpNo:null,
-    permittedBy:null, permittedAt:null, permittedNote:'',
-    purchasedAt:null, purchaseVendor:'', purchaseNote:'', actualCost:null,
-    rejectedBy:null, rejectedAt:null, rejectNote:'',
-    empSeen:true,
-    createdAt:Date.now()
-  };
-  console.log('submitMatRequest: saving req',req);
-  const all=getMatReqs();
-  console.log('submitMatRequest: existing data count =',all.length,'statuses:',all.map(r=>r.status));
-  all.unshift(req);
-  saveMatReqs(all);
-  sendNotif('📦 Material Request',''+currentEmp.name+' requested '+qty+' '+unit+' of "'+item+'"','mat-new-'+req.id);
-  // clear form
-  ['mr-item','mr-qty','mr-unit','mr-cost','mr-reason'].forEach(id=>{document.getElementById(id).value='';});
-  document.getElementById('mr-cat').value='';
-  document.getElementById('mr-priority').value='normal';
-  renderEmpMatList();
-  showToast('✅ Material request submitted!');
-}
-
-function renderEmpMatList(){
-  if(!currentEmp)return;
-  try{
-  const list=getMatReqs().filter(r=>r.empLoginId===currentEmp.loginId);
-  const el=document.getElementById('emp-mat-list');if(!el)return;
-  if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div>';return;}
-  // Mark permitted items as seen
-  let changed=false;
-  const all=getMatReqs();
-  all.forEach(r=>{if(r.empLoginId===currentEmp.loginId&&r.status==='permitted'&&!r.empSeen){r.empSeen=true;changed=true;}});
-  if(changed)saveMatReqs(all);
-
-  el.innerHTML=list.map(r=>{
-    const sc={pending:{color:'#E65100',bg:'#FFF3E0',icon:'⏳',label:'Pending Admin Approval'},
-               permitted:{color:'#2E7D32',bg:'#E8F5E9',icon:'✅',label:'Buy Permission Granted'},
-               purchased:{color:'#00695C',bg:'#E0F2F1',icon:'🛒',label:'Purchased'},
-               rejected:{color:'#C62828',bg:'#FFEBEE',icon:'❌',label:'Rejected'}}[r.status]||{color:'#90A4AE',bg:'#F5F5F5',icon:'❓',label:r.status};
-    const urgTag=r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px">🔴 URGENT</span>':'';
-    let extraSection='';
-    if(r.status==='pending'){
-      extraSection=`<div style="margin-top:8px;background:#E3F2FD;border-radius:8px;padding:10px;border:1px solid #90CAF9">
-        <div style="font-weight:800;font-size:12px;color:#01579B">🛒 Already purchased? Mark it below</div>
-        <div style="margin-top:8px;display:grid;gap:6px">
-          <input id="pur-vendor-${r.id}" type="text" placeholder="Vendor / Shop name (optional)" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
-          <input id="pur-cost-${r.id}" type="number" placeholder="Actual cost paid (₹) *" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
-          <input id="pur-note-${r.id}" type="text" placeholder="Additional note (optional)" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
-          <button onclick="markPurchased('${r.id}')" style="background:#01579B;border:none;color:#fff;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🛒 Mark as Purchased</button>
-        </div>
-      </div>`;
-    } else if(r.status==='permitted'){
-      extraSection=`<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:10px;border:1px solid #A5D6A7">
-        <div style="font-weight:800;font-size:12px;color:#2E7D32">✅ Buy Permission Granted</div>
-        <div style="font-size:12px;color:#388E3C;margin-top:3px">Permission No: <strong>${r.bpNo}</strong> · By: ${r.permittedBy||'Admin'}</div>
-        ${r.permittedNote?'<div style="font-size:11px;color:#555;margin-top:3px">Note: '+r.permittedNote+'</div>':''}
-        <div style="margin-top:8px;display:grid;gap:6px">
-          <input id="pur-vendor-${r.id}" type="text" placeholder="Vendor / Shop name (optional)" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
-          <input id="pur-cost-${r.id}" type="number" placeholder="Actual cost paid (₹) *" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
-          <input id="pur-note-${r.id}" type="text" placeholder="Additional note (optional)" style="padding:8px;border:1px solid #A5D6A7;border-radius:7px;font-size:13px">
-          <button onclick="markPurchased('${r.id}')" style="background:#2E7D32;border:none;color:#fff;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🛒 Mark as Purchased</button>
-        </div>
-      </div>`;
-    } else if(r.status==='purchased'){
-      extraSection=`<div style="margin-top:8px;background:#E0F2F1;border-radius:8px;padding:9px">
-        <div style="font-size:12px;font-weight:700;color:#00695C">🛒 Purchased — Actual Cost: ₹${(r.actualCost||0).toLocaleString('en-IN')}</div>
-        ${r.purchaseVendor?'<div style="font-size:11px;color:#555;margin-top:2px">Vendor: '+r.purchaseVendor+'</div>':''}
-        ${r.purchaseNote?'<div style="font-size:11px;color:#555;margin-top:2px">Note: '+r.purchaseNote+'</div>':''}
-        <div style="font-size:11px;color:#00796B;margin-top:3px">Permission No: ${r.bpNo}</div>
-      </div>`;
-    } else if(r.status==='rejected'){
-      extraSection=`<div style="margin-top:8px;background:#FFEBEE;border-radius:8px;padding:9px">
-        <div style="font-size:12px;font-weight:700;color:#C62828">❌ Rejected by ${r.rejectedBy||'Admin'}</div>
-        ${r.rejectNote?'<div style="font-size:11px;color:#B71C1C;margin-top:3px">Reason: '+r.rejectNote+'</div>':''}
-      </div>`;
-    }
-    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div>
-          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
-          <div style="font-size:11px;color:#90A4AE;margin-top:2px">${r.category} · ${r.qty} ${r.unit}  ·  Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
-        </div>
-        <span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${sc.label}</span>
-      </div>
-      <div style="font-size:12px;color:#546E7A;margin-top:5px">${r.reason}</div>
-      ${extraSection}
-      <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
-    </div>`;
-  }).join('');
-  }catch(e){console.error('renderEmpMatList error:',e);}
-}
-
-function markPurchased(id){
-  const all=getMatReqs();
-  const i=all.findIndex(r=>r.id===id);if(i<0)return;
-  const actualCost=parseFloat((document.getElementById('pur-cost-'+id)||{}).value)||0;
-  if(!actualCost){showToast('⚠️ Enter actual cost paid');return;}
-  const vendor=((document.getElementById('pur-vendor-'+id)||{}).value||'').trim();
-  const note=((document.getElementById('pur-note-'+id)||{}).value||'').trim();
-  all[i].status='purchased';
-  all[i].actualCost=actualCost;
-  all[i].purchaseVendor=vendor;
-  all[i].purchaseNote=note;
-  all[i].purchasedAt=Date.now();
-  saveMatReqs(all);
-  sendNotif('🛒 Material Purchased',currentEmp.name+' purchased "'+all[i].itemName+'" for ₹'+actualCost.toLocaleString('en-IN'),'mat-pur-'+id);
-  renderEmpMatList();
-  showToast('✅ Marked as purchased!');
-}
-
-// ── ADMIN SIDE ─────────────────────────────────────────
-let _matFilter='all';
-
-function filterMat(f,btn){
-  _matFilter=f;
-  document.querySelectorAll('.mat-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});
-  if(btn){btn.style.background='#01579B';btn.style.color='#fff';}
-  renderMatAdmin();
-}
-
-function renderMatAdmin(){
-  try{
-  const all=getMatReqs();
-  const list=_matFilter==='all'?all:all.filter(r=>r.status===_matFilter);
-  // Update KPIs
-  const p=all.filter(r=>r.status==='pending').length;
-  const pe=all.filter(r=>r.status==='permitted').length;
-  const pu=all.filter(r=>r.status==='purchased').length;
-  const rj=all.filter(r=>r.status==='rejected').length;
-  const estTotal=all.reduce((s,r)=>s+(r.estCost||0),0);
-  const actualTotal=all.filter(r=>r.status==='purchased').reduce((s,r)=>s+(r.actualCost||0),0);
-  const urgentCount=all.filter(r=>r.priority==='urgent'&&r.status==='pending').length;
-  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  setEl('mat-kpi-pending',p);setEl('mat-kpi-permitted',pe);setEl('mat-kpi-purchased',pu);setEl('mat-kpi-rejected',rj);
-  setEl('mat-est-total','₹'+estTotal.toLocaleString('en-IN'));
-  setEl('mat-actual-total','₹'+actualTotal.toLocaleString('en-IN'));
-  setEl('mat-urgent-count',urgentCount);
-  const el=document.getElementById('adm-mat-list');if(!el)return;
-  if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:24px">No requests found.</div>';return;}
-  el.innerHTML=list.map(r=>{
-    const sc={pending:{color:'#E65100',bg:'#FFF3E0',icon:'⏳'},
-               permitted:{color:'#2E7D32',bg:'#E8F5E9',icon:'✅'},
-               purchased:{color:'#00695C',bg:'#E0F2F1',icon:'🛒'},
-               rejected:{color:'#C62828',bg:'#FFEBEE',icon:'❌'}}[r.status]||{color:'#90A4AE',bg:'#F5F5F5',icon:'❓'};
-    const urgTag=r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px">🔴 URGENT</span>':'';
-    let actionArea='';
-    if(r.status==='pending'){
-      actionArea=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="showGrantBP('${r.id}')" style="flex:1;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">✅ Grant Buy Permission</button>
-        <button onclick="promptMatReject('${r.id}')" style="flex:1;padding:10px;background:#C62828;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
-      </div>`;
-    } else if(r.status==='permitted'){
-      actionArea=`<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:9px">
-        <div style="font-size:12px;font-weight:800;color:#2E7D32">Permission No: <span style="font-size:14px">${r.bpNo}</span></div>
-        <div style="font-size:11px;color:#555;margin-top:2px">Granted by ${r.permittedBy||'Admin'} · ${r.permittedAt?new Date(r.permittedAt).toLocaleString('en-IN'):''}</div>
-        ${r.permittedNote?'<div style="font-size:11px;color:#388E3C;margin-top:2px">Note: '+r.permittedNote+'</div>':''}
-        <div style="font-size:12px;color:#01579B;margin-top:4px;font-style:italic">Waiting for employee to confirm purchase...</div>
-      </div>`;
-    } else if(r.status==='purchased'){
-      actionArea=`<div style="margin-top:8px;background:#E0F2F1;border-radius:8px;padding:9px">
-        <div style="font-size:13px;font-weight:800;color:#00695C">🛒 Purchased — ₹${(r.actualCost||0).toLocaleString('en-IN')} <span style="font-size:11px;color:#78909C;font-weight:400">(Est: ₹${(r.estCost||0).toLocaleString('en-IN')})</span></div>
-        ${r.purchaseVendor?'<div style="font-size:11px;color:#555;margin-top:2px">Vendor: '+r.purchaseVendor+'</div>':''}
-        <div style="font-size:11px;color:#555;margin-top:2px">BP No: ${r.bpNo} · ${r.purchasedAt?new Date(r.purchasedAt).toLocaleString('en-IN'):''}</div>
-      </div>`;
-    } else if(r.status==='rejected'){
-      actionArea=`<div style="margin-top:8px;background:#FFEBEE;border-radius:8px;padding:8px">
-        <div style="font-size:11px;color:#C62828">Rejected by ${r.rejectedBy||'Admin'}${r.rejectNote?' — "'+r.rejectNote+'"':''}</div>
-      </div>`;
-    }
-    return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div>
-          <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
-          <div style="font-size:11px;color:#607D8B;margin-top:2px">👷 ${r.empName} · ${r.category} · ${r.qty} ${r.unit}  ·  Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
-        </div>
-        <span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
-      </div>
-      <div style="font-size:12px;color:#546E7A;margin-top:5px"><strong>Purpose:</strong> ${r.reason}</div>
-      ${actionArea}
-      <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
-    </div>`;
-  }).join('');
-  }catch(e){console.error('renderMatAdmin error:',e);}
-}
-
-function showGrantBP(id){
-  const existing=document.getElementById('bp-modal');if(existing)existing.remove();
-  const all=getMatReqs();
-  const r=all.find(x=>x.id===id);if(!r)return;
-  const bpNo=nextBPNumber();
-  const modal=document.createElement('div');
-  modal.id='bp-modal';
-  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-  modal.innerHTML=`<div style="background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
-    <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);padding:16px 20px">
-      <div style="color:#fff;font-weight:900;font-size:16px">✅ Grant Buy Permission</div>
-      <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:3px">Item: ${r.itemName} · ${r.qty} ${r.unit} · Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
-    </div>
-    <div style="padding:18px;display:grid;gap:12px">
-      <div style="background:#E8F5E9;border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:11px;color:#388E3C;font-weight:700">BUY PERMISSION NUMBER</div>
-        <div style="font-size:26px;font-weight:900;color:#1B5E20;letter-spacing:2px">${bpNo}</div>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#2E7D32;display:block;margin-bottom:4px">Note / Instruction (optional)</label>
-        <textarea id="bp-note" rows="2" placeholder="e.g. Buy from ABC Hardware only. Budget limit ₹500." style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #A5D6A7;border-radius:9px;font-size:13px;resize:none"></textarea>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="document.getElementById('bp-modal').remove()" style="flex:1;padding:11px;background:#F5F5F5;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-size:13px">Cancel</button>
-        <button onclick="grantBuyPermission('${id}','${bpNo}')" style="flex:2;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">✅ Issue Permission</button>
-      </div>
-    </div>
-  </div>`;
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  document.body.appendChild(modal);
-}
-
-function grantBuyPermission(id,bpNo){
-  const note=((document.getElementById('bp-note')||{}).value||'').trim();
-  const all=getMatReqs();
-  const i=all.findIndex(r=>r.id===id);if(i<0)return;
-  all[i].status='permitted';
-  all[i].bpNo=bpNo;
-  all[i].permittedBy=currentAdmin?currentAdmin.name:'Admin';
-  all[i].permittedAt=Date.now();
-  all[i].permittedNote=note;
-  all[i].empSeen=false;
-  saveMatReqs(all);
-  sendNotif('✅ Buy Permission Granted',all[i].empName+': "'+all[i].itemName+'" — Permission No: '+bpNo,'mat-bp-'+id);
-  const m=document.getElementById('bp-modal');if(m)m.remove();
-  renderMatAdmin();
-  showToast2('Buy Permission '+bpNo+' issued ✓');
-}
-
-function promptMatReject(id){
-  const note=prompt('Rejection reason (optional):');
-  if(note===null)return;
-  const all=getMatReqs();
-  const i=all.findIndex(r=>r.id===id);if(i<0)return;
-  all[i].status='rejected';
-  all[i].rejectedBy=currentAdmin?currentAdmin.name:'Admin';
-  all[i].rejectedAt=Date.now();
-  all[i].rejectNote=note||'';
-  all[i].empSeen=false;
-  saveMatReqs(all);
-  sendNotif('❌ Material Request Rejected','Your request for "'+all[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'mat-rej-'+id);
-  renderMatAdmin();
-  showToast2('Request rejected');
-}
-
-// ── DASHBOARD ──────────────────────────────────────────
-function renderDashMaterials(){
-  const all=getMatReqs();
-  const pending=all.filter(r=>r.status==='pending');
-  const permitted=all.filter(r=>r.status==='permitted');
-  const purchased=all.filter(r=>r.status==='purchased');
-  const rejected=all.filter(r=>r.status==='rejected');
-  const est=all.reduce((s,r)=>s+(r.estCost||0),0);
-  const actual=purchased.reduce((s,r)=>s+(r.actualCost||0),0);
-  const urgent=pending.filter(r=>r.priority==='urgent').length;
-  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  setEl('dash-mat-pending',pending.length);
-  setEl('dash-mat-permitted',permitted.length);
-  setEl('dash-mat-purchased',purchased.length);
-  setEl('dash-mat-rejected',rejected.length);
-  setEl('dash-mat-est','₹'+est.toLocaleString('en-IN'));
-  setEl('dash-mat-actual','₹'+actual.toLocaleString('en-IN'));
-  setEl('dash-mat-urgent',urgent);
-  const uw=document.getElementById('dash-mat-urgent-wrap');
-  if(uw)uw.style.display=urgent>0?'block':'none';
-  // Pending list in dashboard
-  const listEl=document.getElementById('dash-mat-pending-list');if(!listEl)return;
-  if(!pending.length){listEl.innerHTML='<div style="text-align:center;color:#2E7D32;font-size:13px;padding:6px 0">✅ No pending material requests</div>';return;}
-  listEl.innerHTML=pending.slice(0,4).map(r=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5;flex-wrap:wrap;gap:4px">
-      <div>
-        <span style="font-weight:700;font-size:13px">${r.itemName}</span>${r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:5px">URGENT</span>':''}
-        <div style="font-size:11px;color:#90A4AE">👷 ${r.empName} · ${r.qty} ${r.unit}${r.estCost?'  ·  ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
-      </div>
-      <button onclick="showGrantBP('${r.id}')" style="padding:5px 10px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✅ Grant</button>
-    </div>`).join('')+(pending.length>4?`<div style="text-align:center;font-size:12px;color:#01579B;padding:6px;font-weight:700">+ ${pending.length-4} more — see Materials tab</div>`:'');
 }
 
 // ══════════════════════════════════════════════════════
@@ -5191,37 +4700,16 @@ function downloadCurrentExcel(){
     workItemRows.push([]);
   });
 
-  // Sheet 6 — Material Requests & Buy Permissions
-  const allMat=getMatReqs();
-  const matRows=[
-    ['MATERIAL REQUEST & BUY PERMISSION REGISTER','','','','','','','','','','',''],
+  // Sheet 6 — Purchase Requests
+  const allReqs=getRequests();
+  const reqEstTotal=allReqs.reduce((s,r)=>s+(r.estCost||0),0);
+  const reqApprovedEst=allReqs.filter(r=>r.status==='approved').reduce((s,r)=>s+(r.estCost||0),0);
+  const reqRows=[
+    ['PURCHASE REQUESTS','','','','','','','','','','',''],
     ['Report Period',`${from} to ${to}`,'','','','','','','','','',''],
     [''],
-    ['Summary','Pending',allMat.filter(r=>r.status==='pending').length,'Permitted',allMat.filter(r=>r.status==='permitted').length,'Purchased',allMat.filter(r=>r.status==='purchased').length,'Rejected',allMat.filter(r=>r.status==='rejected').length,'','',''],
-    ['Est. Total Spend','₹'+allMat.reduce((s,r)=>s+(r.estCost||0),0).toLocaleString('en-IN'),'Actual Spend','₹'+allMat.filter(r=>r.status==='purchased').reduce((s,r)=>s+(r.actualCost||0),0).toLocaleString('en-IN'),'','','','','','','',''],
-    [''],
-    ['#','Date','Employee','Item / Material','Category','Qty','Unit','Est.Cost(₹)','Priority','Status','BP Number','Permitted By','Permission Note','Actual Cost(₹)','Vendor','Purchase Note','Reject Reason'],
-  ];
-  let matNo=1;
-  allMat.forEach(r=>{
-    matRows.push([
-      matNo++,
-      new Date(r.createdAt).toLocaleDateString('en-IN'),
-      r.empName, r.itemName, r.category, r.qty, r.unit,
-      r.estCost||0, r.priority==='urgent'?'URGENT':'Normal',
-      r.status.toUpperCase(),
-      r.bpNo||'', r.permittedBy||'', r.permittedNote||'',
-      r.actualCost||'', r.purchaseVendor||'', r.purchaseNote||'',
-      r.rejectNote||''
-    ]);
-  });
-  if(matRows.length===7) matRows.push(['No material requests found','','','','','','','','','','','','','','','','']);
-
-  // Sheet 7 — Purchase Requests
-  const allReqs=getRequests();
-  const reqRows=[
-    ['PURCHASE REQUESTS','','','','','','',''],
-    ['Report Period',`${from} to ${to}`,'','','','','',''],
+    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending').length,'','',''],
+    ['Est. Total Spend','₹'+reqEstTotal.toLocaleString('en-IN'),'Approved Est. Spend','₹'+reqApprovedEst.toLocaleString('en-IN'),'','','','','','','',''],
     [''],
     ['#','Employee','Item / Material','Qty','Unit','Est. Cost (₹)','Reason','Urgency','Status','Reviewed By','Review Note','Submitted On'],
   ];
@@ -5236,7 +4724,7 @@ function downloadCurrentExcel(){
       r.reviewedBy||'', r.reviewNote||'', ds
     ]);
   });
-  if(reqRows.length===4) reqRows.push(['No purchase requests found','','','','','','','','','','','']);
+  if(reqRows.length===7) reqRows.push(['No purchase requests found','','','','','','','','','','','']);
 
   // Build workbook
   try{
@@ -5246,7 +4734,6 @@ function downloadCurrentExcel(){
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(taskRows),'Completed Tasks');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(projKpiRows),'Project KPIs');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(workItemRows),'Project Work Items');
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(matRows),'Material Requests');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(reqRows),'Purchase Requests');
     XLSX.writeFile(wb,`FM_Report_${from}_to_${to}.xlsx`);
     showToast2('Excel downloaded ✓');
@@ -5691,7 +5178,6 @@ window.onload=function(){
       updateLiveBadge(!!getDbUrl());
       startLiveTracking();
       updateReqBadges();
-      updateMatBadges();
       return; // skip landing/employee login — checkAutoReset already called above
     } else {
       // Session no longer valid — clear it
