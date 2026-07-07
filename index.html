@@ -1521,11 +1521,18 @@ function bar(pct,len=20){const f=Math.round(pct/100*len);return '▓'.repeat(f)+
 function loadCfg(){try{const c=JSON.parse(localStorage.getItem('HFM4_CFG')||'{}');Object.assign(cfg,c);}catch(e){}}
 function saveCfg(){
   localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
-  // Push employee-safe config to Firebase so new devices can auto-setup
-  if(getDbUrl()){
+  // ONLY push config to Firebase when an admin is actively logged in.
+  // Employee devices must NOT push config back — they would overwrite the
+  // admin's authoritative employee list with a stale copy.
+  if(getDbUrl() && currentAdmin){
     const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:getDbUrl(),convexUrl:getDbUrl()};
     fbPut('/config',pubCfg).catch(()=>{});
   }
+}
+// Lightweight save: persists to localStorage only — never pushes to Firebase.
+// Use this on employee devices to avoid overwriting the admin's Firebase config.
+function saveCfgLocal(){
+  localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
 }
 
 // ══════════════════════════════════════════════════════
@@ -2036,9 +2043,9 @@ async function empPoll(){
       _empKnownTaskIds=myTasks.map(t=>t.id);
     }
     const ci=await fbGet('/customItems');
-    if(ci&&Array.isArray(ci)){cfg.customItems=ci;saveCfg();}
+    if(ci&&Array.isArray(ci)){cfg.customItems=ci;saveCfgLocal();}
     const ec=await fbGet('/empChecklists');
-    if(ec&&typeof ec==='object'){cfg.empChecklists=ec;saveCfg();}
+    if(ec&&typeof ec==='object'){cfg.empChecklists=ec;saveCfgLocal();}
     // Sync projects — detect NEW assignments
     const prevProjIds=[..._empKnownProjIds];
     await syncProjectsFromFirebase();
@@ -3114,13 +3121,14 @@ async function importFromFirebase(){
     if(!r.ok||!r.data){setStatus('error','❌ No config found at this Firebase URL. Ask your admin to log in once so the config is uploaded, then try again.');btn.disabled=false;return;}
     const data=r.data;
     if(!data.hosp||!Array.isArray(data.employees)){setStatus('error','❌ Config found but looks incomplete. Ask admin to log in to the app and try again.');btn.disabled=false;return;}
-    // Step 3: save to local storage
+    // Step 3: save to local storage ONLY — employee devices must never push
+    // config back to Firebase (would overwrite admin's authoritative list).
     const savedPwd=cfg.adminPwd;const savedAdmins=cfg.admins;
     Object.assign(cfg,data);
     if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
     if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
     cfg.dbUrl=urlRaw;cfg.convexUrl=urlRaw;
-    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg)); // save without triggering another Firebase push
+    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg)); // local save only — no Firebase push
     initConvex();
     document.getElementById('import-panel').style.display='none';
     document.getElementById('import-db').value='';
@@ -5399,11 +5407,30 @@ window.onload=function(){
   loadCfg();
   initNotifications();
   initConvex();
-  if(cfg.waNum) showEmpLogin();
-  // else stay on setup
-  // Auto-reset check: run now + every minute
+  // Auto-reset check: always run on boot + every minute
   checkAutoReset();
   setInterval(checkAutoReset,60000);
+  // Restore admin session if it was active before the page was refreshed
+  const savedSession=JSON.parse(sessionStorage.getItem('HFM4_ADMIN_SESSION')||'null');
+  if(savedSession&&savedSession.id){
+    // Re-validate the session against the stored admins list
+    const admins=getAdmins();
+    const adminUser=admins.find(a=>a.id===savedSession.id)||admins.find(a=>a.loginId===(savedSession.loginId||''));
+    if(adminUser){
+      currentAdmin=adminUser;
+      go('view-admin');
+      updateLiveBadge(!!getDbUrl());
+      startLiveTracking();
+      updateReqBadges();
+      updateMatBadges();
+      return; // skip landing/employee login — checkAutoReset already called above
+    } else {
+      // Session no longer valid — clear it
+      sessionStorage.removeItem('HFM4_ADMIN_SESSION');
+    }
+  }
+  if(cfg.waNum) showEmpLogin();
+  // else stay on setup
 };
 
 function showEmpLogin(){
