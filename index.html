@@ -2551,7 +2551,7 @@ function admTab(tab,el){
   if(tab==='proj') initProjectTab();
   if(tab==='chk') renderChecklistAdmin();
   if(tab==='staff'){renderStaff();renderAdminList();}
-  if(tab==='materials'){renderMatAdmin();}
+  if(tab==='materials'){_matFilter='all';document.querySelectorAll('.mat-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});const ab=document.querySelector('.mat-filter-btn');if(ab){ab.style.background='#01579B';ab.style.color='#fff';}renderMatAdmin();}
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
@@ -3966,8 +3966,10 @@ function getMatReqs(){
   try{return JSON.parse(localStorage.getItem('HFM4_MAT_REQS')||'[]');}catch(e){return[];}
 }
 function saveMatReqs(arr){
-  localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(arr));
-  if(getDbUrl()) fbPut('/matReqs',arr).catch(()=>{});
+  try{
+    localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(arr));
+  }catch(e){console.error('saveMatReqs localStorage error:',e);showToast('❌ Storage error: '+e.message,true);return;}
+  if(getDbUrl()) fbPut('/matReqs',arr).catch(e=>console.error('saveMatReqs fbPut error:',e));
   updateMatBadges();
 }
 
@@ -4027,7 +4029,9 @@ function submitMatRequest(){
     empSeen:true,
     createdAt:Date.now()
   };
+  console.log('submitMatRequest: saving req',req);
   const all=getMatReqs();
+  console.log('submitMatRequest: existing data count =',all.length,'statuses:',all.map(r=>r.status));
   all.unshift(req);
   saveMatReqs(all);
   sendNotif('📦 Material Request',''+currentEmp.name+' requested '+qty+' '+unit+' of "'+item+'"','mat-new-'+req.id);
@@ -4041,6 +4045,7 @@ function submitMatRequest(){
 
 function renderEmpMatList(){
   if(!currentEmp)return;
+  try{
   const list=getMatReqs().filter(r=>r.empLoginId===currentEmp.loginId);
   const el=document.getElementById('emp-mat-list');if(!el)return;
   if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div>';return;}
@@ -4057,7 +4062,17 @@ function renderEmpMatList(){
                rejected:{color:'#C62828',bg:'#FFEBEE',icon:'❌',label:'Rejected'}}[r.status]||{color:'#90A4AE',bg:'#F5F5F5',icon:'❓',label:r.status};
     const urgTag=r.priority==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px">🔴 URGENT</span>':'';
     let extraSection='';
-    if(r.status==='permitted'){
+    if(r.status==='pending'){
+      extraSection=`<div style="margin-top:8px;background:#E3F2FD;border-radius:8px;padding:10px;border:1px solid #90CAF9">
+        <div style="font-weight:800;font-size:12px;color:#01579B">🛒 Already purchased? Mark it below</div>
+        <div style="margin-top:8px;display:grid;gap:6px">
+          <input id="pur-vendor-${r.id}" type="text" placeholder="Vendor / Shop name (optional)" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
+          <input id="pur-cost-${r.id}" type="number" placeholder="Actual cost paid (₹) *" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
+          <input id="pur-note-${r.id}" type="text" placeholder="Additional note (optional)" style="padding:8px;border:1px solid #90CAF9;border-radius:7px;font-size:13px">
+          <button onclick="markPurchased('${r.id}')" style="background:#01579B;border:none;color:#fff;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">🛒 Mark as Purchased</button>
+        </div>
+      </div>`;
+    } else if(r.status==='permitted'){
       extraSection=`<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:10px;border:1px solid #A5D6A7">
         <div style="font-weight:800;font-size:12px;color:#2E7D32">✅ Buy Permission Granted</div>
         <div style="font-size:12px;color:#388E3C;margin-top:3px">Permission No: <strong>${r.bpNo}</strong> · By: ${r.permittedBy||'Admin'}</div>
@@ -4086,7 +4101,7 @@ function renderEmpMatList(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
           <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
-          <div style="font-size:11px;color:#90A4AE;margin-top:2px">${r.category} · ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+          <div style="font-size:11px;color:#90A4AE;margin-top:2px">${r.category} · ${r.qty} ${r.unit}  ·  Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
         </div>
         <span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${sc.label}</span>
       </div>
@@ -4095,6 +4110,7 @@ function renderEmpMatList(){
       <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
     </div>`;
   }).join('');
+  }catch(e){console.error('renderEmpMatList error:',e);}
 }
 
 function markPurchased(id){
@@ -4126,6 +4142,7 @@ function filterMat(f,btn){
 }
 
 function renderMatAdmin(){
+  try{
   const all=getMatReqs();
   const list=_matFilter==='all'?all:all.filter(r=>r.status===_matFilter);
   // Update KPIs
@@ -4177,7 +4194,7 @@ function renderMatAdmin(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
           <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgTag}
-          <div style="font-size:11px;color:#607D8B;margin-top:2px">👷 ${r.empName} · ${r.category} · ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+          <div style="font-size:11px;color:#607D8B;margin-top:2px">👷 ${r.empName} · ${r.category} · ${r.qty} ${r.unit}  ·  Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
         </div>
         <span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;background:${sc.bg};color:${sc.color};white-space:nowrap">${sc.icon} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
       </div>
@@ -4186,6 +4203,7 @@ function renderMatAdmin(){
       <div style="font-size:10px;color:#B0BEC5;margin-top:6px">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
     </div>`;
   }).join('');
+  }catch(e){console.error('renderMatAdmin error:',e);}
 }
 
 function showGrantBP(id){
@@ -4199,7 +4217,7 @@ function showGrantBP(id){
   modal.innerHTML=`<div style="background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
     <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);padding:16px 20px">
       <div style="color:#fff;font-weight:900;font-size:16px">✅ Grant Buy Permission</div>
-      <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:3px">Item: ${r.itemName} · ${r.qty} ${r.unit}${r.estCost?' · Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
+      <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:3px">Item: ${r.itemName} · ${r.qty} ${r.unit} · Est. ₹${(r.estCost||0).toLocaleString('en-IN')}</div>
     </div>
     <div style="padding:18px;display:grid;gap:12px">
       <div style="background:#E8F5E9;border-radius:10px;padding:12px;text-align:center">
