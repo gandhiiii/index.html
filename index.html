@@ -2153,6 +2153,21 @@ async function empPoll(){
       });
     }
     _empKnownProjIds=myProjs.map(p=>p.id);
+    // Sync purchase requests from Firebase
+    const fbReqs=await fbGet('/purchaseReqs');
+    if(Array.isArray(fbReqs)&&fbReqs.length){
+      const localReqs=getRequests();
+      if(fbReqs.length>localReqs.length) localStorage.setItem('HFM4_REQUESTS',JSON.stringify(fbReqs));
+    }
+    // Sync material requests from Firebase
+    const fbMat=await fbGet('/matReqs');
+    if(Array.isArray(fbMat)&&fbMat.length){
+      const localMat=getMatReqs();
+      if(fbMat.length>localMat.length) localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(fbMat));
+    }
+    updateReqBadges();updateMatBadges();
+    if(document.getElementById('view-my-requests').classList.contains('active')) renderMyRequests();
+    if(document.getElementById('view-mat-requests').classList.contains('active')) renderEmpMatList();
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -3143,6 +3158,24 @@ function startLiveTracking(){
         } else if(!tasks){
           localStorage.setItem('HFM4_TASKS','[]'); // Firebase returned null = all tasks gone
         }
+        // Sync purchase requests from Firebase
+        const pr=await fetchWithTimeout(base+'/purchaseReqs.json',{},5000);
+        if(pr.ok){
+          const preqs=await pr.json();
+          if(Array.isArray(preqs)&&preqs.length){localStorage.setItem('HFM4_REQUESTS',JSON.stringify(preqs));}
+          const rTab=document.getElementById('tab-requests');
+          if(rTab&&rTab.style.display!=='none') renderRequestsAdmin();
+          updateReqBadges();
+        }
+        // Sync material requests from Firebase
+        const mr=await fetchWithTimeout(base+'/matReqs.json',{},5000);
+        if(mr.ok){
+          const mreqs=await mr.json();
+          if(Array.isArray(mreqs)&&mreqs.length){localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(mreqs));}
+          const mTab=document.getElementById('tab-materials');
+          if(mTab&&mTab.style.display!=='none') renderMatAdmin();
+          updateMatBadges();
+        }
         // Refresh Tasks tab if it is currently visible
         const tasksTab=document.getElementById('tab-tasks');
         if(tasksTab&&tasksTab.style.display!=='none') renderAdminTasks();
@@ -3840,6 +3873,7 @@ function getMatReqs(){
 }
 function saveMatReqs(arr){
   localStorage.setItem('HFM4_MAT_REQS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/matReqs',arr).catch(()=>{});
   updateMatBadges();
 }
 
@@ -4166,6 +4200,7 @@ function getRequests(){
 }
 function saveRequests(arr){
   localStorage.setItem('HFM4_REQUESTS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/purchaseReqs',arr).catch(()=>{});
   updateReqBadges();
 }
 
