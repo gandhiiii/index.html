@@ -208,6 +208,14 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <button class="btn purple" style="margin-top:6px" onclick="adminLogin()">Login →</button>
         <button class="btn outline" onclick="showEmpLogin()" style="padding:10px">← Back</button>
         <div style="text-align:center"><span onclick="showForgotPassword()" style="font-size:12px;color:#7C4DFF;cursor:pointer;text-decoration:underline">Forgot Password?</span></div>
+        <div style="text-align:center;margin-top:6px"><span onclick="toggleAdminRecovery()" style="font-size:11px;color:#42A5F5;cursor:pointer;text-decoration:underline">🔄 Lost all settings? Recover from Firebase URL</span></div>
+        <div id="admin-recovery-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:8px;text-align:center">🔗 Restore from Firebase URL</div>
+          <p style="font-size:11px;color:#1565C0;margin-bottom:10px;line-height:1.5">Enter your Firebase Database URL to restore hospital name, employees, and recovery code. Your admin password is NEVER stored in Firebase — use "Forgot Password?" above with the recovery code to reset it.</p>
+          <input id="admin-recover-url" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+          <button onclick="tryAdminRecovery()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:8px">🔄 Restore Settings</button>
+          <div id="admin-recover-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center"></div>
+        </div>
       </div>
       <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect username or password</p>
     </div>
@@ -1521,11 +1529,13 @@ function bar(pct,len=20){const f=Math.round(pct/100*len);return '▓'.repeat(f)+
 function loadCfg(){try{const c=JSON.parse(localStorage.getItem('HFM4_CFG')||'{}');Object.assign(cfg,c);}catch(e){}}
 function saveCfg(){
   localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+  const url=getDbUrl();
+  if(url) sessionStorage.setItem('HFM4_DB_URL',url);
   // ONLY push config to Firebase when an admin is actively logged in.
   // Employee devices must NOT push config back — they would overwrite the
   // admin's authoritative employee list with a stale copy.
-  if(getDbUrl() && currentAdmin){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:getDbUrl(),convexUrl:getDbUrl()};
+  if(url && currentAdmin){
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
     fbPut('/config',pubCfg).catch(()=>{});
   }
 }
@@ -1749,13 +1759,15 @@ function adminLogin(){
   document.getElementById('al-user').value='';
   document.getElementById('al-pwd').value='';
   currentAdmin=found;
-  sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:found.id,name:found.name,loginId:found.loginId}));
+  const url=getDbUrl();
+  if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+  sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:found.id,name:found.name,loginId:found.loginId,password:found.password}));
   go('view-admin');
-  updateLiveBadge(!!getDbUrl());
+  updateLiveBadge(!!url);
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
-  if(getDbUrl()){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:getDbUrl(),convexUrl:getDbUrl()};
+  if(url){
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
     fbPut('/config',pubCfg).catch(()=>{});
   }
   updateReqBadges();
@@ -1945,6 +1957,42 @@ function showForgotPassword(){
   if(found.id==='admin_default') cfg.adminPwd=newPwd;
   cfg.admins=admins;saveCfg();
   alert('Password reset for "'+found.name+'". New password: '+newPwd);
+}
+
+function toggleAdminRecovery(){
+  const p=document.getElementById('admin-recovery-panel');
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+}
+
+async function tryAdminRecovery(){
+  const urlEl=document.getElementById('admin-recover-url');
+  const statusEl=document.getElementById('admin-recover-status');
+  const url=(urlEl.value||'').trim().replace(/\/+$/,'');
+  statusEl.style.display='block';
+  if(!url||!url.includes('firebaseio.com')){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ Please enter a valid Firebase Database URL ending in firebaseio.com';return;}
+  statusEl.style.background='#E3F2FD';statusEl.style.color='#1565C0';statusEl.textContent='🔄 Connecting to Firebase...';
+  try{
+    const r=await xhrRequest(url+'/config.json','GET',null,8000);
+    if(!r.ok||!r.data){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ No config found at this URL. Make sure an admin has logged in at least once to upload the config.';return;}
+    const data=r.data;
+    if(!data.hosp||!Array.isArray(data.employees)){statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent='❌ Config found but incomplete. Ask admin to log in and push config again.';return;}
+    // Restore settings (safely, without overwriting admin password)
+    const savedPwd=cfg.adminPwd;
+    const savedAdmins=cfg.admins;
+    Object.assign(cfg,data);
+    if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
+    if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
+    cfg.dbUrl=url;cfg.convexUrl=url;
+    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+    if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+    statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
+    statusEl.innerHTML='✅ Restored! Hospital: <strong>'+cfg.hosp+'</strong> · '+cfg.employees.length+' employees loaded.<br><br>Your admin password was <strong>not</strong> restored (never stored in Firebase).<br>• Use <strong>"Forgot Password?"</strong> above with your recovery code to reset.<br>• Your recovery code is: <strong>'+(cfg.adminRecoveryCode||'not set — ask another admin')+'</strong><br><br><span style="font-size:11px">Write down the recovery code above. Close this panel and try logging in, or use Forgot Password.</span>';
+    if(document.getElementById('view-admin-login')) document.getElementById('view-admin-login').querySelector('.login-sub').textContent='✅ Settings restored! Use "Forgot Password?" to reset admin password.';
+    setTimeout(()=>{statusEl.scrollIntoView({behavior:'smooth',block:'center'});},100);
+  }catch(e){
+    statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
+    statusEl.textContent='❌ Error: '+e.message+'. Check the URL and your internet connection.';
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -3207,7 +3255,7 @@ async function pushConfigToFirebase(){
   btn.disabled=true;
   setStatus('loading','☁️ Uploading config to Firebase...');
   try{
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:base,convexUrl:base};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||''};
     const r=await xhrRequest(base+'/config.json','PUT',pubCfg,8000);
     if(r.ok){
       setStatus('ok','✅ Config uploaded! Employees can now set up using just the Firebase URL.');
@@ -5421,6 +5469,7 @@ window.onload=function(){
     const adminUser=admins.find(a=>a.id===savedSession.id)||admins.find(a=>a.loginId===(savedSession.loginId||''));
     if(adminUser){
       currentAdmin=adminUser;
+      if(savedSession.password && !currentAdmin.password) currentAdmin.password=savedSession.password;
       go('view-admin');
       updateLiveBadge(!!getDbUrl());
       startLiveTracking();
@@ -5430,6 +5479,27 @@ window.onload=function(){
     } else {
       // Session no longer valid — clear it
       sessionStorage.removeItem('HFM4_ADMIN_SESSION');
+    }
+  }
+  // If localStorage has minimal/no config but we have a saved Firebase URL, try restoring
+  if((!cfg.waNum||!cfg.employees||!cfg.employees.length) && !savedSession){
+    const savedUrl=sessionStorage.getItem('HFM4_DB_URL');
+    if(savedUrl){
+      (async ()=>{
+        try{
+          const r=await xhrRequest(savedUrl+'/config.json','GET',null,5000);
+          if(r.ok&&r.data&&r.data.hosp&&Array.isArray(r.data.employees)){
+            const savedPwd=cfg.adminPwd;const savedAdmins=cfg.admins;
+            Object.assign(cfg,r.data);
+            if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
+            if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
+            cfg.dbUrl=savedUrl;cfg.convexUrl=savedUrl;
+            localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+          }
+        }catch(e){/* silent — user can manually recover */ }
+        if(cfg.waNum) showEmpLogin();
+      })();
+      return;
     }
   }
   if(cfg.waNum) showEmpLogin();
