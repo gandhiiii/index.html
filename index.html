@@ -2489,10 +2489,10 @@ function renderAdminTransport(){
   // Vehicle fleet list
   const vEl=document.getElementById('trans-vehicle-list');
   if(vEl){
-    const vehicles=cfg.transportVehicles||[];
-    if(!vehicles.length){vEl.innerHTML='<div style="color:#90A4AE;font-size:13px;padding:8px">No vehicles yet.</div>';}
+    const vList=cfg.transportVehicles||[];
+    if(!vList.length){vEl.innerHTML='<div style="color:#90A4AE;font-size:13px;padding:8px">No vehicles yet.</div>';}
     else {
-      vEl.innerHTML=vehicles.map(v=>`
+      vEl.innerHTML=vList.map(v=>`
         <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #B2DFDB;gap:8px;flex-wrap:wrap">
           <div style="flex:1;min-width:120px">
             <div style="font-weight:800;font-size:13px;color:#263238">🚐 ${v.name}</div>
@@ -2538,10 +2538,10 @@ function renderAdminTransport(){
   // Transport Activity today
   const dataEl=document.getElementById('adm-transport-data');
   if(!dataEl)return;
-  const emps=cfg.transportEmployees||[];
-  if(!emps.length){dataEl.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">No transport employees to track.</div>';return;}
+  const empList=cfg.transportEmployees||[];
+  if(!empList.length){dataEl.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">No transport employees to track.</div>';return;}
   let html='';
-  emps.forEach(e=>{
+  empList.forEach(e=>{
     const saved=JSON.parse(localStorage.getItem('HFM4_TRANS_'+todayStr()+'_'+e.loginId)||'null');
     if(!saved){html+=`<div style="padding:10px 12px;margin-bottom:6px;background:#FAFAFA;border-radius:8px;border-left:3px solid #BDBDBD"><strong>🚑 ${e.name}</strong> — <span style="color:#90A4AE">No data yet today</span></div>`;return;}
     const statusIcons={available:'✅ Available','on-trip':'🚑 On Trip',maintenance:'🔧 Maintenance','off-duty':'🌙 Off Duty'};
@@ -2561,8 +2561,8 @@ function renderAdminTransport(){
   // Populate admin breakdown vehicle dropdown
   const admBdV=document.getElementById('adm-bd-vehicle');
   if(admBdV){
-    const vehicles=cfg.transportVehicles||[];
-    admBdV.innerHTML='<option value="">— Select Vehicle —</option>'+vehicles.map(v=>{
+    const admVehicles=cfg.transportVehicles||[];
+    admBdV.innerHTML='<option value="">— Select Vehicle —</option>'+admVehicles.map(v=>{
       const label=v.name+(v.model?' ('+v.model+')':'')+(v.regNo?' · '+v.regNo:'');
       return '<option value="'+v.id+'">'+label+'</option>';
     }).join('');
