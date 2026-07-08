@@ -6478,12 +6478,12 @@ window.onload=function(){
             localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
           }
         }catch(e){/* silent — user can manually recover */ }
-        if(cfg.waNum) showLoginPage();
+        showLoginPage();
       })();
       return;
     }
   }
-  if(cfg.waNum) showLoginPage();
+  if(cfg.waNum||sessionStorage.getItem('HFM4_DB_URL')) showLoginPage();
   // else stay on setup
 };
 </script>
