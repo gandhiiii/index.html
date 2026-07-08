@@ -2365,7 +2365,7 @@ function addProblem(){
   const pri=document.getElementById('p-pri').value;
   if(!loc||loc==='— Select Department —'){alert('Please select a location.');return;}
   if(!desc){alert('Please enter a description of the problem.');return;}
-  problems.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  problems.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),status:'open'});
   document.getElementById('p-loc').value='';
   document.getElementById('p-loc-other').value='';
   document.getElementById('p-loc-other').style.display='none';
@@ -2590,7 +2590,10 @@ function renderAdmin(){
   document.getElementById('dl-na').textContent=`N/A: ${totalNa}`;
   document.getElementById('dl-pend').textContent=`Pending: ${Math.max(0,cfg.employees.length*TOTAL-totalOk-totalFault-totalNa)}`;
   const iEl=document.getElementById('adm-issues');
-  iEl.innerHTML=allProbs.length?allProbs.map(p=>`<div class="fi"><strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">by ${p.emp} at ${p.time}</span></div>`).join(''):'<div style="text-align:center;color:#90A4AE;font-size:13px;padding:10px">No problems today ✓</div>';
+  iEl.innerHTML=allProbs.length?allProbs.map(p=>{
+    const isDone=(p.status||'open')==='completed';
+    return `<div class="fi" style="${isDone?'opacity:.6':''}">${isDone?'✅ ':''}<strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc}${isDone?' <span style="color:#2E7D32;font-size:11px">(Completed)</span>':''} <span style="color:#90A4AE;font-size:11px">by ${p.emp} at ${p.time}</span></div>`;
+  }).join(''):'<div style="text-align:center;color:#90A4AE;font-size:13px;padding:10px">No problems today ✓</div>';
   // Projects dashboard snapshot
   const dpEl=document.getElementById('dash-projects');
   if(dpEl){
@@ -2650,13 +2653,21 @@ function renderAdminProblems(){
   if(!filtered.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:14px">'+(_adminProbFilter==='all'?'No problems reported today ✓':'No '+_adminProbFilter+' problems reported')+'</div>';return;}
   const priOrder={'🔴 Critical':0,'🟠 High':1,'🟡 Medium':2,'🟢 Low':3};
   filtered.sort((a,b)=>(priOrder[a.pri]||9)-(priOrder[b.pri]||9));
-  el.innerHTML=filtered.map(p=>`
-    <div class="fi" style="padding:10px 12px;margin-bottom:6px;border-left:4px solid ${p.pri==='🔴 Critical'?'#C62828':p.pri==='🟠 High'?'#E65100':p.pri==='🟡 Medium'?'#F57F17':'#2E7D32'};background:#FAFAFA;border-radius:0 8px 8px 0">
+  filtered.sort((a,b)=>{
+    const aO=(a.status||'open')==='open'?0:1;
+    const bO=(b.status||'open')==='open'?0:1;
+    if(aO!==bO) return aO-bO;
+    return (priOrder[a.pri]||9)-(priOrder[b.pri]||9);
+  });
+  el.innerHTML=filtered.map(p=>{
+    const isDone=(p.status||'open')==='completed';
+    return `<div class="fi" style="padding:10px 12px;margin-bottom:6px;border-left:4px solid ${isDone?'#2E7D32':p.pri==='🔴 Critical'?'#C62828':p.pri==='🟠 High'?'#E65100':p.pri==='🟡 Medium'?'#F57F17':'#2E7D32'};background:${isDone?'#F1F8E9':'#FAFAFA'};border-radius:0 8px 8px 0;${isDone?'opacity:.65':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
-        <div><strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc}</div>
+        <div>${isDone?'✅ ':''}<strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc}${isDone?' <span style="color:#2E7D32;font-size:11px">(Completed)</span>':''}</div>
         <div style="font-size:11px;color:#90A4AE">👷 ${p.emp} · ${p.time}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderDashRequests(){
@@ -4062,7 +4073,7 @@ function addEmployeeProblem(){
   if(!loc||loc==='— Select Department —'){showToast('⚠️ Select a location');return;}
   if(!desc){showToast('⚠️ Enter a description');return;}
   const probs=getEmployeeProblems();
-  probs.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  probs.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),status:'open'});
   saveEmployeeProblems(probs);
   sel.value='';other.value='';other.style.display='none';
   document.getElementById('emp-prob-desc').value='';
@@ -4075,16 +4086,32 @@ function removeEmployeeProblem(i){
   saveEmployeeProblems(probs);
   renderEmployeeProblems();
 }
+function toggleEmployeeProblemStatus(i){
+  const probs=getEmployeeProblems();
+  probs[i].status=probs[i].status==='completed'?'open':'completed';
+  if(probs[i].status==='completed') probs[i].completedAt=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  else delete probs[i].completedAt;
+  saveEmployeeProblems(probs);
+  renderEmployeeProblems();
+}
 function renderEmployeeProblems(){
   const probs=getEmployeeProblems();
   const el=document.getElementById('emp-prob-list');
   if(!el)return;
   if(!probs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No problems reported today.</div>';return;}
-  el.innerHTML=probs.map((p,i)=>`
-    <div class="fi" style="margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start">
-      <div><strong>${p.pri}</strong> · ${p.loc} — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.time}</span></div>
-      <button onclick="removeEmployeeProblem(${i})" style="background:none;border:none;color:#C62828;font-size:17px;cursor:pointer;padding:0 0 0 7px;flex-shrink:0">×</button>
-    </div>`).join('');
+  el.innerHTML=probs.map((p,i)=>{
+    const isDone=p.status==='completed';
+    return `<div class="fi" style="margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start;${isDone?'opacity:.6':''}">
+      <div style="${isDone?'text-decoration:line-through;color:#90A4AE':''}">
+        <strong>${p.pri}</strong> · ${p.loc} — ${p.desc}
+        <span style="color:#90A4AE;font-size:11px">${isDone?'✅ '+p.time+' → Done at '+p.completedAt:p.time}</span>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button onclick="toggleEmployeeProblemStatus(${i})" style="background:${isDone?'#FFF3E0':'#E8F5E9'};border:none;color:${isDone?'#E65100':'#2E7D32'};padding:5px 8px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">${isDone?'🔄 Reopen':'✅ Done'}</button>
+        <button onclick="removeEmployeeProblem(${i})" style="background:none;border:none;color:#C62828;font-size:17px;cursor:pointer;padding:0 4px;flex-shrink:0">×</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function submitPurchaseRequest(){
