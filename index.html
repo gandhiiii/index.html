@@ -279,6 +279,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn orange" id="btn-tasks" onclick="openMyTasks()" style="font-size:15px">📌 My Assigned Tasks</button>
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openMyProjects()">🏗️ My Projects</button>
     <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
+    <button class="btn" style="background:#C62828;color:#fff;font-size:15px" onclick="openMyProblems()">⚠️ My Problems</button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -607,6 +608,90 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- ══ MY PROBLEMS ═══════════════════════════════════ -->
+<div id="view-my-problems" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>⚠️ My Problems</h1><p id="prob-date-hdr"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #C62828;margin-bottom:8px">
+      <h3 style="color:#C62828;font-size:14px;margin-bottom:11px">⚠️ Report a Problem</h3>
+      <div style="display:grid;gap:9px">
+        <div>
+          <label>Location / Department</label>
+          <select id="emp-prob-loc" onchange="toggleOtherLoc(this)">
+            <option>— Select Department —</option>
+            <option>B3 — Basement Parking</option>
+            <option>B2 — Basement Storage</option>
+            <option>B1 — Basement</option>
+            <option>GF — Ground Floor Lobby</option>
+            <option>GF — Reception</option>
+            <option>GF — Waiting Area</option>
+            <option>GF — Security</option>
+            <option>GF — Cafeteria / Canteen</option>
+            <option>1F — OPD</option>
+            <option>1F — Pharmacy</option>
+            <option>1F — Registration</option>
+            <option>1F — Billing Counter</option>
+            <option>2F — ICU / CCU</option>
+            <option>2F — NICU</option>
+            <option>3F — General Ward</option>
+            <option>3F — Semi-Private Ward</option>
+            <option>4F — Private Rooms</option>
+            <option>4F — Deluxe Rooms</option>
+            <option>5F — OT Complex</option>
+            <option>5F — Recovery Room</option>
+            <option>5F — CSSD</option>
+            <option>6F — Labor Room / Maternity</option>
+            <option>7F — Administration Office</option>
+            <option>7F — HR Office</option>
+            <option>8F — Pathology Lab</option>
+            <option>8F — Radiology / X-Ray</option>
+            <option>8F — MRI Room</option>
+            <option>8F — CT Scan</option>
+            <option>9F — Medical Records</option>
+            <option>9F — Doctor's Lounge</option>
+            <option>10F — Store Room</option>
+            <option>10F — Linen Room</option>
+            <option>10F — Housekeeping</option>
+            <option>10F — Engineering / Maintenance</option>
+            <option>10F — Server Room / IT</option>
+            <option>Terrace — Water Tank</option>
+            <option>Terrace — AHU / HVAC Units</option>
+            <option>Terrace — Solar Panels</option>
+            <option>Terrace — DG Set</option>
+            <option>Terrace — Lift Machine Room</option>
+            <option>External — Parking Lot</option>
+            <option>External — Compound / Gate</option>
+            <option>External — Garden Area</option>
+            <option>Other</option>
+          </select>
+          <input type="text" id="emp-prob-loc-other" placeholder="Specify location..." style="display:none;margin-top:7px">
+        </div>
+        <div><label>Description</label><textarea id="emp-prob-desc" rows="2" placeholder="What is wrong? ..."></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div><label>Priority</label>
+            <select id="emp-prob-pri">
+              <option>🔴 Critical</option>
+              <option>🟠 High</option>
+              <option selected>🟡 Medium</option>
+              <option>🟢 Low</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end"><button class="btn red" style="margin:0;padding:11px" onclick="addEmployeeProblem()">+ Add</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 My Reported Problems</div>
+      <div id="emp-prob-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No problems reported today.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -650,6 +735,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('chk',this)">📋 Checklists</div>
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
+      <div class="tab" onclick="admTab('problems',this)">⚠️ Problems</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
@@ -1066,6 +1152,23 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
         </div>
         <div id="adm-req-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No requests yet.</div></div>
+      </div>
+    </div>
+
+    <!-- PROBLEMS -->
+    <div id="tab-problems" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:800;font-size:15px">⚠️ All Problems Reported</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="filterAdminProblems('all',this)" class="prob-filter-btn" style="background:#C62828;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
+            <button onclick="filterAdminProblems('🔴 Critical',this)" class="prob-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🔴 Critical</button>
+            <button onclick="filterAdminProblems('🟠 High',this)" class="prob-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🟠 High</button>
+            <button onclick="filterAdminProblems('🟡 Medium',this)" class="prob-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🟡 Medium</button>
+            <button onclick="filterAdminProblems('🟢 Low',this)" class="prob-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🟢 Low</button>
+          </div>
+        </div>
+        <div id="adm-prob-list" style="padding:13px"></div>
       </div>
     </div>
 
@@ -2270,7 +2373,8 @@ function addProblem(){
   renderProbs();saveProgress();showToast('Problem added ✓');
 }
 function toggleOtherLoc(sel){
-  document.getElementById('p-loc-other').style.display=sel.value==='Other'?'block':'none';
+  const otherId=sel.id==='emp-prob-loc'?'emp-prob-loc-other':'p-loc-other';
+  document.getElementById(otherId).style.display=sel.value==='Other'?'block':'none';
 }
 function renderProbs(){
   document.getElementById('prob-list').innerHTML=problems.map((p,i)=>`
@@ -2409,7 +2513,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','problems','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -2419,6 +2523,7 @@ function admTab(tab,el){
   if(tab==='chk') renderChecklistAdmin();
   if(tab==='staff'){renderStaff();renderAdminList();}
   if(tab==='requests'){renderRequestsAdmin();}
+  if(tab==='problems'){renderAdminProblems();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
@@ -2523,6 +2628,35 @@ function renderAdmin(){
   renderEmpProjectKPIs();
   renderDashRequests();
   renderReminderList();
+}
+
+// ── ADMIN PROBLEMS TAB ─────────────────────────────
+let _adminProbFilter='all';
+function filterAdminProblems(f,btn){
+  _adminProbFilter=f;
+  document.querySelectorAll('.prob-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});
+  if(btn){btn.style.background='#C62828';btn.style.color='#fff';}
+  renderAdminProblems();
+}
+function renderAdminProblems(){
+  const allProbs=[];
+  cfg.employees.forEach(emp=>{
+    const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+emp.loginId)||'null');
+    if(saved&&saved.problems) allProbs.push(...saved.problems.map(p=>({...p,emp:emp.name})));
+  });
+  const filtered=_adminProbFilter==='all'?allProbs:allProbs.filter(p=>p.pri===_adminProbFilter);
+  const el=document.getElementById('adm-prob-list');
+  if(!el)return;
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:14px">'+(_adminProbFilter==='all'?'No problems reported today ✓':'No '+_adminProbFilter+' problems reported')+'</div>';return;}
+  const priOrder={'🔴 Critical':0,'🟠 High':1,'🟡 Medium':2,'🟢 Low':3};
+  filtered.sort((a,b)=>(priOrder[a.pri]||9)-(priOrder[b.pri]||9));
+  el.innerHTML=filtered.map(p=>`
+    <div class="fi" style="padding:10px 12px;margin-bottom:6px;border-left:4px solid ${p.pri==='🔴 Critical'?'#C62828':p.pri==='🟠 High'?'#E65100':p.pri==='🟡 Medium'?'#F57F17':'#2E7D32'};background:#FAFAFA;border-radius:0 8px 8px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
+        <div><strong>${p.pri}</strong> · <strong>${p.loc}</strong> — ${p.desc}</div>
+        <div style="font-size:11px;color:#90A4AE">👷 ${p.emp} · ${p.time}</div>
+      </div>
+    </div>`).join('');
 }
 
 function renderDashRequests(){
@@ -3157,6 +3291,8 @@ function startLiveTracking(){
       const projTab=document.getElementById('tab-proj');
       if(projTab&&projTab.style.display!=='none'){renderAdminProjects();renderProjectKPIs();}
       renderProjectKPIs();
+      const probTab=document.getElementById('tab-problems');
+      if(probTab&&probTab.style.display!=='none') renderAdminProblems();
     }catch(e){/* render failed — non-blocking */}
     if(!anyOk) setFbStatus('warn','Checking Firebase... no data yet. Ensure employees have logged in and Firebase Rules allow read/write.');
   }
@@ -3895,6 +4031,60 @@ function openMyRequests(){
   if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   renderMyRequests();
   go('view-my-requests');
+}
+
+// ── EMPLOYEE PROBLEMS ──────────────────────────────
+function openMyProblems(){
+  const d=document.getElementById('prob-date-hdr');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  renderEmployeeProblems();
+  go('view-my-problems');
+}
+function getEmployeeProblems(){
+  if(!currentEmp)return [];
+  const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
+  return saved&&saved.problems?saved.problems:[];
+}
+function saveEmployeeProblems(probs){
+  if(!currentEmp)return;
+  const key='HFM4_'+todayStr()+'_'+currentEmp.loginId;
+  const saved=JSON.parse(localStorage.getItem(key)||'{}');
+  saved.problems=probs;
+  saved.updated=Date.now();
+  localStorage.setItem(key,JSON.stringify(saved));
+}
+function addEmployeeProblem(){
+  const sel=document.getElementById('emp-prob-loc');
+  const other=document.getElementById('emp-prob-loc-other');
+  const loc=sel.value==='Other'?other.value.trim():sel.value;
+  const desc=document.getElementById('emp-prob-desc').value.trim();
+  const pri=document.getElementById('emp-prob-pri').value;
+  if(!loc||loc==='— Select Department —'){showToast('⚠️ Select a location');return;}
+  if(!desc){showToast('⚠️ Enter a description');return;}
+  const probs=getEmployeeProblems();
+  probs.push({loc,desc,pri,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  saveEmployeeProblems(probs);
+  sel.value='';other.value='';other.style.display='none';
+  document.getElementById('emp-prob-desc').value='';
+  renderEmployeeProblems();
+  showToast('✅ Problem added');
+}
+function removeEmployeeProblem(i){
+  const probs=getEmployeeProblems();
+  probs.splice(i,1);
+  saveEmployeeProblems(probs);
+  renderEmployeeProblems();
+}
+function renderEmployeeProblems(){
+  const probs=getEmployeeProblems();
+  const el=document.getElementById('emp-prob-list');
+  if(!el)return;
+  if(!probs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No problems reported today.</div>';return;}
+  el.innerHTML=probs.map((p,i)=>`
+    <div class="fi" style="margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div><strong>${p.pri}</strong> · ${p.loc} — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.time}</span></div>
+      <button onclick="removeEmployeeProblem(${i})" style="background:none;border:none;color:#C62828;font-size:17px;cursor:pointer;padding:0 0 0 7px;flex-shrink:0">×</button>
+    </div>`).join('');
 }
 
 function submitPurchaseRequest(){
