@@ -290,9 +290,16 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <!-- Vehicle Assignment -->
     <div class="card" style="border-left:4px solid #00695C">
       <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🚐 Vehicle Assignment</h3>
-      <select id="trans-vehicle" style="font-size:15px;padding:11px;font-weight:700" onchange="saveTransportData()">
+      <select id="trans-vehicle" style="font-size:15px;padding:11px;font-weight:700" onchange="onTransVehicleChange()">
         <option value="">— Select Vehicle —</option>
       </select>
+      <div id="trans-vehicle-info" style="display:none;margin-top:10px;padding:12px;background:#E0F2F1;border-radius:8px;font-size:13px">
+        <div style="font-weight:800;font-size:15px;color:#004D40" id="trans-vi-name"></div>
+        <div style="margin-top:4px;color:#00695C;display:grid;grid-template-columns:auto 1fr;gap:3px 10px">
+          <span style="font-weight:600">Model:</span><span id="trans-vi-model">—</span>
+          <span style="font-weight:600">Reg No:</span><span id="trans-vi-reg">—</span>
+        </div>
+      </div>
     </div>
     <!-- Quick Status -->
     <div class="card" style="border-left:4px solid #00897B">
@@ -341,6 +348,28 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <div class="card" style="padding:0;overflow:hidden">
       <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Today's Trips</div>
       <div id="trans-trip-list" style="padding:13px"></div>
+    </div>
+    <!-- Breakdown Reporting -->
+    <div class="card" style="border-left:4px solid #C62828">
+      <h3 style="font-size:14px;font-weight:800;color:#C62828;margin-bottom:10px">🔧 Report Breakdown</h3>
+      <div style="display:grid;gap:8px">
+        <div><label>Vehicle</label><select id="trans-bd-vehicle" style="font-size:13px;padding:9px;font-weight:600"></select></div>
+        <div><label>Issue Description</label><textarea id="trans-bd-desc" rows="2" placeholder="What is the problem? e.g. Engine overheating, brake failure..."></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label>Severity</label>
+            <select id="trans-bd-severity" style="font-size:13px;padding:9px;font-weight:600">
+              <option value="critical">🔴 Critical</option>
+              <option value="major">🟠 Major</option>
+              <option value="minor" selected>🟡 Minor</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end"><button class="btn red" style="margin:0;padding:10px;width:100%" onclick="reportBreakdown()">🔧 Report</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">🔧 Open Breakdowns</div>
+      <div id="trans-bd-list" style="padding:13px"></div>
     </div>
   </div>
 </div>
@@ -820,7 +849,11 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div style="display:flex;gap:6px;align-items:center">
         <button class="hbtn" onclick="showNotifPanel()" style="position:relative">🔔<span id="adm-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center"></span></button>
         <button class="hbtn" onclick="showChangePwdModal()" title="Change my password">🔑</button>
-        <button class="hbtn" onclick="downloadExcel()">📥 Excel</button>
+        <select id="adm-excel-dept" onchange="downloadExcel()" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid #B0BEC5;background:#fff;font-weight:600;cursor:pointer">
+          <option value="all">📥 Excel (All)</option>
+          <option value="fm">📥 Excel (FM)</option>
+          <option value="transport">📥 Excel (Transport)</option>
+        </select>
         <button class="hbtn" onclick="adminLogout()">Logout</button>
       </div>
     </div>
@@ -1291,6 +1324,50 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div id="trans-emp-list"></div>
         </div>
         <div class="card" style="border-left:4px solid #00897B">
+          <h3 style="font-size:14px;font-weight:800;color:#00897B;margin-bottom:10px">🚐 Vehicle Fleet</h3>
+          <div style="background:#E0F2F1;border-radius:10px;padding:12px;margin-bottom:12px">
+            <div style="font-weight:800;font-size:13px;color:#00897B;margin-bottom:8px">➕ Add Vehicle</div>
+            <div style="display:grid;gap:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input id="tv-name" type="text" placeholder="Vehicle Name (e.g. Ambulance 1)">
+                <input id="tv-model" type="text" placeholder="Make/Model (e.g. Toyota Hiace)">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input id="tv-reg" type="text" placeholder="Registration No. (e.g. MH-01-AB-1234)">
+                <button onclick="addTransportVehicle()" style="background:#00897B;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Vehicle</button>
+              </div>
+            </div>
+          </div>
+          <div id="trans-vehicle-list"></div>
+        </div>
+        <div class="card" style="border-left:4px solid #C62828">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">🔧 Report a Breakdown</div>
+          <div style="padding:13px;display:grid;gap:8px;border-bottom:1px solid #F0F4F8">
+            <div><label>Vehicle</label>
+              <select id="adm-bd-vehicle" style="font-size:13px;padding:9px;font-weight:600;width:100%">
+                <option value="">— Select Vehicle —</option>
+              </select>
+            </div>
+            <div><label>Issue Description</label>
+              <textarea id="adm-bd-desc" rows="2" placeholder="e.g. Engine overheating, brake failure..." style="width:100%"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><label>Severity</label>
+                <select id="adm-bd-severity" style="font-size:13px;padding:9px;font-weight:600;width:100%">
+                  <option value="critical">🔴 Critical</option>
+                  <option value="major">🟠 Major</option>
+                  <option value="minor" selected>🟡 Minor</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end">
+                <button onclick="adminReportBreakdown()" style="background:#C62828;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;width:100%;font-size:13px">➕ Report Breakdown</button>
+              </div>
+            </div>
+          </div>
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">🔧 Breakdown Reports</div>
+          <div id="adm-trans-breakdowns" style="padding:13px"></div>
+        </div>
+        <div class="card" style="border-left:4px solid #00897B">
           <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📊 Transport Activity Today</div>
           <div id="adm-transport-data" style="padding:13px"></div>
         </div>
@@ -1314,6 +1391,13 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
               <option value="year">This Year</option>
               <option value="lastyear">Last Year</option>
               <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          <div><label>Department</label>
+            <select id="rep-dept" style="margin-top:5px">
+              <option value="all">All Departments</option>
+              <option value="fm">👷 FM (Checklists)</option>
+              <option value="transport">🚑 Transportation</option>
             </select>
           </div>
           <div id="rep-custom-range" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1644,7 +1728,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:['Ambulance 1','Ambulance 2','Ambulance 3']};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}]};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
@@ -2013,6 +2097,23 @@ function getTransportData(){
   if(!currentTransEmp)return null;
   return JSON.parse(localStorage.getItem('HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId)||'null');
 }
+function onTransVehicleChange(){
+  const vSel=document.getElementById('trans-vehicle');
+  const infoEl=document.getElementById('trans-vehicle-info');
+  const id=vSel.value;
+  const vehicles=cfg.transportVehicles||[];
+  const v=vehicles.find(x=>x.id===id);
+  if(v){
+    document.getElementById('trans-vi-name').textContent='🚐 '+v.name;
+    document.getElementById('trans-vi-model').textContent=v.model||'—';
+    document.getElementById('trans-vi-reg').textContent=v.regNo||'—';
+    infoEl.style.display='block';
+  } else {
+    infoEl.style.display='none';
+  }
+  saveTransportData();
+}
+
 function saveTransportData(){
   if(!currentTransEmp)return;
   const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
@@ -2041,11 +2142,16 @@ function loadTransportHome(){
   document.getElementById('trans-id-display').textContent='ID: '+currentTransEmp.loginId;
   // Load vehicle list
   const vSel=document.getElementById('trans-vehicle');
-  vSel.innerHTML='<option value="">— Select Vehicle —</option>'+(cfg.transportVehicles||[]).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
+  const vehicles=cfg.transportVehicles||[];
+  vSel.innerHTML='<option value="">— Select Vehicle —</option>'+vehicles.map(v=>{
+    const label=v.name+(v.model?' ('+v.model+')':'')+(v.regNo?' · '+v.regNo:'');
+    return '<option value="'+v.id+'">'+label+'</option>';
+  }).join('');
   // Load saved data
   const saved=getTransportData();
   if(saved){
     if(saved.vehicle) vSel.value=saved.vehicle;
+    onTransVehicleChange();
     if(saved.status) document.getElementById('trans-status').value=saved.status;
     if(saved.fuel!=null){document.getElementById('trans-fuel').value=saved.fuel;document.getElementById('trans-fuel-val').textContent=saved.fuel+'%';}
     transCheckItems=saved.checks||[];
@@ -2056,9 +2162,19 @@ function loadTransportHome(){
       {label:'Oxygen cylinder full',done:false},{label:'Stretcher secure & clean',done:false},{label:'Fuel level adequate',done:false},
       {label:'Dashboard warning lights off',done:false}
     ]:[];
+    onTransVehicleChange();
   }
   renderTransChecklist();
   renderTransTrips();
+  renderTransBreakdowns();
+  // Populate breakdown vehicle dropdown
+  const bdSel=document.getElementById('trans-bd-vehicle');
+  if(bdSel){
+    bdSel.innerHTML='<option value="">— Select Vehicle —</option>'+vehicles.map(v=>{
+      const label=v.name+(v.model?' ('+v.model+')':'')+(v.regNo?' · '+v.regNo:'');
+      return '<option value="'+v.id+'">'+label+'</option>';
+    }).join('');
+  }
   go('view-transport-home');
 }
 function renderTransChecklist(){
@@ -2136,6 +2252,7 @@ function deleteTransTrip(i){
 
 // ── ADMIN TRANSPORT ─────────────────────────────────
 function renderAdminTransport(){
+  // Employees list
   const listEl=document.getElementById('trans-emp-list');
   if(listEl){
     const emps=cfg.transportEmployees||[];
@@ -2149,6 +2266,55 @@ function renderAdminTransport(){
           </div>
           <button onclick="removeTransportEmployee(${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">Remove</button>
         </div>`).join('');
+    }
+  }
+  // Vehicle fleet list
+  const vEl=document.getElementById('trans-vehicle-list');
+  if(vEl){
+    const vehicles=cfg.transportVehicles||[];
+    if(!vehicles.length){vEl.innerHTML='<div style="color:#90A4AE;font-size:13px;padding:8px">No vehicles yet.</div>';}
+    else {
+      vEl.innerHTML=vehicles.map(v=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #B2DFDB;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <div style="font-weight:800;font-size:13px;color:#263238">🚐 ${v.name}</div>
+            <div style="font-size:11px;color:#90A4AE">${v.model?'Model: '+v.model:''}${v.regNo?' · Reg: '+v.regNo:''}</div>
+          </div>
+          <button onclick="removeTransportVehicle('${v.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">Remove</button>
+        </div>`).join('');
+    }
+  }
+  // Breakdowns
+  const bdEl=document.getElementById('adm-trans-breakdowns');
+  if(bdEl){
+    const bds=getBreakdowns();
+    if(!bds.length){bdEl.innerHTML='<div style="text-align:center;color:#2E7D32;padding:15px;font-size:13px">✅ No breakdowns reported.</div>';}
+    else {
+      const openBds=bds.filter(b=>b.status==='open');
+      const resolvedBds=bds.filter(b=>b.status==='resolved');
+      let bdHtml='';
+      if(openBds.length){
+        bdHtml+=`<div style="font-weight:700;font-size:13px;color:#C62828;margin-bottom:6px">🔴 Open (${openBds.length})</div>`;
+        bdHtml+=openBds.map(b=>{
+          const sevIcon={critical:'🔴',major:'🟠',minor:'🟡'}[b.severity]||'🟡';
+          const sevColor={critical:'#C62828',major:'#E65100',minor:'#F57F17'}[b.severity]||'#F57F17';
+          return `<div style="padding:10px 12px;margin-bottom:6px;background:#FFF5F5;border-radius:8px;border-left:3px solid ${sevColor}">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+              <div><strong>${sevIcon} ${getVehicleLabel(b.vehicle)}</strong> — ${b.desc} <span style="color:#90A4AE;font-size:11px">by ${b.reportedBy} · ${new Date(b.reportedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></div>
+              <button onclick="resolveBreakdown('${b.id}')" style="background:#2E7D32;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">✅ Resolve</button>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      if(resolvedBds.length){
+        bdHtml+=`<div style="font-weight:700;font-size:13px;color:#2E7D32;margin:8px 0 4px">✅ Resolved (${resolvedBds.length})</div>`;
+        bdHtml+=resolvedBds.slice(-5).reverse().map(b=>{
+          return `<div style="padding:8px 12px;margin-bottom:4px;background:#F1F8E9;border-radius:6px;font-size:12px;opacity:.7">
+            ✅ ${getVehicleLabel(b.vehicle)} — ${b.desc} <span style="color:#90A4AE">resolved by ${b.resolvedBy}</span>
+          </div>`;
+        }).join('');
+      }
+      bdEl.innerHTML=bdHtml;
     }
   }
   // Transport Activity today
@@ -2167,13 +2333,22 @@ function renderAdminTransport(){
     const totalKm=trips.reduce((s,t)=>s+(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0),0);
     html+=`<div style="padding:12px;margin-bottom:8px;background:#FAFAFA;border-radius:8px;border-left:3px solid ${sc}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-        <div><strong>🚑 ${e.name}</strong> · ${saved.vehicle||'No vehicle'} · <span style="color:${sc};font-weight:700">${statusIcons[saved.status]||saved.status}</span></div>
+        <div><strong>🚑 ${e.name}</strong> · ${getVehicleLabel(saved.vehicle)} · <span style="color:${sc};font-weight:700">${statusIcons[saved.status]||saved.status}</span></div>
         <div style="font-size:12px;color:#90A4AE">⛽ ${saved.fuel||0}% · 🛣️ ${totalKm} km · 🚗 ${trips.length} trip(s)</div>
       </div>
       ${trips.length?`<div style="margin-top:6px;font-size:12px;color:#607D8B">${trips.slice(-3).map(t=>'🚑 '+t.to+(t.kmEnd&&t.kmStart?' ('+Math.max(0,t.kmEnd-t.kmStart)+'km)':'')).join(' | ')}${trips.length>3?' <span style="color:#00695C">+'+ (trips.length-3)+' more</span>':''}</div>`:''}
     </div>`;
   });
   dataEl.innerHTML=html||'<div style="text-align:center;color:#90A4AE;padding:20px">No transport activity today.</div>';
+  // Populate admin breakdown vehicle dropdown
+  const admBdV=document.getElementById('adm-bd-vehicle');
+  if(admBdV){
+    const vehicles=cfg.transportVehicles||[];
+    admBdV.innerHTML='<option value="">— Select Vehicle —</option>'+vehicles.map(v=>{
+      const label=v.name+(v.model?' ('+v.model+')':'')+(v.regNo?' · '+v.regNo:'');
+      return '<option value="'+v.id+'">'+label+'</option>';
+    }).join('');
+  }
 }
 function addTransportEmployee(){
   const name=(document.getElementById('tne-name').value||'').trim();
@@ -2207,6 +2382,108 @@ function autoFillTransEmp(){
   const num=String((cfg.transportEmployees||[]).length+1).padStart(3,'0');
   document.getElementById('tne-id').value='T'+initials+num;
   if(!document.getElementById('tne-pwd').value) document.getElementById('tne-pwd').value=String(Math.floor(1000+Math.random()*9000));
+}
+
+// ── TRANSPORT VEHICLE MANAGEMENT ────────────────────
+function addTransportVehicle(){
+  const name=(document.getElementById('tv-name').value||'').trim();
+  if(!name){alert('Enter vehicle name.');return;}
+  const model=(document.getElementById('tv-model').value||'').trim();
+  const regNo=(document.getElementById('tv-reg').value||'').trim().toUpperCase();
+  if(!cfg.transportVehicles) cfg.transportVehicles=[];
+  const id='v'+Date.now();
+  cfg.transportVehicles.push({id,name,model,regNo});
+  saveCfg();
+  document.getElementById('tv-name').value='';document.getElementById('tv-model').value='';document.getElementById('tv-reg').value='';
+  renderAdminTransport();
+  showToast2('Vehicle '+name+' added ✓');
+}
+function removeTransportVehicle(id){
+  const idx=(cfg.transportVehicles||[]).findIndex(v=>v.id===id);
+  if(idx===-1)return;
+  if(!confirm('Remove vehicle "'+cfg.transportVehicles[idx].name+'"?'))return;
+  cfg.transportVehicles.splice(idx,1);
+  saveCfg();
+  renderAdminTransport();
+}
+function getVehicleLabel(id){
+  const v=(cfg.transportVehicles||[]).find(v=>v.id===id);
+  if(!v)return id||'—';
+  return v.name+(v.model?' ('+v.model+')':'')+(v.regNo?' · '+v.regNo:'');
+}
+
+// ── BREAKDOWN SYSTEM ────────────────────────────────
+function getBreakdowns(){
+  const all=JSON.parse(localStorage.getItem('HFM4_TRANS_BREAKDOWNS')||'[]');
+  return all.filter(b=>b);
+}
+function saveBreakdowns(arr){
+  localStorage.setItem('HFM4_TRANS_BREAKDOWNS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/transportBreakdowns',arr).catch(()=>{});
+}
+function reportBreakdown(){
+  const vehicle=document.getElementById('trans-bd-vehicle').value;
+  const desc=(document.getElementById('trans-bd-desc').value||'').trim();
+  const severity=document.getElementById('trans-bd-severity').value;
+  if(!vehicle){showToast('⚠️ Select a vehicle');return;}
+  if(!desc){showToast('⚠️ Enter issue description');return;}
+  const bds=getBreakdowns();
+  bds.push({
+    id:'bd_'+Date.now(),vehicle,desc,severity,
+    status:'open',
+    reportedBy:currentTransEmp?currentTransEmp.name:'Admin',
+    reportedById:currentTransEmp?currentTransEmp.loginId:'admin',
+    reportedAt:Date.now(),
+    resolvedBy:'',resolvedAt:null,resolutionNote:''
+  });
+  saveBreakdowns(bds);
+  document.getElementById('trans-bd-desc').value='';
+  showToast('✅ Breakdown reported');
+  if(currentTransEmp) renderTransBreakdowns();
+}
+function adminReportBreakdown(){
+  const vehicle=document.getElementById('adm-bd-vehicle').value;
+  const desc=(document.getElementById('adm-bd-desc').value||'').trim();
+  const severity=document.getElementById('adm-bd-severity').value;
+  if(!vehicle){showToast('⚠️ Select a vehicle');return;}
+  if(!desc){showToast('⚠️ Enter issue description');return;}
+  const bds=getBreakdowns();
+  bds.push({
+    id:'bd_'+Date.now(),vehicle,desc,severity,
+    status:'open',
+    reportedBy:currentAdmin?currentAdmin.name:'Admin',
+    reportedById:currentAdmin?currentAdmin.loginId:'admin',
+    reportedAt:Date.now(),
+    resolvedBy:'',resolvedAt:null,resolutionNote:''
+  });
+  saveBreakdowns(bds);
+  document.getElementById('adm-bd-desc').value='';
+  showToast('✅ Breakdown reported by admin');
+  renderAdminTransport();
+}
+function resolveBreakdown(id){
+  const note=prompt('Resolution notes (optional):');
+  const bds=getBreakdowns();
+  const bd=bds.find(b=>b.id===id);
+  if(!bd)return;
+  bd.status='resolved';
+  bd.resolvedAt=Date.now();
+  bd.resolvedBy=currentAdmin?currentAdmin.name:'Admin';
+  bd.resolutionNote=note||'';
+  saveBreakdowns(bds);
+  renderAdminTransport();
+}
+function renderTransBreakdowns(){
+  const el=document.getElementById('trans-bd-list');
+  if(!el)return;
+  const bds=getBreakdowns().filter(b=>b.status==='open');
+  if(!bds.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:10px;font-size:13px">No breakdowns reported.</div>';return;}
+  el.innerHTML=bds.map(b=>{
+    const sevIcon={critical:'🔴',major:'🟠',minor:'🟡'}[b.severity]||'🟡';
+    return `<div style="padding:8px 10px;margin-bottom:4px;background:#FFF5F5;border-radius:6px;font-size:12px;border-left:3px solid ${b.severity==='critical'?'#C62828':b.severity==='major'?'#E65100':'#F57F17'}">
+      ${sevIcon} <strong>${getVehicleLabel(b.vehicle)}</strong> — ${b.desc} <span style="color:#90A4AE">by ${b.reportedBy}</span>
+    </div>`;
+  }).join('');
 }
 
 function renderAdminList(){
@@ -3295,6 +3572,9 @@ function getEmpData(emp,repDate){
 
 function downloadExcel(){
   const repDate=document.getElementById('rep-date').value||todayStr();
+  const deptEl=document.getElementById('adm-excel-dept')||document.getElementById('rep-dept');
+  const dept=deptEl?deptEl.value:'all';
+  if(dept==='transport'){downloadTransportExcel(repDate);return;}
   const wb=XLSX.utils.book_new();
   const allEmpData=cfg.employees.map(emp=>({emp,data:getEmpData(emp,repDate)}));
   const active=allEmpData.filter(e=>e.data);
@@ -3468,10 +3748,63 @@ function downloadExcel(){
   showToast2('Downloaded: '+fname);
 }
 
-function shareReportWA(){downloadExcel();setTimeout(()=>window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(`📊 *${cfg.hosp} — Facility Report*\n📅 ${fmtDate(document.getElementById('rep-date').value||todayStr())}\n\nExcel report downloaded. Please find the attached file.\n\n_Hospital FM_`),'_blank'),1500);}
+function downloadTransportExcel(repDate){
+  const wb=XLSX.utils.book_new();
+  const bdStr=localStorage.getItem('HFM4_TRANS_BREAKDOWNS');
+  const allBd=bdStr?JSON.parse(bdStr):[];
+  const dayBd=allBd.filter(b=>b.date===repDate);
+  const vehicles=cfg.transportVehicles||[];
+  const empTransRows=[['Login ID','Employee Name','Vehicle','Checklist %','Status','Fuel','Trips']];
+  const empTripsRows=[['Login ID','Employee Name','Trip From','Trip To','Started','Ended','Odometer','Purpose']];
+  (cfg.transportEmployees||[]).forEach(emp=>{
+    const trStr=localStorage.getItem('HFM4_TRANS_'+repDate+'_'+emp.loginId);
+    if(!trStr)return;
+    const td=JSON.parse(trStr);
+    const vName=td.vehicle?getVehicleLabel(td.vehicle):'—';
+    const chk=td.checklist?((Object.values(td.checklist).filter(Boolean).length/Object.keys(td.checklist).length*100).toFixed(0)):'—';
+    empTransRows.push([emp.loginId,td.name||emp.name,vName,chk+'%',td.status||'—',td.fuel||'—',(td.trips||[]).length]);
+    (td.trips||[]).forEach(tr=>empTripsRows.push([emp.loginId,td.name||emp.name,tr.from||'',tr.to||'',tr.start||'',tr.end||'',tr.odo||'',tr.purpose||'']));
+  });
+  // Breakdowns
+  const bdRows=[['Date','Vehicle','Reported By','Description','Status','Resolved At']];
+  allBd.forEach(b=>bdRows.push([b.date,b.vehicle||b.veh,b.reportedBy,b.desc,b.status,b.resolvedAt||'']));
+  // Sheets
+  const dashRows=[
+    ['═'.repeat(60)],
+    [`  ${cfg.hosp.toUpperCase()} — TRANSPORTATION REPORT`],
+    [`  Report Date: ${fmtDate(repDate)}   Generated: ${new Date().toLocaleString('en-IN')}`],
+    ['═'.repeat(60)],[''],
+    ['  ┌─────────────── BREAKDOWN SUMMARY ───────────┐'],
+    [`  │  Total Breakdowns:       ${allBd.length}`],
+    [`  │  Today's Breakdowns:     ${dayBd.length}`],
+    [`  │  Open Breakdowns:        ${allBd.filter(b=>b.status!=='resolved').length}`],
+    ['  └────────────────────────────────────────────┘'],[''],
+    ['  ┌─────────────── VEHICLE FLEET ───────────────┐'],
+    ...vehicles.map(v=>[`  │  ${v.name} · ${v.model||''} · ${v.regNo||'No Reg'}`]),
+    ['  └────────────────────────────────────────────┘'],
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(dashRows),'Transport Dashboard');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(empTransRows),'Employee Transport');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(empTripsRows),'Trips');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bdRows),'Breakdowns');
+  const fname=cfg.hosp.replace(/\s+/g,'_')+'_Transport_Report_'+repDate+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showToast2('Transport report downloaded: '+fname);
+}
+
+function shareReportWA(){
+  const deptEl=document.getElementById('adm-excel-dept')||document.getElementById('rep-dept');
+  const dept=deptEl?deptEl.value:'all';
+  if(dept==='transport')downloadTransportExcel(document.getElementById('rep-date').value||todayStr());
+  else downloadExcel();
+  setTimeout(()=>window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(`📊 *${cfg.hosp} — Facility Report*\n📅 ${fmtDate(document.getElementById('rep-date').value||todayStr())}\n\nExcel report downloaded. Please find the attached file.\n\n_Hospital FM_`),'_blank'),1500);
+}
 function shareReportEmail(){
   const d=document.getElementById('rep-date').value||todayStr();
-  downloadExcel();
+  const deptEl=document.getElementById('adm-excel-dept')||document.getElementById('rep-dept');
+  const dept=deptEl?deptEl.value:'all';
+  if(dept==='transport')downloadTransportExcel(d);
+  else downloadExcel();
   setTimeout(()=>{window.location.href='mailto:'+cfg.email+'?subject='+encodeURIComponent(cfg.hosp+' Report '+fmtDate(d))+'&body='+encodeURIComponent('Hi,\n\nPlease find the attached Hospital FM report for '+fmtDate(d)+'.\n\nRegards,\nHospital FM System');},1500);
 }
 
@@ -3630,10 +3963,16 @@ function startLiveTracking(){
           Object.entries(trData).forEach(([loginId,data])=>{
             if(data) localStorage.setItem('HFM4_TRANS_'+todayStr()+'_'+loginId,JSON.stringify(data));
           });
-          const transTab=document.getElementById('tab-transport');
-          if(transTab&&transTab.style.display!=='none') renderAdminTransport();
         }
       }
+      // Also sync breakdowns
+      const bdR=await fetchWithTimeout(base+'/transportBreakdowns.json',{},5000);
+      if(bdR.ok){
+        const bdData=await bdR.json();
+        if(Array.isArray(bdData)) localStorage.setItem('HFM4_TRANS_BREAKDOWNS',JSON.stringify(bdData));
+      }
+      const transTab=document.getElementById('tab-transport');
+      if(transTab&&transTab.style.display!=='none') renderAdminTransport();
     }catch(e){/* transport fetch failed — non-blocking */}
     // Sync tasks — always replace local with Firebase truth
     try{
@@ -5189,6 +5528,41 @@ function downloadCurrentReport(){
 
 function downloadCurrentExcel(){
   if(!_currentReportData){alert('Generate a report first.');return;}
+  const deptEl=document.getElementById('rep-dept');
+  const dept=deptEl?deptEl.value:'all';
+  if(dept==='transport'){
+    const {from,to,label,rangeData}=_currentReportData;
+    const wb=XLSX.utils.book_new();
+    const bdStr=localStorage.getItem('HFM4_TRANS_BREAKDOWNS');
+    const allBd=bdStr?JSON.parse(bdStr):[];
+    const vehicles=cfg.transportVehicles||[];
+    const empTransRows=[['Date','Login ID','Employee Name','Vehicle','Checklist %','Status','Fuel','Trips']];
+    const empTripsRows=[['Date','Login ID','Employee Name','Trip From','Trip To','Started','Ended','Odometer','Purpose']];
+    const dates=Object.keys(rangeData).sort().filter(d=>d>=from&&d<=to);
+    dates.forEach(date=>{
+      (cfg.transportEmployees||[]).forEach(emp=>{
+        const trStr=localStorage.getItem('HFM4_TRANS_'+date+'_'+emp.loginId);
+        if(!trStr)return;
+        const td=JSON.parse(trStr);
+        const vName=td.vehicle?getVehicleLabel(td.vehicle):'—';
+        const chk=td.checklist?((Object.values(td.checklist).filter(Boolean).length/Object.keys(td.checklist).length*100).toFixed(0)):'—';
+        empTransRows.push([date,emp.loginId,td.name||emp.name,vName,chk+'%',td.status||'—',td.fuel||'—',(td.trips||[]).length]);
+        (td.trips||[]).forEach(tr=>empTripsRows.push([date,emp.loginId,td.name||emp.name,tr.from||'',tr.to||'',tr.start||'',tr.end||'',tr.odo||'',tr.purpose||'']));
+      });
+    });
+    const bdRows=[['Date','Vehicle','Reported By','Description','Status','Resolved At']];
+    allBd.filter(b=>b.date>=from&&b.date<=to).forEach(b=>bdRows.push([b.date,b.vehicle||b.veh,b.reportedBy,b.desc,b.status,b.resolvedAt||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(empTransRows),'Employee Transport');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(empTripsRows),'Trips');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(bdRows),'Breakdowns');
+    // Vehicle fleet sheet
+    const fleetRows=[['Name','Model','Registration No.']];
+    vehicles.forEach(v=>fleetRows.push([v.name,v.model||'',v.regNo||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fleetRows),'Vehicle Fleet');
+    XLSX.writeFile(wb,`Transport_Report_${from}_to_${to}.xlsx`);
+    showToast2('Transport Excel downloaded ✓');
+    return;
+  }
   const {from,to,label,rangeData}=_currentReportData;
   const dates=Object.keys(rangeData).sort();
   const allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
