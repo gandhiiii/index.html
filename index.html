@@ -253,7 +253,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   <div class="login-wrap">
     <div class="login-box">
       <div class="login-logo">🚑</div>
-      <div class="login-title" id="tl-hosp">Hospital FM</div>
+      <div class="login-title" id="tl-hosp">Hospital FM — Transport</div>
       <div class="login-sub" id="tl-date"></div>
       <div style="background:#E0F2F1;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
         <span style="font-size:13px;font-weight:700;color:#00695C">🚑 Transport Employee Login</span>
@@ -264,8 +264,26 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <button class="btn" style="background:#00695C;color:#fff;margin-top:4px;padding:15px;font-size:16px" onclick="transportLogin()">Login →</button>
       </div>
       <p id="tl-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
-      <div style="margin-top:16px;text-align:center;border-top:1px solid #F0F4F8;padding-top:14px">
-        <span onclick="showLanding()" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">← Back</span>
+      <!-- First time setup -->
+      <div style="margin-top:16px;border-top:1px solid #F0F4F8;padding-top:14px">
+        <div onclick="toggleTransportImport()" style="text-align:center;font-size:12px;color:#00695C;cursor:pointer;padding:4px;font-weight:700">
+          📱 First time on this device? Tap here to set up
+        </div>
+        <div id="transport-import-panel" style="display:none;margin-top:10px;background:#E0F2F1;border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:800;color:#00695C;margin-bottom:10px;text-align:center">🔗 Quick Setup — Just paste the Firebase URL</div>
+          <div style="display:grid;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#00695C;text-transform:uppercase;display:block;margin-bottom:4px">Firebase Database URL (from your Admin)</label>
+              <input id="transport-import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#80CBC4;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+              <p style="font-size:11px;color:#00695C;margin-top:5px;line-height:1.5">Paste the Firebase URL your admin shared. The app will connect and load everything automatically.</p>
+            </div>
+            <button onclick="transportImportDb()" style="background:#00695C;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;width:100%">🔗 Connect & Load</button>
+            <div id="transport-import-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;text-align:center"></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;text-align:center">
+          <span onclick="showLanding()" style="font-size:12px;color:#90A4AE;cursor:pointer;padding:4px;font-weight:600">← Back to Home</span>
+        </div>
       </div>
     </div>
   </div>
@@ -2077,6 +2095,47 @@ function showTransportLogin(){
   document.getElementById('tl-hosp').textContent='🏥 '+cfg.hosp+' — Transport';
   document.getElementById('tl-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   go('view-transport-login');
+}
+function toggleTransportImport(){
+  const p=document.getElementById('transport-import-panel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+async function transportImportDb(){
+  const urlRaw=(document.getElementById('transport-import-db').value||'').trim().replace(/\/+$/,'');
+  const statusEl=document.getElementById('transport-import-status');
+  function setStatus(type,msg){
+    statusEl.style.display='block';
+    if(type==='loading'){statusEl.style.background='#E0F2F1';statusEl.style.color='#00695C';statusEl.textContent=msg;}
+    else if(type==='ok'){statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';statusEl.textContent=msg;}
+    else{statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent=msg;}
+  }
+  if(!urlRaw){setStatus('error','❌ Please paste the Firebase URL from your admin.');return;}
+  if(!urlRaw.includes('firebaseio.com')&&!urlRaw.includes('firebase')){setStatus('error','❌ That does not look like a Firebase URL.');return;}
+  setStatus('loading','🔄 Connecting to Firebase...');
+  try{
+    const ping=await xhrRequest(urlRaw+'/hfm_ping.json','PUT',{ts:Date.now()},8000);
+    if(!ping.ok){setStatus('error','❌ Firebase connection failed (Error '+ping.status+'). Check Rules.');return;}
+    setStatus('loading','🔄 Loading hospital config...');
+    const r=await xhrRequest(urlRaw+'/config.json','GET',null,8000);
+    if(!r.ok||!r.data){setStatus('error','❌ No config found. Ask admin to log in once.');return;}
+    const data=r.data;
+    if(!data.hosp||!Array.isArray(data.employees)){setStatus('error','❌ Config incomplete. Ask admin to log in.');return;}
+    const savedPwd=cfg.adminPwd;const savedAdmins=cfg.admins;
+    Object.assign(cfg,data);
+    if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
+    if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
+    cfg.dbUrl=urlRaw;cfg.convexUrl=urlRaw;
+    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+    sessionStorage.setItem('HFM4_DB_URL',urlRaw);
+    initConvex();
+    document.getElementById('transport-import-panel').style.display='none';
+    document.getElementById('transport-import-db').value='';
+    document.getElementById('tl-hosp').textContent='🏥 '+cfg.hosp+' — Transport';
+    document.getElementById('tl-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    setStatus('ok','✅ Connected! '+cfg.hosp+' — '+(cfg.transportEmployees||[]).length+' transport employees loaded.');
+  }catch(e){
+    setStatus('error','❌ Error: '+e.message);
+  }
 }
 function transportLogin(){
   const id=document.getElementById('tl-id').value.trim().toUpperCase();
