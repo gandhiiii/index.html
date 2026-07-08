@@ -289,7 +289,10 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div id="trans-active-trip" style="display:none;background:#FFF8E1;border-radius:10px;padding:12px;margin-bottom:12px;border:2px solid #F57F17">
         <div style="font-weight:800;font-size:14px;color:#E65100">🚑 Active Trip In Progress</div>
         <div id="trans-active-info" style="font-size:12px;color:#795548;margin-top:6px"></div>
-        <button class="btn" style="background:#C62828;color:#fff;margin-top:10px;padding:12px;font-size:15px" onclick="completeTrip()">✅ Complete Trip</button>
+        <div id="trans-return-actions" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button id="btn-return-start" class="btn" style="background:#1565C0;color:#fff;padding:12px;font-size:14px;flex:1" onclick="startReturn()">🔁 Start Return</button>
+          <button id="btn-complete-trip" class="btn" style="background:#C62828;color:#fff;padding:12px;font-size:14px;flex:1" onclick="completeTrip()">✅ Complete Trip</button>
+        </div>
       </div>
       <div id="trans-trip-form" style="display:grid;gap:8px">
         <div><label>Destination</label>
@@ -2158,6 +2161,12 @@ function loadTransportHome(){
     onTransVehicleChange();
   }
   renderTransChecklist();
+  // Restore active trip state
+  if(saved){
+    const activeTrip=saved.trips?saved.trips.find(t=>t.status==='in-progress'):null;
+    if(activeTrip){_currentTripId=activeTrip.id;startGpsTracking();}
+  }
+  updateTripUI(saved);
   renderTransTrips();
   renderTransBreakdowns();
   loadGoogleMapsApi();
@@ -2241,14 +2250,23 @@ function startTrip(){
   startGpsTracking();
   updateTripUI(saved);
   renderTransTrips();
+  // Clear form
+  document.getElementById('trans-trip-dest').value='';
+  document.getElementById('trans-trip-patient').value='';
+  document.getElementById('trans-trip-purpose').value='';
+  document.getElementById('trans-dist-val').textContent='—';
+  document.getElementById('trans-distance-info').style.display='none';
+  document.getElementById('trans-dest-coords').dataset.lat='';
+  document.getElementById('trans-dest-coords').dataset.lng='';
   showToast('🚀 Journey started to '+dest);
 }
 function completeTrip(){
-  if(!_currentTripId){showToast('⚠️ No active trip');return;}
   const saved=getTransportData();
-  if(!saved||!saved.trips)return;
-  const trip=saved.trips.find(t=>t.id===_currentTripId);
-  if(!trip){showToast('⚠️ Trip not found');return;}
+  if(!saved||!saved.trips){showToast('⚠️ No active trip');return;}
+  const trip=_currentTripId?saved.trips.find(t=>t.id===_currentTripId):saved.trips.find(t=>t.status==='in-progress');
+  if(!trip){showToast('⚠️ No active trip found');return;}
+  _currentTripId=trip.id;
+  !trip.returnStart&&(trip.returnStart=new Date().toISOString());
   trip.returnEnd=new Date().toISOString();
   trip.status='completed';
   if(_gpsLastPos){
@@ -2269,6 +2287,23 @@ function completeTrip(){
   updateTripUI(saved);
   renderTransTrips();
   showToast('✅ Trip completed');
+}
+function startReturn(){
+  const saved=getTransportData();
+  if(!saved||!saved.trips){showToast('⚠️ No active trip');return;}
+  const trip=_currentTripId?saved.trips.find(t=>t.id===_currentTripId):saved.trips.find(t=>t.status==='in-progress');
+  if(!trip){showToast('⚠️ No active trip found');return;}
+  trip.returnStart=new Date().toISOString();
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  localStorage.setItem(key,JSON.stringify(saved));
+  if(getDbUrl()) fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+  updateTripUI(saved);
+  if(_gpsLastPos&&getDbUrl()){
+    fbPut('/transport-live/'+currentTransEmp.loginId+'/location',{
+      lat:_gpsLastPos.lat,lng:_gpsLastPos.lng,accuracy:0,updated:Date.now()
+    }).catch(()=>{});
+  }
+  showToast('🔁 Return journey started');
 }
 function startGpsTracking(){
   if(!navigator.geolocation){showToast('⚠️ GPS not available');return;}
@@ -2304,14 +2339,23 @@ function updateTripUI(saved){
   const formEl=document.getElementById('trans-trip-form');
   const activeTrip=saved&&saved.trips?saved.trips.find(t=>t.status==='in-progress'):null;
   if(activeTrip){
+    _currentTripId=activeTrip.id;
     activeEl.style.display='block';
+    const hasReturn=!!activeTrip.returnStart;
     document.getElementById('trans-active-info').innerHTML=
       '📍 <strong>'+activeTrip.destination+'</strong>'+
       (activeTrip.patient?' · 👤 '+activeTrip.patient:'')+
       ' · 🕐 Started: '+new Date(activeTrip.journeyStart).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+
-      (activeTrip.distance?' · 📏 '+activeTrip.distance+' km':'');
+      (activeTrip.distance?' · 📏 '+activeTrip.distance+' km':'')+
+      (hasReturn?' · 🔁 Return started: '+new Date(activeTrip.returnStart).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'');
+    // Toggle buttons
+    const retBtn=document.getElementById('btn-return-start');
+    const compBtn=document.getElementById('btn-complete-trip');
+    if(retBtn) retBtn.style.display=hasReturn?'none':'inline-block';
+    if(compBtn) compBtn.textContent=hasReturn?'✅ Complete Return':'✅ Complete Trip';
     formEl.style.display='none';
   } else {
+    _currentTripId=null;
     activeEl.style.display='none';
     formEl.style.display='grid';
   }
@@ -2504,7 +2548,7 @@ function renderAdminTransport(){
     const statusColor={available:'#2E7D32','on-trip':'#E65100',maintenance:'#C62828','off-duty':'#757575'};
     const sc=statusColor[saved.status]||'#757575';
     const trips=saved.trips||[];
-    const totalKm=trips.reduce((s,t)=>s+(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0),0);
+    const totalKm=trips.reduce((s,t)=>s+(t.distance||(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0)),0);
     html+=`<div style="padding:12px;margin-bottom:8px;background:#FAFAFA;border-radius:8px;border-left:3px solid ${sc}">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
         <div><strong>🚑 ${e.name}</strong> · ${getVehicleLabel(saved.vehicle)} · <span style="color:${sc};font-weight:700">${statusIcons[saved.status]||saved.status}</span></div>
