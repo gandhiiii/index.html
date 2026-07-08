@@ -1973,6 +1973,14 @@ function go(id){
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
+// Always reset admin panel to the Dash tab so re-login never shows a blank page
+function resetAdminTabs(){
+  ['dash','tasks','proj','chk','staff','requests','problems','transport','report'].forEach(t=>{
+    const e=document.getElementById('tab-'+t);
+    if(e) e.style.display=t==='dash'?'block':'none';
+  });
+  document.querySelectorAll('#view-admin .tab').forEach((t,i)=>t.classList.toggle('on',i===0));
+}
 
 function showLoginPage(){
   document.getElementById('ul-hosp').textContent='🏥 '+cfg.hosp;
@@ -2008,6 +2016,7 @@ function universalLogin(){
     if(url) sessionStorage.setItem('HFM4_DB_URL',url);
     sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:foundAdmin.id,name:foundAdmin.name,loginId:foundAdmin.loginId,password:foundAdmin.password}));
     go('view-admin');
+    resetAdminTabs();
     updateLiveBadge(!!url);
     startLiveTracking();
     if(url){
@@ -2039,6 +2048,8 @@ function getAdmins(){
   if(!cfg.admins||!cfg.admins.length){
     cfg.admins=[{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd||'admin',createdAt:Date.now()}];
   }
+  // Keep cfg.adminPwd in sync with first admin's password so backward-compat login never breaks
+  if(cfg.admins[0]) cfg.adminPwd=cfg.admins[0].password;
   return cfg.admins;
 }
 
@@ -2061,6 +2072,7 @@ function adminLogin(){
   if(url) sessionStorage.setItem('HFM4_DB_URL',url);
   sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:found.id,name:found.name,loginId:found.loginId,password:found.password}));
   go('view-admin');
+  resetAdminTabs();
   updateLiveBadge(!!url);
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
@@ -2146,11 +2158,12 @@ function loadTransportHome(){
   // Load saved data
   const saved=getTransportData();
   if(saved){
+    // Set transCheckItems BEFORE calling onTransVehicleChange so saveTransportData() doesn't crash
+    transCheckItems=saved.checks||[];
     if(saved.vehicle) vSel.value=saved.vehicle;
     onTransVehicleChange();
     if(saved.status) document.getElementById('trans-status').value=saved.status;
     if(saved.fuel!=null){document.getElementById('trans-fuel').value=saved.fuel;document.getElementById('trans-fuel-val').textContent=saved.fuel+'%';}
-    transCheckItems=saved.checks||[];
   } else {
     transCheckItems=(cfg.transportVehicles||[]).length?[
       {label:'Engine oil level OK',done:false},{label:'Coolant level OK',done:false},{label:'Brake fluid OK',done:false},
@@ -2202,6 +2215,7 @@ function resetTransChecks(){
 }
 
 // ── ENHANCED TRIP SYSTEM with GPS & Maps ─────────────
+let transCheckItems=[];
 let _currentTripId=null;
 let _gpsWatchId=null;
 let _gpsLastPos=null;
@@ -2878,8 +2892,8 @@ function changeMyPassword(){
   if(!me){alert('Session error. Please log out and log in again.');return;}
   if(me.password!==oldPwd){alert('Current password is incorrect.');return;}
   me.password=newPwd;
-  // Also update legacy adminPwd if this is the default admin
-  if(me.id==='admin_default') cfg.adminPwd=newPwd;
+  // Also update legacy adminPwd if this is the first/default admin
+  if(me.id==='admin_default'||admins.indexOf(me)===0) cfg.adminPwd=newPwd;
   cfg.admins=admins;saveCfg();
   document.getElementById('cp-old').value='';
   document.getElementById('cp-new').value='';
@@ -6432,6 +6446,7 @@ window.onload=function(){
       currentAdmin=adminUser;
       if(savedSession.password && !currentAdmin.password) currentAdmin.password=savedSession.password;
       go('view-admin');
+      resetAdminTabs();
       updateLiveBadge(!!getDbUrl());
       startLiveTracking();
       updateReqBadges();
