@@ -163,126 +163,64 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="login-title" id="land-hosp">Hospital FM</div>
       <div class="login-sub" id="land-date"></div>
       <div style="display:grid;gap:10px;margin-top:10px">
-        <button class="btn blue" style="padding:16px;font-size:16px" onclick="go('view-emp-login')">👷 Employee Login</button>
-        <button class="btn" style="background:#00695C;color:#fff;padding:16px;font-size:16px" onclick="showTransportLogin()">🚑 Transport Login</button>
-        <button class="btn purple" style="padding:16px;font-size:16px" onclick="openAdminLogin()">🔐 Admin Login</button>
+        <button class="btn purple" style="padding:16px;font-size:16px" onclick="showLoginPage()">🔑 Login</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ EMPLOYEE LOGIN ════════════════════════════════ -->
-<div id="view-emp-login" class="view">
+<!-- ══ UNIVERSAL LOGIN ═════════════════════════════════ -->
+<div id="view-login" class="view">
   <div class="login-wrap">
     <div class="login-box">
-      <div class="login-logo">🏥</div>
-      <div class="login-title" id="el-hosp">Hospital FM</div>
-      <div class="login-sub" id="el-date"></div>
-      <div style="background:#E3F2FD;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
-        <span style="font-size:13px;font-weight:700;color:#1565C0">👷 Employee Login</span>
+      <div class="login-logo" id="ul-logo">🏥</div>
+      <div class="login-title" id="ul-hosp">Hospital FM</div>
+      <div class="login-sub" id="ul-date"></div>
+      <div style="background:#EDE7F6;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
+        <span style="font-size:13px;font-weight:700;color:#4527A0">🔑 Login</span>
       </div>
       <div style="display:grid;gap:12px">
-        <div><label>Login ID</label><input id="el-id" type="text" placeholder="Enter your Login ID" autocomplete="off" style="font-size:16px;text-align:center;letter-spacing:1px"></div>
-        <div><label>Password</label><input id="el-pwd" type="password" placeholder="Enter your Password" onkeydown="if(event.key==='Enter')empLogin()" style="font-size:16px;text-align:center;letter-spacing:2px"></div>
-        <button class="btn blue" style="margin-top:4px;padding:15px;font-size:16px" onclick="empLogin()">Login →</button>
+        <div><label>Login ID</label><input id="ul-id" type="text" placeholder="Enter your Login ID" autocomplete="off" style="font-size:16px;text-align:center;letter-spacing:1px"></div>
+        <div><label>Password</label><input id="ul-pwd" type="password" placeholder="Enter your Password" onkeydown="if(event.key==='Enter')universalLogin()" style="font-size:16px;text-align:center;letter-spacing:2px"></div>
+        <button class="btn purple" style="margin-top:4px;padding:15px;font-size:16px" onclick="universalLogin()">Login →</button>
       </div>
-      <p id="el-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
+      <p id="ul-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
       <!-- First time setup -->
       <div style="margin-top:16px;border-top:1px solid #F0F4F8;padding-top:14px">
-        <div onclick="toggleImport()" style="text-align:center;font-size:12px;color:#42A5F5;cursor:pointer;padding:4px;font-weight:700">
+        <div onclick="toggleImport()" style="text-align:center;font-size:12px;color:#7C4DFF;cursor:pointer;padding:4px;font-weight:700">
           📱 First time on this device? Tap here to set up
         </div>
-        <div id="import-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
-          <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:10px;text-align:center">🔗 Quick Setup — Just paste the Firebase URL</div>
+        <div id="import-panel" style="display:none;margin-top:10px;background:#EDE7F6;border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:800;color:#4527A0;margin-bottom:10px;text-align:center">🔗 Quick Setup — Just paste the Firebase URL</div>
           <div style="display:grid;gap:10px">
             <div>
-              <label style="font-size:11px;font-weight:700;color:#1565C0;text-transform:uppercase;display:block;margin-bottom:4px">Firebase Database URL (from your Admin)</label>
-              <input id="import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
-              <p style="font-size:11px;color:#1565C0;margin-top:5px;line-height:1.5">Paste the Firebase URL your admin shared. The app will connect and load everything automatically.</p>
+              <label style="font-size:11px;font-weight:700;color:#4527A0;text-transform:uppercase;display:block;margin-bottom:4px">Firebase Database URL (from your Admin)</label>
+              <input id="import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#B39DDB;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+              <p style="font-size:11px;color:#4527A0;margin-top:5px;line-height:1.5">Paste the Firebase URL your admin shared. The app will connect and load everything automatically.</p>
             </div>
             <!-- Legacy: setup code (hidden, shown only if needed) -->
             <div id="legacy-code-section" style="display:none">
               <label style="font-size:11px;font-weight:700;color:#607D8B;text-transform:uppercase;display:block;margin-bottom:4px">Or paste Setup Code (old method)</label>
               <textarea id="import-code" rows="3" placeholder="Paste setup code from admin..." style="margin-top:0;font-size:12px;font-family:monospace;resize:none;background:#fff;border-color:#B0BEC5"></textarea>
             </div>
-            <button onclick="importFromFirebase()" id="import-btn" style="width:100%;background:#1565C0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🔌 Connect &amp; Set Up</button>
+            <button onclick="importFromFirebase()" id="import-btn" style="width:100%;background:#4527A0;color:#fff;border:none;padding:13px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🔌 Connect &amp; Set Up</button>
             <div id="import-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;text-align:center"></div>
             <div style="text-align:center">
               <span onclick="document.getElementById('legacy-code-section').style.display=document.getElementById('legacy-code-section').style.display==='none'?'block':'none'" style="font-size:11px;color:#90A4AE;cursor:pointer;text-decoration:underline">Have a setup code instead? Tap here</span>
             </div>
           </div>
         </div>
-      </div>
-      <!-- Small admin link at the bottom — not obvious to employees -->
-      <div style="margin-top:16px;text-align:center;border-top:1px solid #F0F4F8;padding-top:14px">
-        <span onclick="openAdminLogin()" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">Admin Access</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ ADMIN LOGIN ════════════════════════════════════ -->
-<div id="view-admin-login" class="view">
-  <div class="login-wrap">
-    <div class="login-box">
-      <div class="login-logo">🔐</div>
-      <div class="login-title">Admin Login</div>
-      <div class="login-sub" id="admin-login-sub">Enter your admin credentials</div>
-      <div style="display:grid;gap:12px">
-        <div><label>Username</label><input id="al-user" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')adminLogin()"></div>
-        <div><label>Password</label><input id="al-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
-        <button class="btn purple" style="margin-top:6px" onclick="adminLogin()">Login →</button>
-        <button class="btn outline" onclick="showEmpLogin()" style="padding:10px">← Back</button>
-        <div style="text-align:center"><span onclick="showForgotPassword()" style="font-size:12px;color:#7C4DFF;cursor:pointer;text-decoration:underline">Forgot Password?</span></div>
-        <div style="text-align:center;margin-top:6px"><span onclick="toggleAdminRecovery()" style="font-size:11px;color:#42A5F5;cursor:pointer;text-decoration:underline">🔄 Lost all settings? Recover from Firebase URL</span></div>
+        <div style="margin-top:12px;text-align:center;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+          <span onclick="showForgotPassword()" style="font-size:11px;color:#7C4DFF;cursor:pointer;text-decoration:underline">Forgot Password?</span>
+          <span onclick="toggleAdminRecovery()" style="font-size:11px;color:#42A5F5;cursor:pointer;text-decoration:underline">🔄 Recover from Firebase</span>
+          <span onclick="showLanding()" style="font-size:11px;color:#90A4AE;cursor:pointer">← Back</span>
+        </div>
         <div id="admin-recovery-panel" style="display:none;margin-top:10px;background:#E3F2FD;border-radius:12px;padding:14px">
           <div style="font-size:13px;font-weight:800;color:#1565C0;margin-bottom:8px;text-align:center">🔗 Restore from Firebase URL</div>
-          <p style="font-size:11px;color:#1565C0;margin-bottom:10px;line-height:1.5">Enter your Firebase Database URL to restore hospital name, employees, and recovery code. Your admin password is NEVER stored in Firebase — use "Forgot Password?" above with the recovery code to reset it.</p>
+          <p style="font-size:11px;color:#1565C0;margin-bottom:10px;line-height:1.5">Enter your Firebase Database URL to restore hospital name, employees, and recovery code.</p>
           <input id="admin-recover-url" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="background:#fff;border-color:#90CAF9;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
           <button onclick="tryAdminRecovery()" style="width:100%;background:#1565C0;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:8px">🔄 Restore Settings</button>
           <div id="admin-recover-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;margin-top:8px;text-align:center"></div>
-        </div>
-      </div>
-      <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect username or password</p>
-    </div>
-  </div>
-</div>
-
-<!-- ══ TRANSPORT LOGIN ════════════════════════════════ -->
-<div id="view-transport-login" class="view">
-  <div class="login-wrap">
-    <div class="login-box">
-      <div class="login-logo">🚑</div>
-      <div class="login-title" id="tl-hosp">Hospital FM — Transport</div>
-      <div class="login-sub" id="tl-date"></div>
-      <div style="background:#E0F2F1;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
-        <span style="font-size:13px;font-weight:700;color:#00695C">🚑 Transport Employee Login</span>
-      </div>
-      <div style="display:grid;gap:12px">
-        <div><label>Login ID</label><input id="tl-id" type="text" placeholder="Enter your Transport Login ID" autocomplete="off" style="font-size:16px;text-align:center;letter-spacing:1px"></div>
-        <div><label>Password</label><input id="tl-pwd" type="password" placeholder="Enter your Password" onkeydown="if(event.key==='Enter')transportLogin()" style="font-size:16px;text-align:center;letter-spacing:2px"></div>
-        <button class="btn" style="background:#00695C;color:#fff;margin-top:4px;padding:15px;font-size:16px" onclick="transportLogin()">Login →</button>
-      </div>
-      <p id="tl-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
-      <!-- First time setup -->
-      <div style="margin-top:16px;border-top:1px solid #F0F4F8;padding-top:14px">
-        <div onclick="toggleTransportImport()" style="text-align:center;font-size:12px;color:#00695C;cursor:pointer;padding:4px;font-weight:700">
-          📱 First time on this device? Tap here to set up
-        </div>
-        <div id="transport-import-panel" style="display:none;margin-top:10px;background:#E0F2F1;border-radius:12px;padding:14px">
-          <div style="font-size:13px;font-weight:800;color:#00695C;margin-bottom:10px;text-align:center">🔗 Quick Setup — Just paste the Firebase URL</div>
-          <div style="display:grid;gap:10px">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#00695C;text-transform:uppercase;display:block;margin-bottom:4px">Firebase Database URL (from your Admin)</label>
-              <input id="transport-import-db" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="background:#fff;border-color:#80CBC4;font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
-              <p style="font-size:11px;color:#00695C;margin-top:5px;line-height:1.5">Paste the Firebase URL your admin shared. The app will connect and load everything automatically.</p>
-            </div>
-            <button onclick="transportImportDb()" style="background:#00695C;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;width:100%">🔗 Connect & Load</button>
-            <div id="transport-import-status" style="display:none;font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;text-align:center"></div>
-          </div>
-        </div>
-        <div style="margin-top:10px;text-align:center">
-          <span onclick="showLanding()" style="font-size:12px;color:#90A4AE;cursor:pointer;padding:4px;font-weight:600">← Back to Home</span>
         </div>
       </div>
     </div>
@@ -2007,21 +1945,12 @@ function go(id){
   window.scrollTo(0,0);
 }
 
-function openAdminLogin(){
-  const sub=document.getElementById('admin-login-sub');
-  const url=getDbUrl();
-  if(sub){
-    if(url && cfg.adminRecoveryCode){
-      sub.innerHTML='🔗 Connected to '+cfg.hosp+'<br><span style="font-size:11px;color:#E65100">⚠️ Your admin password is not stored on this device. Use <strong>"Forgot Password?"</strong> below with your recovery code to set a new one.</span>';
-    } else if(url){
-      sub.textContent='🔗 Connected to '+cfg.hosp+' — enter your admin credentials';
-    } else {
-      sub.textContent='Enter your admin credentials';
-    }
-  }
-  go('view-admin-login');
+function showLoginPage(){
+  document.getElementById('ul-hosp').textContent='🏥 '+cfg.hosp;
+  document.getElementById('ul-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('ul-err').style.display='none';
+  go('view-login');
 }
-
 function showLanding(){
   const d=document.getElementById('land-date');
   if(d) d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -2030,35 +1959,52 @@ function showLanding(){
 }
 
 // ══════════════════════════════════════════════════════
-// LOGIN
+// UNIVERSAL LOGIN — detects role by credentials
 // ══════════════════════════════════════════════════════
-function empLogin(){
-  const id=document.getElementById('el-id').value.trim().toUpperCase();
-  const pwd=document.getElementById('el-pwd').value.trim();
-  // Check transport employees first
-  const transEmp=(cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===id && e.password===pwd);
+function universalLogin(){
+  const id=document.getElementById('ul-id').value.trim().toUpperCase();
+  const pwd=document.getElementById('ul-pwd').value.trim();
+  const errEl=document.getElementById('ul-err');
+  // 1. Check admin
+  const admins=getAdmins();
+  let foundAdmin=admins.find(a=>a.loginId.toUpperCase()===id&&a.password===pwd);
+  if(!foundAdmin&&id==='ADMIN'&&pwd===cfg.adminPwd){
+    foundAdmin=admins[0]||{id:'admin_default',name:'Admin',loginId:'admin',password:cfg.adminPwd};
+  }
+  if(foundAdmin){
+    errEl.style.display='none';
+    currentAdmin=foundAdmin;currentEmp=null;currentTransEmp=null;
+    document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
+    const url=getDbUrl();
+    if(url) sessionStorage.setItem('HFM4_DB_URL',url);
+    sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:foundAdmin.id,name:foundAdmin.name,loginId:foundAdmin.loginId,password:foundAdmin.password}));
+    go('view-admin');
+    updateLiveBadge(!!url);
+    startLiveTracking();
+    if(url){
+      const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
+      fbPut('/config',pubCfg).catch(()=>{});
+    }
+    updateReqBadges();
+    return;
+  }
+  // 2. Check transport employee
+  const transEmp=(cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===id&&e.password===pwd);
   if(transEmp){
-    document.getElementById('el-err').style.display='none';
-    currentTransEmp=transEmp;
-    currentEmp=null;
-    document.getElementById('el-id').value='';document.getElementById('el-pwd').value='';
-    showToast2('🚑 Transport employee — redirecting to Transport page');
+    errEl.style.display='none';
+    currentTransEmp=transEmp;currentEmp=null;currentAdmin=null;
+    document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
     loadTransportHome();
     return;
   }
-  // Then check FM employees
-  const emp=cfg.employees.find(e=>e.loginId.toUpperCase()===id && e.password===pwd);
-  if(!emp){document.getElementById('el-err').style.display='block';return;}
-  document.getElementById('el-err').style.display='none';
-  currentEmp=emp;
-  currentTransEmp=null;
-  document.getElementById('el-id').value='';document.getElementById('el-pwd').value='';
+  // 3. Check FM employee
+  const emp=cfg.employees.find(e=>e.loginId.toUpperCase()===id&&e.password===pwd);
+  if(!emp){errEl.style.display='block';return;}
+  errEl.style.display='none';
+  currentEmp=emp;currentTransEmp=null;currentAdmin=null;
+  document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
   loadEmployeeHome();
 }
-
-// ══════════════════════════════════════════════════════
-// MULTI-ADMIN SYSTEM
-// ══════════════════════════════════════════════════════
 function getAdmins(){
   // Ensure default admin always exists (backward compat)
   if(!cfg.admins||!cfg.admins.length){
@@ -2099,9 +2045,9 @@ function adminLogin(){
 function logout(){
   currentEmp=null;statuses={};values={};problems=[];
   if(_empPollTimer){clearInterval(_empPollTimer);_empPollTimer=null;}
-  showEmpLogin();
+  showLoginPage();
 }
-function adminLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showEmpLogin();}
+function adminLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showLoginPage();}
 
 // ══════════════════════════════════════════════════════
 // TRANSPORTATION DEPARTMENT
@@ -2109,67 +2055,10 @@ function adminLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_S
 let currentTransEmp=null;
 let _transPollTimer=null;
 
-function showTransportLogin(){
-  document.getElementById('tl-hosp').textContent='🏥 '+cfg.hosp+' — Transport';
-  document.getElementById('tl-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  go('view-transport-login');
-}
-function toggleTransportImport(){
-  const p=document.getElementById('transport-import-panel');
-  p.style.display=p.style.display==='none'?'block':'none';
-}
-async function transportImportDb(){
-  const urlRaw=(document.getElementById('transport-import-db').value||'').trim().replace(/\/+$/,'');
-  const statusEl=document.getElementById('transport-import-status');
-  function setStatus(type,msg){
-    statusEl.style.display='block';
-    if(type==='loading'){statusEl.style.background='#E0F2F1';statusEl.style.color='#00695C';statusEl.textContent=msg;}
-    else if(type==='ok'){statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';statusEl.textContent=msg;}
-    else{statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';statusEl.textContent=msg;}
-  }
-  if(!urlRaw){setStatus('error','❌ Please paste the Firebase URL from your admin.');return;}
-  if(!urlRaw.includes('firebaseio.com')&&!urlRaw.includes('firebase')){setStatus('error','❌ That does not look like a Firebase URL.');return;}
-  setStatus('loading','🔄 Connecting to Firebase...');
-  try{
-    const ping=await xhrRequest(urlRaw+'/hfm_ping.json','PUT',{ts:Date.now()},8000);
-    if(!ping.ok){setStatus('error','❌ Firebase connection failed (Error '+ping.status+'). Check Rules.');return;}
-    setStatus('loading','🔄 Loading hospital config...');
-    const r=await xhrRequest(urlRaw+'/config.json','GET',null,8000);
-    if(!r.ok||!r.data){setStatus('error','❌ No config found. Ask admin to log in once.');return;}
-    const data=r.data;
-    if(!data.hosp||!Array.isArray(data.employees)){setStatus('error','❌ Config incomplete. Ask admin to log in.');return;}
-    const savedPwd=cfg.adminPwd;const savedAdmins=cfg.admins;
-    Object.assign(cfg,data);
-    if(!cfg.adminPwd) cfg.adminPwd=savedPwd||'admin';
-    if(!cfg.admins||!cfg.admins.length) cfg.admins=savedAdmins||[];
-    cfg.dbUrl=urlRaw;cfg.convexUrl=urlRaw;
-    localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
-    sessionStorage.setItem('HFM4_DB_URL',urlRaw);
-    initConvex();
-    document.getElementById('transport-import-panel').style.display='none';
-    document.getElementById('transport-import-db').value='';
-    document.getElementById('tl-hosp').textContent='🏥 '+cfg.hosp+' — Transport';
-    document.getElementById('tl-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    setStatus('ok','✅ Connected! '+cfg.hosp+' — '+(cfg.transportEmployees||[]).length+' transport employees loaded.');
-  }catch(e){
-    setStatus('error','❌ Error: '+e.message);
-  }
-}
-function transportLogin(){
-  const id=document.getElementById('tl-id').value.trim().toUpperCase();
-  const pwd=document.getElementById('tl-pwd').value.trim();
-  const emp=(cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===id&&e.password===pwd);
-  if(!emp){document.getElementById('tl-err').style.display='block';return;}
-  document.getElementById('tl-err').style.display='none';
-  currentTransEmp=emp;
-  currentEmp=null;
-  document.getElementById('tl-id').value='';document.getElementById('tl-pwd').value='';
-  loadTransportHome();
-}
 function transLogout(){
   currentTransEmp=null;
   if(_transPollTimer){clearInterval(_transPollTimer);_transPollTimer=null;}
-  showTransportLogin();
+  showLoginPage();
 }
 function getTransportData(){
   if(!currentTransEmp)return null;
@@ -2778,8 +2667,6 @@ async function tryAdminRecovery(){
     await preloadAllFromFirebase();
     statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
     statusEl.innerHTML='✅ Restored! Hospital: <strong>'+cfg.hosp+'</strong> · '+cfg.employees.length+' employees loaded.<br><br>Your admin password was <strong>not</strong> restored (never stored in Firebase).<br>• Use <strong>"Forgot Password?"</strong> above with your recovery code to reset.<br>• Your recovery code is: <strong>'+(cfg.adminRecoveryCode||'not set — ask another admin')+'</strong><br><br><span style="font-size:11px">Write down the recovery code above. Close this panel and try logging in, or use Forgot Password.</span>';
-    const alSub=document.getElementById('admin-login-sub');
-    if(alSub) alSub.textContent='✅ Settings restored! Use "Forgot Password?" to reset admin password.';
     setTimeout(()=>{statusEl.scrollIntoView({behavior:'smooth',block:'center'});},100);
   }catch(e){
     statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
@@ -4172,8 +4059,8 @@ async function importFromFirebase(){
     initConvex();
     document.getElementById('import-panel').style.display='none';
     document.getElementById('import-db').value='';
-    document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
-    document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('ul-hosp').textContent='🏥 '+cfg.hosp;
+    document.getElementById('ul-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     setStatus('ok','✅ Connected! '+cfg.employees.length+' employees loaded.');
     alert('✅ Setup complete!\n\nHospital: '+cfg.hosp+'\nEmployees loaded: '+cfg.employees.length+'\n🔴 Live tracking: ON ✓\n\nYou can now login with your Employee ID & Password.');
   }catch(e){
@@ -4207,8 +4094,8 @@ function importConfig(){
     document.getElementById('import-panel').style.display='none';
     if(document.getElementById('import-code')) document.getElementById('import-code').value='';
     if(document.getElementById('import-db')) document.getElementById('import-db').value='';
-    document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
-    document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('ul-hosp').textContent='🏥 '+cfg.hosp;
+    document.getElementById('ul-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const liveOn=!!getDbUrl();
     alert('✅ Setup complete!\n\nHospital: '+cfg.hosp+'\nEmployees loaded: '+cfg.employees.length+'\n'+(liveOn?'🔴 Live tracking: ON ✓ (Firebase connected)':'⚪ Live tracking: OFF — enter Firebase URL to enable')+'\n\nYou can now login.');
   }catch(e){
@@ -6299,21 +6186,14 @@ window.onload=function(){
             localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
           }
         }catch(e){/* silent — user can manually recover */ }
-        if(cfg.waNum) showEmpLogin();
+        if(cfg.waNum) showLoginPage();
       })();
       return;
     }
   }
-  if(cfg.waNum) showEmpLogin();
+  if(cfg.waNum) showLoginPage();
   // else stay on setup
 };
-
-function showEmpLogin(){
-  // Update header info on employee login page
-  document.getElementById('el-hosp').textContent='🏥 '+cfg.hosp;
-  document.getElementById('el-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  go('view-emp-login');
-}
 </script>
 </body>
 </html>
