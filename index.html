@@ -285,26 +285,45 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     </div>
     <!-- Trip Recording -->
     <div class="card" style="border-left:4px solid #F57F17">
-      <h3 style="font-size:14px;font-weight:800;color:#F57F17;margin-bottom:10px">📋 Log a Trip</h3>
-      <div style="display:grid;gap:8px">
-        <div><label>Destination</label><input id="trans-trip-to" type="text" placeholder="e.g. City Hospital, Main Road"></div>
-        <div><label>Purpose</label><input id="trans-trip-purpose" type="text" placeholder="e.g. Patient transfer, Emergency call"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div><label>KM Start</label><input id="trans-trip-km-start" type="number" min="0" placeholder="0"></div>
-          <div><label>KM End</label><input id="trans-trip-km-end" type="number" min="0" placeholder="0"></div>
+      <h3 style="font-size:14px;font-weight:800;color:#F57F17;margin-bottom:10px">📋 Trip Details</h3>
+      <div id="trans-active-trip" style="display:none;background:#FFF8E1;border-radius:10px;padding:12px;margin-bottom:12px;border:2px solid #F57F17">
+        <div style="font-weight:800;font-size:14px;color:#E65100">🚑 Active Trip In Progress</div>
+        <div id="trans-active-info" style="font-size:12px;color:#795548;margin-top:6px"></div>
+        <button class="btn" style="background:#C62828;color:#fff;margin-top:10px;padding:12px;font-size:15px" onclick="completeTrip()">✅ Complete Trip</button>
+      </div>
+      <div id="trans-trip-form" style="display:grid;gap:8px">
+        <div><label>Destination</label>
+          <input id="trans-trip-dest" type="text" placeholder="e.g. City Hospital, Main Road" style="font-size:14px">
+          <div id="trans-dest-suggestions" style="display:none;background:#fff;border:1px solid #B0BEC5;border-radius:8px;max-height:200px;overflow-y:auto;margin-top:4px;position:absolute;z-index:1000;width:calc(100% - 2px)"></div>
+          <div id="trans-dest-coords" style="display:none"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div><label>Start Time</label><input id="trans-trip-time-start" type="time"></div>
-          <div><label>End Time</label><input id="trans-trip-time-end" type="time"></div>
+          <div><label>Patient Name</label><input id="trans-trip-patient" type="text" placeholder="Patient name (if applicable)"></div>
+          <div><label>Purpose</label>
+            <select id="trans-trip-purpose" style="font-size:13px;padding:9px;font-weight:600">
+              <option value="">— Select —</option>
+              <option value="Patient Transfer">Patient Transfer</option>
+              <option value="Emergency Call">🚨 Emergency Call</option>
+              <option value="Routine Checkup">Routine Checkup</option>
+              <option value="Supply Pickup">Supply Pickup</option>
+              <option value="Staff Transport">Staff Transport</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
-        <button class="btn" style="background:#F57F17;color:#fff;margin:0;padding:11px" onclick="logTrip()">➕ Log Trip</button>
+        <div id="trans-distance-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#2E7D32">
+          📏 Distance: <span id="trans-dist-val">—</span>
+        </div>
+        <button class="btn" id="btn-start-trip" style="background:#2E7D32;color:#fff;margin:0;padding:12px;font-size:15px" onclick="startTrip()">🚀 Start Journey</button>
       </div>
     </div>
-    <!-- Trip History -->
+    <!-- Active / Completed Trips -->
     <div class="card" style="padding:0;overflow:hidden">
       <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Today's Trips</div>
       <div id="trans-trip-list" style="padding:13px"></div>
     </div>
+    <!-- GPS Status -->
+    <div id="trans-gps-status" style="display:none;text-align:center;padding:8px;font-size:12px;font-weight:700;border-radius:8px;margin-bottom:6px"></div>
     <!-- Breakdown Reporting -->
     <div class="card" style="border-left:4px solid #C62828">
       <h3 style="font-size:14px;font-weight:800;color:#C62828;margin-bottom:10px">🔧 Report Breakdown</h3>
@@ -1268,6 +1287,13 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
 
     <!-- TRANSPORT -->
     <div id="tab-transport" style="display:none">
+      <!-- Transport Dashboard KPIs -->
+      <div id="trans-kpi-cards" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <!-- Live Tracking -->
+      <div class="card" id="trans-live-card" style="border-left:4px solid #C62828">
+        <h3 style="font-size:14px;font-weight:800;color:#C62828;margin-bottom:10px">📍 Live GPS Tracking</h3>
+        <div id="trans-live-list" style="font-size:13px;display:grid;gap:6px"></div>
+      </div>
       <div style="display:grid;gap:12px">
         <div class="card" style="border-left:4px solid #00695C">
           <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🚑 Transport Employees</h3>
@@ -2134,6 +2160,7 @@ function loadTransportHome(){
   renderTransChecklist();
   renderTransTrips();
   renderTransBreakdowns();
+  loadGoogleMapsApi();
   // Populate breakdown vehicle dropdown
   const bdSel=document.getElementById('trans-bd-vehicle');
   if(bdSel){
@@ -2164,31 +2191,130 @@ function resetTransChecks(){
   saveTransportData();
   renderTransChecklist();
 }
-function logTrip(){
-  const to=document.getElementById('trans-trip-to').value.trim();
-  const purpose=document.getElementById('trans-trip-purpose').value.trim();
-  const kmStart=parseFloat(document.getElementById('trans-trip-km-start').value)||0;
-  const kmEnd=parseFloat(document.getElementById('trans-trip-km-end').value)||0;
-  const timeStart=document.getElementById('trans-trip-time-start').value;
-  const timeEnd=document.getElementById('trans-trip-time-end').value;
-  if(!to||!purpose){showToast('⚠️ Enter destination and purpose');return;}
+
+// ── ENHANCED TRIP SYSTEM with GPS & Maps ─────────────
+let _currentTripId=null;
+let _gpsWatchId=null;
+let _gpsLastPos=null;
+function startTrip(){
+  const dest=document.getElementById('trans-trip-dest').value.trim();
+  const patient=(document.getElementById('trans-trip-patient').value||'').trim();
+  const purpose=document.getElementById('trans-trip-purpose').value;
+  if(!dest){showToast('⚠️ Enter destination');return;}
+  if(!purpose){showToast('⚠️ Select purpose');return;}
+  const tripId='trip_'+Date.now();
+  const journeyStart=new Date().toISOString();
+  _currentTripId=tripId;
+  // Get distance from maps if available
+  let distance=0;
+  const distEl=document.getElementById('trans-dist-val');
+  const coordsEl=document.getElementById('trans-dest-coords');
+  if(distEl&&distEl.textContent&&distEl.textContent!=='—'){
+    distance=parseFloat(distEl.textContent)||0;
+  }
   const saved=getTransportData()||{trips:[]};
   saved.trips=saved.trips||[];
-  saved.trips.push({to,purpose,kmStart,kmEnd,timeStart,timeEnd,loggedAt:Date.now()});
-  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  saved.trips.push({
+    id:tripId,destination:dest,patient,purpose,
+    journeyStart,returnStart:null,returnEnd:null,
+    distance,status:'in-progress',
+    startLat:_gpsLastPos?_gpsLastPos.lat:null,
+    startLng:_gpsLastPos?_gpsLastPos.lng:null,
+    destLat:coordsEl?coordsEl.dataset.lat:null,
+    destLng:coordsEl?coordsEl.dataset.lng:null,
+    loggedAt:Date.now()
+  });
   saved.name=currentTransEmp.name;
   saved.loginId=currentTransEmp.loginId;
   saved.updated=Date.now();
+  saved.status='on-trip';
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
   localStorage.setItem(key,JSON.stringify(saved));
-  if(getDbUrl()) fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
-  document.getElementById('trans-trip-to').value='';
-  document.getElementById('trans-trip-purpose').value='';
-  document.getElementById('trans-trip-km-start').value='';
-  document.getElementById('trans-trip-km-end').value='';
-  document.getElementById('trans-trip-time-start').value='';
-  document.getElementById('trans-trip-time-end').value='';
+  if(getDbUrl()){
+    fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+    fbPut('/transport-live/'+currentTransEmp.loginId,{
+      name:currentTransEmp.name,status:'on-trip',destination:dest,
+      tripId:tripId,updated:Date.now()
+    }).catch(()=>{});
+  }
+  // Start GPS tracking
+  startGpsTracking();
+  updateTripUI(saved);
   renderTransTrips();
-  showToast('✅ Trip logged');
+  showToast('🚀 Journey started to '+dest);
+}
+function completeTrip(){
+  if(!_currentTripId){showToast('⚠️ No active trip');return;}
+  const saved=getTransportData();
+  if(!saved||!saved.trips)return;
+  const trip=saved.trips.find(t=>t.id===_currentTripId);
+  if(!trip){showToast('⚠️ Trip not found');return;}
+  trip.returnEnd=new Date().toISOString();
+  trip.status='completed';
+  if(_gpsLastPos){
+    trip.endLat=_gpsLastPos.lat;
+    trip.endLng=_gpsLastPos.lng;
+  }
+  saved.status='available';
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  localStorage.setItem(key,JSON.stringify(saved));
+  if(getDbUrl()){
+    fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+    fbPut('/transport-live/'+currentTransEmp.loginId,{
+      name:currentTransEmp.name,status:'available',updated:Date.now()
+    }).catch(()=>{});
+  }
+  stopGpsTracking();
+  _currentTripId=null;
+  updateTripUI(saved);
+  renderTransTrips();
+  showToast('✅ Trip completed');
+}
+function startGpsTracking(){
+  if(!navigator.geolocation){showToast('⚠️ GPS not available');return;}
+  if(_gpsWatchId) return;
+  showGpsStatus('🔄 Starting GPS...','#E3F2FD','#1565C0');
+  _gpsWatchId=navigator.geolocation.watchPosition(pos=>{
+    _gpsLastPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    showGpsStatus('📍 Live: '+_gpsLastPos.lat.toFixed(4)+', '+_gpsLastPos.lng.toFixed(4)+' (±'+Math.round(pos.coords.accuracy)+'m)','#E8F5E9','#2E7D32');
+    if(getDbUrl()&&currentTransEmp){
+      fbPut('/transport-live/'+currentTransEmp.loginId+'/location',{
+        lat:_gpsLastPos.lat,lng:_gpsLastPos.lng,accuracy:pos.coords.accuracy,
+        updated:Date.now()
+      }).catch(()=>{});
+    }
+  },err=>{
+    showGpsStatus('⚠️ GPS error: '+err.message,'#FFEBEE','#C62828');
+  },{enableHighAccuracy:true,timeout:10000});
+}
+function stopGpsTracking(){
+  if(_gpsWatchId){navigator.geolocation.clearWatch(_gpsWatchId);_gpsWatchId=null;}
+  document.getElementById('trans-gps-status').style.display='none';
+}
+function showGpsStatus(msg,bg,clr){
+  const el=document.getElementById('trans-gps-status');
+  if(!el)return;
+  el.style.display='block';
+  el.style.background=bg;
+  el.style.color=clr;
+  el.textContent=msg;
+}
+function updateTripUI(saved){
+  const activeEl=document.getElementById('trans-active-trip');
+  const formEl=document.getElementById('trans-trip-form');
+  const activeTrip=saved&&saved.trips?saved.trips.find(t=>t.status==='in-progress'):null;
+  if(activeTrip){
+    activeEl.style.display='block';
+    document.getElementById('trans-active-info').innerHTML=
+      '📍 <strong>'+activeTrip.destination+'</strong>'+
+      (activeTrip.patient?' · 👤 '+activeTrip.patient:'')+
+      ' · 🕐 Started: '+new Date(activeTrip.journeyStart).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+
+      (activeTrip.distance?' · 📏 '+activeTrip.distance+' km':'');
+    formEl.style.display='none';
+  } else {
+    activeEl.style.display='none';
+    formEl.style.display='grid';
+  }
 }
 function renderTransTrips(){
   const saved=getTransportData();
@@ -2197,28 +2323,109 @@ function renderTransTrips(){
   if(!el)return;
   if(!trips.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No trips logged today.</div>';return;}
   el.innerHTML=trips.map((t,i)=>{
-    const km=t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart)+' km':'—';
-    return `<div style="padding:10px 12px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
-      <div>
-        <div style="font-weight:700;font-size:13px">🚑 ${t.to}</div>
-        <div style="font-size:12px;color:#607D8B">${t.purpose} · ${km}${t.timeStart?' · '+t.timeStart+(t.timeEnd?'-'+t.timeEnd:''):''}</div>
+    const isActive=t.status==='in-progress';
+    const km=t.distance||(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0);
+    const jt=t.journeyStart?new Date(t.journeyStart).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):(t.timeStart||'');
+    const rt=t.returnEnd?new Date(t.returnEnd).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):(t.timeEnd||'');
+    return `<div style="padding:10px 12px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;${isActive?'background:#FFF8E1;border-left:3px solid #F57F17':''}">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${isActive?'🚀':'✅'} ${t.destination||t.to}</div>
+        <div style="font-size:12px;color:#607D8B">
+          ${t.purpose||''} ${t.patient?'· 👤 '+t.patient:''}
+          ${jt?'· 🕐 '+jt+(rt?' → '+rt:''):''}
+          ${km?'· 📏 '+km+' km':''}
+          ${isActive?'<span style="color:#E65100;font-weight:700"> · IN PROGRESS</span>':''}
+        </div>
       </div>
-      <button onclick="deleteTransTrip(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 3px;flex-shrink:0">×</button>
+      ${!isActive?`<button onclick="deleteTransTrip(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 3px;flex-shrink:0">×</button>`:''}
     </div>`;
   }).join('');
 }
 function deleteTransTrip(i){
   const saved=getTransportData();
   if(!saved||!saved.trips)return;
+  const trip=saved.trips[i];
+  if(trip.id===_currentTripId){_currentTripId=null;stopGpsTracking();}
   saved.trips.splice(i,1);
   const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
   localStorage.setItem(key,JSON.stringify(saved));
   if(getDbUrl()) fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
   renderTransTrips();
 }
+// Load Google Maps API
+function loadGoogleMapsApi(){
+  if(window.google||document.querySelector('script[src*="maps.googleapis"]')) return;
+  const key=cfg.googleMapsKey||'';
+  if(!key) return;
+  const s=document.createElement('script');
+  s.src='https://maps.googleapis.com/maps/api/js?key='+key+'&libraries=places&callback=initGoogleMaps';
+  s.async=true;s.defer=true;
+  document.head.appendChild(s);
+}
+function initGoogleMaps(){
+  const input=document.getElementById('trans-trip-dest');
+  if(!input||!window.google) return;
+  const autocomplete=new google.maps.places.Autocomplete(input,{types:['geocode','establishment']});
+  autocomplete.addListener('place_changed',function(){
+    const place=autocomplete.getPlace();
+    if(!place.geometry) return;
+    const lat=place.geometry.location.lat();
+    const lng=place.geometry.location.lng();
+    document.getElementById('trans-dest-coords').dataset.lat=lat;
+    document.getElementById('trans-dest-coords').dataset.lng=lng;
+    // Calculate distance from current position if available
+    if(_gpsLastPos){
+      const dist=haversineDistance(_gpsLastPos.lat,_gpsLastPos.lng,lat,lng);
+      document.getElementById('trans-dist-val').textContent=dist.toFixed(1);
+      document.getElementById('trans-distance-info').style.display='block';
+    } else {
+      document.getElementById('trans-dist-val').textContent='Enable GPS for distance';
+      document.getElementById('trans-distance-info').style.display='block';
+    }
+  });
+}
+function haversineDistance(lat1,lng1,lat2,lng2){
+  const R=6371;const dLat=(lat2-lat1)*Math.PI/180;const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 
 // ── ADMIN TRANSPORT ─────────────────────────────────
 function renderAdminTransport(){
+  // KPI calculations
+  const emps=cfg.transportEmployees||[];
+  const vehicles=cfg.transportVehicles||[];
+  let activeTrips=0,totalKm=0,onlineDrivers=0;
+  emps.forEach(e=>{
+    const saved=JSON.parse(localStorage.getItem('HFM4_TRANS_'+todayStr()+'_'+e.loginId)||'null');
+    if(saved){
+      if(saved.status==='on-trip') activeTrips++;
+      const trips=saved.trips||[];
+      trips.forEach(t=>{
+        totalKm+=t.distance||(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0);
+      });
+    }
+    // Check live tracking for online drivers
+    const live=JSON.parse(localStorage.getItem('HFM4_TRANS_LIVE_'+e.loginId)||'null');
+    if(live&&Date.now()-live.updated<30000) onlineDrivers++;
+  });
+  const kpis=[
+    {label:'Drivers',value:emps.length,icon:'👨‍🔧',color:'#1565C0'},
+    {label:'Vehicles',value:vehicles.length,icon:'🚐',color:'#00695C'},
+    {label:'Active Trips',value:activeTrips,icon:'🚀',color:'#E65100'},
+    {label:'Total KM',value:totalKm+' km',icon:'📏',color:'#2E7D32'},
+    {label:'Online',value:onlineDrivers,icon:'🟢',color:'#558B2F'},
+  ];
+  const kpiContainer=document.getElementById('trans-kpi-cards');
+  if(kpiContainer){
+    kpiContainer.innerHTML=kpis.map(k=>`
+      <div style="background:${k.color}15;border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:80px">
+        <div style="font-size:20px">${k.icon}</div>
+        <div style="font-size:22px;font-weight:800;color:${k.color}">${k.value}</div>
+        <div style="font-size:10px;color:#546E7A;font-weight:600;margin-top:2px">${k.label}</div>
+      </div>
+    `).join('');
+  }
   // Employees list
   const listEl=document.getElementById('trans-emp-list');
   if(listEl){
@@ -2303,7 +2510,7 @@ function renderAdminTransport(){
         <div><strong>🚑 ${e.name}</strong> · ${getVehicleLabel(saved.vehicle)} · <span style="color:${sc};font-weight:700">${statusIcons[saved.status]||saved.status}</span></div>
         <div style="font-size:12px;color:#90A4AE">⛽ ${saved.fuel||0}% · 🛣️ ${totalKm} km · 🚗 ${trips.length} trip(s)</div>
       </div>
-      ${trips.length?`<div style="margin-top:6px;font-size:12px;color:#607D8B">${trips.slice(-3).map(t=>'🚑 '+t.to+(t.kmEnd&&t.kmStart?' ('+Math.max(0,t.kmEnd-t.kmStart)+'km)':'')).join(' | ')}${trips.length>3?' <span style="color:#00695C">+'+ (trips.length-3)+' more</span>':''}</div>`:''}
+      ${trips.length?`<div style="margin-top:6px;font-size:12px;color:#607D8B">${trips.slice(-3).map(t=>'🚑 '+(t.destination||t.to)+(t.kmEnd&&t.kmStart?' ('+Math.max(0,t.kmEnd-t.kmStart)+'km)':'')).join(' | ')}${trips.length>3?' <span style="color:#00695C">+'+ (trips.length-3)+' more</span>':''}</div>`:''}
     </div>`;
   });
   dataEl.innerHTML=html||'<div style="text-align:center;color:#90A4AE;padding:20px">No transport activity today.</div>';
@@ -2316,6 +2523,35 @@ function renderAdminTransport(){
       return '<option value="'+v.id+'">'+label+'</option>';
     }).join('');
   }
+  // Live tracking
+  renderTransLiveTracking();
+}
+function renderTransLiveTracking(){
+  const el=document.getElementById('trans-live-list');
+  if(!el)return;
+  const emps=cfg.transportEmployees||[];
+  let html='';
+  let found=false;
+  emps.forEach(e=>{
+    const live=JSON.parse(localStorage.getItem('HFM4_TRANS_LIVE_'+e.loginId)||'null');
+    if(live&&Date.now()-live.updated<60000){
+      found=true;
+      const statusIcon=live.status==='on-trip'?'🚀':'🟢';
+      const statusColor=live.status==='on-trip'?'#E65100':'#2E7D32';
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#F1F8E9;border-radius:8px">
+        <div>${statusIcon}</div>
+        <div style="flex:1"><strong>${live.name}</strong>
+          <span style="color:${statusColor};font-weight:700;font-size:11px;margin-left:6px">${live.status==='on-trip'?'On Trip to '+live.destination:'Available'}</span>
+        </div>
+        <div style="font-size:10px;color:#90A4AE">${timestampToTime(live.updated)}</div>
+      </div>`;
+    }
+  });
+  el.innerHTML=found?html:'<div style="text-align:center;color:#90A4AE;padding:15px;font-size:13px">No drivers currently online.</div>';
+}
+function timestampToTime(ts){
+  if(!ts)return'—';
+  return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 }
 function addTransportEmployee(){
   const name=(document.getElementById('tne-name').value||'').trim();
@@ -3948,6 +4184,18 @@ function startLiveTracking(){
         const bdData=await bdR.json();
         if(Array.isArray(bdData)) localStorage.setItem('HFM4_TRANS_BREAKDOWNS',JSON.stringify(bdData));
       }
+      // Sync live tracking data
+      try{
+        const liveR=await fetchWithTimeout(base+'/transport-live.json',{},5000);
+        if(liveR.ok){
+          const liveData=await liveR.json();
+          if(liveData&&typeof liveData==='object'){
+            Object.entries(liveData).forEach(([loginId,data])=>{
+              if(data) localStorage.setItem('HFM4_TRANS_LIVE_'+loginId,JSON.stringify(data));
+            });
+          }
+        }
+      }catch(e){/* live tracking fetch failed — non-blocking */}
       const transTab=document.getElementById('tab-transport');
       if(transTab&&transTab.style.display!=='none') renderAdminTransport();
     }catch(e){/* transport fetch failed — non-blocking */}
