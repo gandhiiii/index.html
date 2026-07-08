@@ -1159,6 +1159,12 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             <div><label>Password (auto)</label><input type="text" id="ne-pwd" placeholder="Auto 4-digit PIN" style="background:#F9FBF9"></div>
           </div>
           <div><label>WhatsApp / Phone Number (for reminders)</label><input type="tel" id="ne-phone" placeholder="e.g. 919876543210 (country code + number, no +)"></div>
+          <div><label>Department</label>
+            <select id="ne-dept" style="font-size:13px;padding:9px;font-weight:600;width:100%">
+              <option value="fm">👷 Facility Management (FM)</option>
+              <option value="transport">🚑 Transportation</option>
+            </select>
+          </div>
           <div style="background:#E8F5E9;border-radius:8px;padding:10px 12px;font-size:12px;color:#2E7D32">
             💡 Just type the name and tap Add — ID and Password are created automatically. Phone number is needed to send WhatsApp/SMS reminders for pending tasks.
           </div>
@@ -3504,7 +3510,7 @@ function renderStaff(){
   el.innerHTML=cfg.employees.map((e,i)=>`
     <div style="padding:13px 15px;border-bottom:1px solid #F0F4F8">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="font-weight:800;font-size:14px">${e.name}</div>
+        <div style="font-weight:800;font-size:14px">${e.name} <span style="font-size:11px;font-weight:600;background:${e.dept==='transport'?'#E0F2F1':'#E3F2FD'};color:${e.dept==='transport'?'#00695C':'#1565C0'};padding:2px 8px;border-radius:4px;vertical-align:middle">${e.dept==='transport'?'🚑 Transport':'👷 FM'}</span></div>
         <button onclick="removeEmployee(${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 11px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0">Remove</button>
       </div>
       <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
@@ -3597,19 +3603,31 @@ function addEmployee(){
   const loginId=(document.getElementById('ne-id').value.trim().toUpperCase()||initials+num);
   const password=(document.getElementById('ne-pwd').value.trim()||String(Math.floor(1000+Math.random()*9000)));
   const phone=(document.getElementById('ne-phone').value.trim().replace(/\D/g,'')||'');
+  const dept=document.getElementById('ne-dept').value;
   if(cfg.employees.find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists. Change it.');return;}
-  cfg.employees.push({name,loginId,password,phone});
+  if(dept==='transport'){
+    if((cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists in Transport. Change it.');return;}
+    if(!cfg.transportEmployees) cfg.transportEmployees=[];
+    cfg.transportEmployees.push({name,loginId,password,phone});
+  }
+  cfg.employees.push({name,loginId,password,phone,dept});
   saveCfg();
   document.getElementById('ne-name').value='';
   document.getElementById('ne-id').value='';
   document.getElementById('ne-pwd').value='';
   document.getElementById('ne-phone').value='';
+  document.getElementById('ne-dept').value='fm';
   renderStaff();
-  showToast2('✓ Added: '+name+'  ID: '+loginId+'  Pass: '+password);
+  showToast2('✓ Added: '+name+' ('+(dept==='transport'?'Transport':'FM')+')  ID: '+loginId+'  Pass: '+password);
 }
 
 function removeEmployee(i){
   if(!confirm('Remove '+cfg.employees[i].name+'?'))return;
+  const emp=cfg.employees[i];
+  if(cfg.transportEmployees&&emp.dept==='transport'){
+    const ti=cfg.transportEmployees.findIndex(e=>e.loginId===emp.loginId);
+    if(ti>=0) cfg.transportEmployees.splice(ti,1);
+  }
   cfg.employees.splice(i,1);saveCfg();renderStaff();
 }
 
