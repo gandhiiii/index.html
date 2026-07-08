@@ -1994,7 +1994,6 @@ function showLanding(){
 // UNIVERSAL LOGIN — detects role by credentials
 // ══════════════════════════════════════════════════════
 function universalLogin(){
-  try{
   const id=document.getElementById('ul-id').value.trim().toUpperCase();
   const pwd=document.getElementById('ul-pwd').value.trim();
   const errEl=document.getElementById('ul-err');
@@ -2037,10 +2036,6 @@ function universalLogin(){
   currentEmp=emp;currentTransEmp=null;currentAdmin=null;
   document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
   loadEmployeeHome();
-  }catch(e){
-    document.getElementById('ul-err').textContent='❌ Error: '+e.message;
-    document.getElementById('ul-err').style.display='block';
-  }
 }
 function getAdmins(){
   // Ensure default admin always exists (backward compat)
