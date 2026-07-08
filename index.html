@@ -164,6 +164,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="login-sub" id="land-date"></div>
       <div style="display:grid;gap:10px;margin-top:10px">
         <button class="btn blue" style="padding:16px;font-size:16px" onclick="go('view-emp-login')">👷 Employee Login</button>
+        <button class="btn" style="background:#00695C;color:#fff;padding:16px;font-size:16px" onclick="showTransportLogin()">🚑 Transport Login</button>
         <button class="btn purple" style="padding:16px;font-size:16px" onclick="openAdminLogin()">🔐 Admin Login</button>
       </div>
     </div>
@@ -243,6 +244,103 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
       </div>
       <p id="al-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">Incorrect username or password</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSPORT LOGIN ════════════════════════════════ -->
+<div id="view-transport-login" class="view">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🚑</div>
+      <div class="login-title" id="tl-hosp">Hospital FM</div>
+      <div class="login-sub" id="tl-date"></div>
+      <div style="background:#E0F2F1;border-radius:10px;padding:10px 14px;text-align:center;margin:10px 0 16px">
+        <span style="font-size:13px;font-weight:700;color:#00695C">🚑 Transport Employee Login</span>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div><label>Login ID</label><input id="tl-id" type="text" placeholder="Enter your Transport Login ID" autocomplete="off" style="font-size:16px;text-align:center;letter-spacing:1px"></div>
+        <div><label>Password</label><input id="tl-pwd" type="password" placeholder="Enter your Password" onkeydown="if(event.key==='Enter')transportLogin()" style="font-size:16px;text-align:center;letter-spacing:2px"></div>
+        <button class="btn" style="background:#00695C;color:#fff;margin-top:4px;padding:15px;font-size:16px" onclick="transportLogin()">Login →</button>
+      </div>
+      <p id="tl-err" style="color:#C62828;font-size:13px;text-align:center;margin-top:10px;display:none">❌ Invalid Login ID or Password. Try again.</p>
+      <div style="margin-top:16px;text-align:center;border-top:1px solid #F0F4F8;padding-top:14px">
+        <span onclick="showLanding()" style="font-size:11px;color:#CFD8DC;cursor:pointer;user-select:none">← Back</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSPORT HOME ═════════════════════════════════ -->
+<div id="view-transport-home" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1 id="trans-hosp">🚑 Transport</h1><p id="trans-date"></p></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="hbtn" onclick="transLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="background:linear-gradient(135deg,#00695C,#004D40);color:#fff;text-align:center;padding:24px">
+      <div style="font-size:48px;margin-bottom:8px">🚑</div>
+      <div style="font-size:20px;font-weight:900" id="trans-name-display">Driver</div>
+      <div style="font-size:12px;opacity:.8;margin-top:4px" id="trans-id-display">ID: —</div>
+    </div>
+    <!-- Vehicle Assignment -->
+    <div class="card" style="border-left:4px solid #00695C">
+      <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🚐 Vehicle Assignment</h3>
+      <select id="trans-vehicle" style="font-size:15px;padding:11px;font-weight:700" onchange="saveTransportData()">
+        <option value="">— Select Vehicle —</option>
+      </select>
+    </div>
+    <!-- Quick Status -->
+    <div class="card" style="border-left:4px solid #00897B">
+      <h3 style="font-size:14px;font-weight:800;color:#00897B;margin-bottom:10px">📊 Current Status</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#E0F2F1;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#00695C;font-weight:700">STATUS</div>
+          <select id="trans-status" style="margin-top:4px;font-size:13px;padding:6px;font-weight:700;text-align:center;width:100%" onchange="saveTransportData()">
+            <option value="available">✅ Available</option>
+            <option value="on-trip">🚑 On Trip</option>
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="off-duty">🌙 Off Duty</option>
+          </select>
+        </div>
+        <div style="background:#FFF8E1;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#E65100;font-weight:700">FUEL LEVEL</div>
+          <input type="range" id="trans-fuel" min="0" max="100" value="75" oninput="document.getElementById('trans-fuel-val').textContent=this.value+'%';saveTransportData()" style="width:100%;margin-top:4px">
+          <div style="font-size:20px;font-weight:900;color:#E65100" id="trans-fuel-val">75%</div>
+        </div>
+      </div>
+    </div>
+    <!-- Vehicle Readiness Checklist -->
+    <div class="card" style="border-left:4px solid #2E7D32">
+      <h3 style="font-size:14px;font-weight:800;color:#2E7D32;margin-bottom:10px">✅ Vehicle Readiness Checklist</h3>
+      <div id="trans-checklist" style="display:grid;gap:6px"></div>
+      <button class="btn green" style="margin-top:10px" onclick="resetTransChecks()">🔄 Reset All</button>
+    </div>
+    <!-- Trip Recording -->
+    <div class="card" style="border-left:4px solid #F57F17">
+      <h3 style="font-size:14px;font-weight:800;color:#F57F17;margin-bottom:10px">📋 Log a Trip</h3>
+      <div style="display:grid;gap:8px">
+        <div><label>Destination</label><input id="trans-trip-to" type="text" placeholder="e.g. City Hospital, Main Road"></div>
+        <div><label>Purpose</label><input id="trans-trip-purpose" type="text" placeholder="e.g. Patient transfer, Emergency call"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label>KM Start</label><input id="trans-trip-km-start" type="number" min="0" placeholder="0"></div>
+          <div><label>KM End</label><input id="trans-trip-km-end" type="number" min="0" placeholder="0"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label>Start Time</label><input id="trans-trip-time-start" type="time"></div>
+          <div><label>End Time</label><input id="trans-trip-time-end" type="time"></div>
+        </div>
+        <button class="btn" style="background:#F57F17;color:#fff;margin:0;padding:11px" onclick="logTrip()">➕ Log Trip</button>
+      </div>
+    </div>
+    <!-- Trip History -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Today's Trips</div>
+      <div id="trans-trip-list" style="padding:13px"></div>
     </div>
   </div>
 </div>
@@ -736,6 +834,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('problems',this)">⚠️ Problems</div>
+      <div class="tab" onclick="admTab('transport',this)">🚑 Transport</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
@@ -1172,6 +1271,32 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
 
+    <!-- TRANSPORT -->
+    <div id="tab-transport" style="display:none">
+      <div style="display:grid;gap:12px">
+        <div class="card" style="border-left:4px solid #00695C">
+          <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🚑 Transport Employees</h3>
+          <div style="background:#E0F2F1;border-radius:10px;padding:12px;margin-bottom:12px">
+            <div style="font-weight:800;font-size:13px;color:#00695C;margin-bottom:8px">➕ Add Transport Employee</div>
+            <div style="display:grid;gap:8px">
+              <input id="tne-name" type="text" placeholder="Full Name" oninput="autoFillTransEmp()">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input id="tne-id" type="text" placeholder="Login ID (auto)" style="background:#F9FBF9">
+                <input id="tne-pwd" type="text" placeholder="Password (auto)" style="background:#F9FBF9">
+              </div>
+              <input id="tne-phone" type="tel" placeholder="Phone (optional)">
+              <button onclick="addTransportEmployee()" style="background:#00695C;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add</button>
+            </div>
+          </div>
+          <div id="trans-emp-list"></div>
+        </div>
+        <div class="card" style="border-left:4px solid #00897B">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📊 Transport Activity Today</div>
+          <div id="adm-transport-data" style="padding:13px"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- REPORT -->
     <div id="tab-report" style="display:none">
       <!-- Period picker -->
@@ -1519,7 +1644,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{}};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:['Ambulance 1','Ambulance 2','Ambulance 3']};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
@@ -1542,7 +1667,7 @@ function saveCfg(){
   // Employee devices must NOT push config back — they would overwrite the
   // admin's authoritative employee list with a stale copy.
   if(url && currentAdmin){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
     fbPut('/config',pubCfg).catch(()=>{});
   }
 }
@@ -1845,7 +1970,7 @@ function adminLogin(){
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
   if(url){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
     fbPut('/config',pubCfg).catch(()=>{});
   }
   updateReqBadges();
@@ -1857,6 +1982,232 @@ function logout(){
   showEmpLogin();
 }
 function adminLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showEmpLogin();}
+
+// ══════════════════════════════════════════════════════
+// TRANSPORTATION DEPARTMENT
+// ══════════════════════════════════════════════════════
+let currentTransEmp=null;
+let _transPollTimer=null;
+
+function showTransportLogin(){
+  document.getElementById('tl-hosp').textContent='🏥 '+cfg.hosp+' — Transport';
+  document.getElementById('tl-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  go('view-transport-login');
+}
+function transportLogin(){
+  const id=document.getElementById('tl-id').value.trim().toUpperCase();
+  const pwd=document.getElementById('tl-pwd').value.trim();
+  const emp=(cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===id&&e.password===pwd);
+  if(!emp){document.getElementById('tl-err').style.display='block';return;}
+  document.getElementById('tl-err').style.display='none';
+  currentTransEmp=emp;
+  document.getElementById('tl-id').value='';document.getElementById('tl-pwd').value='';
+  loadTransportHome();
+}
+function transLogout(){
+  currentTransEmp=null;
+  if(_transPollTimer){clearInterval(_transPollTimer);_transPollTimer=null;}
+  showTransportLogin();
+}
+function getTransportData(){
+  if(!currentTransEmp)return null;
+  return JSON.parse(localStorage.getItem('HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId)||'null');
+}
+function saveTransportData(){
+  if(!currentTransEmp)return;
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  const saved=JSON.parse(localStorage.getItem(key)||'{}');
+  const vehicle=document.getElementById('trans-vehicle');
+  const statusEl=document.getElementById('trans-status');
+  const fuel=document.getElementById('trans-fuel');
+  saved.vehicle=vehicle?vehicle.value:'';
+  saved.status=statusEl?statusEl.value:'available';
+  saved.fuel=fuel?parseInt(fuel.value)||0:0;
+  if(transCheckItems.length) saved.checks=transCheckItems;
+  saved.trips=saved.trips||[];
+  saved.name=currentTransEmp.name;
+  saved.loginId=currentTransEmp.loginId;
+  saved.updated=Date.now();
+  localStorage.setItem(key,JSON.stringify(saved));
+  // Sync to Firebase
+  if(getDbUrl()){
+    fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+  }
+}
+function loadTransportHome(){
+  document.getElementById('trans-hosp').textContent='🚑 '+cfg.hosp+' — Transport';
+  document.getElementById('trans-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('trans-name-display').textContent=currentTransEmp.name;
+  document.getElementById('trans-id-display').textContent='ID: '+currentTransEmp.loginId;
+  // Load vehicle list
+  const vSel=document.getElementById('trans-vehicle');
+  vSel.innerHTML='<option value="">— Select Vehicle —</option>'+(cfg.transportVehicles||[]).map(v=>'<option value="'+v+'">'+v+'</option>').join('');
+  // Load saved data
+  const saved=getTransportData();
+  if(saved){
+    if(saved.vehicle) vSel.value=saved.vehicle;
+    if(saved.status) document.getElementById('trans-status').value=saved.status;
+    if(saved.fuel!=null){document.getElementById('trans-fuel').value=saved.fuel;document.getElementById('trans-fuel-val').textContent=saved.fuel+'%';}
+    transCheckItems=saved.checks||[];
+  } else {
+    transCheckItems=(cfg.transportVehicles||[]).length?[
+      {label:'Engine oil level OK',done:false},{label:'Coolant level OK',done:false},{label:'Brake fluid OK',done:false},
+      {label:'Tyres & pressure OK',done:false},{label:'Lights & sirens working',done:false},{label:'First aid kit present',done:false},
+      {label:'Oxygen cylinder full',done:false},{label:'Stretcher secure & clean',done:false},{label:'Fuel level adequate',done:false},
+      {label:'Dashboard warning lights off',done:false}
+    ]:[];
+  }
+  renderTransChecklist();
+  renderTransTrips();
+  go('view-transport-home');
+}
+function renderTransChecklist(){
+  const el=document.getElementById('trans-checklist');
+  if(!el)return;
+  el.innerHTML=transCheckItems.map((item,i)=>{
+    const c=item.done?'#E8F5E9':'#fff';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:${c};border-radius:8px;border:1px solid ${item.done?'#A5D6A7':'#E0E0E0'}">
+      <input type="checkbox" ${item.done?'checked':''} onchange="toggleTransCheck(${i},this.checked)" style="width:18px;height:18px;cursor:pointer">
+      <span style="font-size:13px;font-weight:${item.done?'400':'600'};color:${item.done?'#2E7D32':'#37474F'};${item.done?'text-decoration:line-through':''}">${item.label}</span>
+    </div>`;
+  }).join('');
+}
+function toggleTransCheck(i,v){
+  transCheckItems[i].done=v;
+  saveTransportData();
+}
+function resetTransChecks(){
+  transCheckItems.forEach(item=>item.done=false);
+  saveTransportData();
+  renderTransChecklist();
+}
+function logTrip(){
+  const to=document.getElementById('trans-trip-to').value.trim();
+  const purpose=document.getElementById('trans-trip-purpose').value.trim();
+  const kmStart=parseFloat(document.getElementById('trans-trip-km-start').value)||0;
+  const kmEnd=parseFloat(document.getElementById('trans-trip-km-end').value)||0;
+  const timeStart=document.getElementById('trans-trip-time-start').value;
+  const timeEnd=document.getElementById('trans-trip-time-end').value;
+  if(!to||!purpose){showToast('⚠️ Enter destination and purpose');return;}
+  const saved=getTransportData()||{trips:[]};
+  saved.trips=saved.trips||[];
+  saved.trips.push({to,purpose,kmStart,kmEnd,timeStart,timeEnd,loggedAt:Date.now()});
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  saved.name=currentTransEmp.name;
+  saved.loginId=currentTransEmp.loginId;
+  saved.updated=Date.now();
+  localStorage.setItem(key,JSON.stringify(saved));
+  if(getDbUrl()) fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+  document.getElementById('trans-trip-to').value='';
+  document.getElementById('trans-trip-purpose').value='';
+  document.getElementById('trans-trip-km-start').value='';
+  document.getElementById('trans-trip-km-end').value='';
+  document.getElementById('trans-trip-time-start').value='';
+  document.getElementById('trans-trip-time-end').value='';
+  renderTransTrips();
+  showToast('✅ Trip logged');
+}
+function renderTransTrips(){
+  const saved=getTransportData();
+  const trips=saved&&saved.trips?saved.trips:[];
+  const el=document.getElementById('trans-trip-list');
+  if(!el)return;
+  if(!trips.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No trips logged today.</div>';return;}
+  el.innerHTML=trips.map((t,i)=>{
+    const km=t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart)+' km':'—';
+    return `<div style="padding:10px 12px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+      <div>
+        <div style="font-weight:700;font-size:13px">🚑 ${t.to}</div>
+        <div style="font-size:12px;color:#607D8B">${t.purpose} · ${km}${t.timeStart?' · '+t.timeStart+(t.timeEnd?'-'+t.timeEnd:''):''}</div>
+      </div>
+      <button onclick="deleteTransTrip(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 3px;flex-shrink:0">×</button>
+    </div>`;
+  }).join('');
+}
+function deleteTransTrip(i){
+  const saved=getTransportData();
+  if(!saved||!saved.trips)return;
+  saved.trips.splice(i,1);
+  const key='HFM4_TRANS_'+todayStr()+'_'+currentTransEmp.loginId;
+  localStorage.setItem(key,JSON.stringify(saved));
+  if(getDbUrl()) fbPut('/transport/'+todayStr()+'/'+currentTransEmp.loginId,saved).catch(()=>{});
+  renderTransTrips();
+}
+
+// ── ADMIN TRANSPORT ─────────────────────────────────
+function renderAdminTransport(){
+  const listEl=document.getElementById('trans-emp-list');
+  if(listEl){
+    const emps=cfg.transportEmployees||[];
+    if(!emps.length){listEl.innerHTML='<div style="color:#90A4AE;font-size:13px;padding:8px">No transport employees yet.</div>';}
+    else {
+      listEl.innerHTML=emps.map((e,i)=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #B2DFDB;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <div style="font-weight:800;font-size:13px;color:#263238">🚑 ${e.name}</div>
+            <div style="font-size:11px;color:#90A4AE">ID: ${e.loginId} · Pwd: ${e.password}${e.phone?' · 📞 '+e.phone:''}</div>
+          </div>
+          <button onclick="removeTransportEmployee(${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">Remove</button>
+        </div>`).join('');
+    }
+  }
+  // Transport Activity today
+  const dataEl=document.getElementById('adm-transport-data');
+  if(!dataEl)return;
+  const emps=cfg.transportEmployees||[];
+  if(!emps.length){dataEl.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">No transport employees to track.</div>';return;}
+  let html='';
+  emps.forEach(e=>{
+    const saved=JSON.parse(localStorage.getItem('HFM4_TRANS_'+todayStr()+'_'+e.loginId)||'null');
+    if(!saved){html+=`<div style="padding:10px 12px;margin-bottom:6px;background:#FAFAFA;border-radius:8px;border-left:3px solid #BDBDBD"><strong>🚑 ${e.name}</strong> — <span style="color:#90A4AE">No data yet today</span></div>`;return;}
+    const statusIcons={available:'✅ Available','on-trip':'🚑 On Trip',maintenance:'🔧 Maintenance','off-duty':'🌙 Off Duty'};
+    const statusColor={available:'#2E7D32','on-trip':'#E65100',maintenance:'#C62828','off-duty':'#757575'};
+    const sc=statusColor[saved.status]||'#757575';
+    const trips=saved.trips||[];
+    const totalKm=trips.reduce((s,t)=>s+(t.kmEnd&&t.kmStart?Math.max(0,t.kmEnd-t.kmStart):0),0);
+    html+=`<div style="padding:12px;margin-bottom:8px;background:#FAFAFA;border-radius:8px;border-left:3px solid ${sc}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div><strong>🚑 ${e.name}</strong> · ${saved.vehicle||'No vehicle'} · <span style="color:${sc};font-weight:700">${statusIcons[saved.status]||saved.status}</span></div>
+        <div style="font-size:12px;color:#90A4AE">⛽ ${saved.fuel||0}% · 🛣️ ${totalKm} km · 🚗 ${trips.length} trip(s)</div>
+      </div>
+      ${trips.length?`<div style="margin-top:6px;font-size:12px;color:#607D8B">${trips.slice(-3).map(t=>'🚑 '+t.to+(t.kmEnd&&t.kmStart?' ('+Math.max(0,t.kmEnd-t.kmStart)+'km)':'')).join(' | ')}${trips.length>3?' <span style="color:#00695C">+'+ (trips.length-3)+' more</span>':''}</div>`:''}
+    </div>`;
+  });
+  dataEl.innerHTML=html||'<div style="text-align:center;color:#90A4AE;padding:20px">No transport activity today.</div>';
+}
+function addTransportEmployee(){
+  const name=(document.getElementById('tne-name').value||'').trim();
+  if(!name){alert('Enter employee name.');return;}
+  const initials=name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,3)||'TRP';
+  const num=String((cfg.transportEmployees||[]).length+1).padStart(3,'0');
+  const loginId=(document.getElementById('tne-id').value.trim().toUpperCase()||'T'+initials+num);
+  const password=(document.getElementById('tne-pwd').value.trim()||String(Math.floor(1000+Math.random()*9000)));
+  const phone=(document.getElementById('tne-phone').value.trim().replace(/\D/g,'')||'');
+  if((cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists.');return;}
+  if(!cfg.transportEmployees) cfg.transportEmployees=[];
+  cfg.transportEmployees.push({name,loginId,password,phone});
+  saveCfg();
+  document.getElementById('tne-name').value='';
+  document.getElementById('tne-id').value='';
+  document.getElementById('tne-pwd').value='';
+  document.getElementById('tne-phone').value='';
+  renderAdminTransport();
+  showToast2('Transport employee '+name+' added ✓');
+}
+function removeTransportEmployee(i){
+  if(!confirm('Remove transport employee "'+cfg.transportEmployees[i].name+'"?'))return;
+  cfg.transportEmployees.splice(i,1);
+  saveCfg();
+  renderAdminTransport();
+}
+function autoFillTransEmp(){
+  const name=document.getElementById('tne-name').value.trim();
+  if(!name)return;
+  const initials=name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,3)||'TRP';
+  const num=String((cfg.transportEmployees||[]).length+1).padStart(3,'0');
+  document.getElementById('tne-id').value='T'+initials+num;
+  if(!document.getElementById('tne-pwd').value) document.getElementById('tne-pwd').value=String(Math.floor(1000+Math.random()*9000));
+}
 
 function renderAdminList(){
   const el=document.getElementById('admin-list');if(!el)return;
@@ -2513,7 +2864,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','problems','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','problems','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -2524,6 +2875,7 @@ function admTab(tab,el){
   if(tab==='staff'){renderStaff();renderAdminList();}
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='problems'){renderAdminProblems();}
+  if(tab==='transport'){renderAdminTransport();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
@@ -3269,6 +3621,20 @@ function startLiveTracking(){
         } else {setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));anyOk=true;}
       }
     }catch(e){/* daily fetch failed — non-blocking */}
+    // Sync transport data from Firebase
+    try{
+      const trR=await fetchWithTimeout(base+'/transport/'+todayStr()+'.json',{},5000);
+      if(trR.ok){
+        const trData=await trR.json();
+        if(trData&&typeof trData==='object'&&!Array.isArray(trData)){
+          Object.entries(trData).forEach(([loginId,data])=>{
+            if(data) localStorage.setItem('HFM4_TRANS_'+todayStr()+'_'+loginId,JSON.stringify(data));
+          });
+          const transTab=document.getElementById('tab-transport');
+          if(transTab&&transTab.style.display!=='none') renderAdminTransport();
+        }
+      }
+    }catch(e){/* transport fetch failed — non-blocking */}
     // Sync tasks — always replace local with Firebase truth
     try{
       const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
@@ -3304,6 +3670,8 @@ function startLiveTracking(){
       renderProjectKPIs();
       const probTab=document.getElementById('tab-problems');
       if(probTab&&probTab.style.display!=='none') renderAdminProblems();
+      const transTab=document.getElementById('tab-transport');
+      if(transTab&&transTab.style.display!=='none') renderAdminTransport();
     }catch(e){/* render failed — non-blocking */}
     if(!anyOk) setFbStatus('warn','Checking Firebase... no data yet. Ensure employees have logged in and Firebase Rules allow read/write.');
   }
