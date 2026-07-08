@@ -152,9 +152,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
       </div>
     </div>
-    <div style="text-align:center;margin-top:16px;padding:10px;border-top:1px solid #ECEFF1">
-      <button onclick="showLoginPage()" style="background:transparent;border:2px solid #7C4DFF;color:#7C4DFF;padding:10px 24px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer">🔑 Already have an account? Login</button>
-    </div>
   </div>
 </div>
 
@@ -299,14 +296,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
       <div id="trans-trip-form" style="display:grid;gap:8px">
         <div><label>Destination</label>
-          <div style="display:flex;gap:6px">
-            <input id="trans-trip-dest" type="text" placeholder="e.g. City Hospital, Main Road" style="font-size:14px;flex:1" onkeydown="if(event.key==='Enter')showDestMap()">
-            <button onclick="showDestMap()" style="background:#1565C0;border:none;color:#fff;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer;font-size:12px;white-space:nowrap">🗺️ Map</button>
-          </div>
-        </div>
-        <div id="trans-dest-map-wrap" style="display:none">
-          <div id="trans-dest-map" style="width:100%;height:200px;border-radius:8px;overflow:hidden;border:1px solid #B0BEC5"></div>
-          <div style="margin-top:4px;font-size:11px;color:#90A4AE;text-align:center">📍 Pin shows selected location — drag to adjust</div>
+          <input id="trans-trip-dest" type="text" placeholder="e.g. City Hospital, Main Road" style="font-size:14px">
+          <div id="trans-dest-suggestions" style="display:none;background:#fff;border:1px solid #B0BEC5;border-radius:8px;max-height:200px;overflow-y:auto;margin-top:4px;position:absolute;z-index:1000;width:calc(100% - 2px)"></div>
+          <div id="trans-dest-coords" style="display:none"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div><label>Patient Name</label><input id="trans-trip-patient" type="text" placeholder="Patient name (if applicable)"></div>
@@ -321,6 +313,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
               <option value="Other">Other</option>
             </select>
           </div>
+        </div>
+        <div id="trans-distance-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#2E7D32">
+          📏 Distance: <span id="trans-dist-val">—</span>
         </div>
         <button class="btn" id="btn-start-trip" style="background:#2E7D32;color:#fff;margin:0;padding:12px;font-size:15px" onclick="startTrip()">🚀 Start Journey</button>
       </div>
@@ -620,7 +615,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
           <div><label>Priority</label><select id="p-pri"><option>🔴 Critical</option><option>🟠 High</option><option selected>🟡 Medium</option><option>🟢 Low</option></select></div>
           <div style="display:flex;align-items:flex-end"><button class="btn red" style="margin:0;padding:11px" onclick="addProblem()">+ Add</button></div>
+        </div>
       </div>
+      <div id="prob-list" style="margin-top:8px"></div>
     </div>
     <div id="chk-body"></div>
     <div style="margin-top:18px;border-top:2px solid #E8EAF6;padding-top:14px">
@@ -2171,6 +2168,8 @@ function loadTransportHome(){
   }
   updateTripUI(saved);
   renderTransTrips();
+  renderTransBreakdowns();
+  loadGoogleMapsApi();
   // Populate breakdown vehicle dropdown
   const bdSel=document.getElementById('trans-bd-vehicle');
   if(bdSel){
@@ -2398,14 +2397,36 @@ function deleteTransTrip(i){
   renderTransTrips();
 }
 // Load Google Maps API
-function showDestMap(){
-  const q=document.getElementById('trans-trip-dest').value.trim();
-  if(!q){showToast('⚠️ Enter a destination first');return;}
-  const el=document.getElementById('trans-dest-map');
-  const wrap=document.getElementById('trans-dest-map-wrap');
-  if(!el)return;
-  wrap.style.display='block';
-  el.innerHTML='<iframe width="100%" height="100%" style="border:0" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q='+encodeURIComponent(q)+'&output=embed"></iframe>';
+function loadGoogleMapsApi(){
+  if(window.google||document.querySelector('script[src*="maps.googleapis"]')) return;
+  const key=cfg.googleMapsKey||'';
+  if(!key) return;
+  const s=document.createElement('script');
+  s.src='https://maps.googleapis.com/maps/api/js?key='+key+'&libraries=places&callback=initGoogleMaps';
+  s.async=true;s.defer=true;
+  document.head.appendChild(s);
+}
+function initGoogleMaps(){
+  const input=document.getElementById('trans-trip-dest');
+  if(!input||!window.google) return;
+  const autocomplete=new google.maps.places.Autocomplete(input,{types:['geocode','establishment']});
+  autocomplete.addListener('place_changed',function(){
+    const place=autocomplete.getPlace();
+    if(!place.geometry) return;
+    const lat=place.geometry.location.lat();
+    const lng=place.geometry.location.lng();
+    document.getElementById('trans-dest-coords').dataset.lat=lat;
+    document.getElementById('trans-dest-coords').dataset.lng=lng;
+    // Calculate distance from current position if available
+    if(_gpsLastPos){
+      const dist=haversineDistance(_gpsLastPos.lat,_gpsLastPos.lng,lat,lng);
+      document.getElementById('trans-dist-val').textContent=dist.toFixed(1);
+      document.getElementById('trans-distance-info').style.display='block';
+    } else {
+      document.getElementById('trans-dist-val').textContent='Enable GPS for distance';
+      document.getElementById('trans-distance-info').style.display='block';
+    }
+  });
 }
 function haversineDistance(lat1,lng1,lat2,lng2){
   const R=6371;const dLat=(lat2-lat1)*Math.PI/180;const dLng=(lng2-lng1)*Math.PI/180;
@@ -3738,6 +3759,7 @@ function resendSetupWithUrl(){
   sendConfigWA();
   showToast2('Opening WhatsApp with updated setup code ✓');
 }
+
 function autoFillEmp(){
   const name=document.getElementById('ne-name').value.trim();
   if(!name) return;
@@ -4404,7 +4426,7 @@ async function pushConfigToFirebase(){
   btn.disabled=true;
   setStatus('loading','☁️ Uploading config to Firebase...');
   try{
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||''};
     const r=await xhrRequest(base+'/config.json','PUT',pubCfg,8000);
     if(r.ok){
       setStatus('ok','✅ Config uploaded! Employees can now set up using just the Firebase URL.');
@@ -6461,14 +6483,7 @@ window.onload=function(){
       return;
     }
   }
-  if(cfg.waNum||cfg.employees.length||cfg.transportEmployees.length||sessionStorage.getItem('HFM4_DB_URL')) showLoginPage();
-  // Fallback: show login anyway after 1s (user can connect from login page too)
-  setTimeout(function(){
-    const active=document.querySelector('.view.active');
-    if(active&&active.id==='view-setup'){
-      showLoginPage();
-    }
-  },1000);
+  if(cfg.waNum||sessionStorage.getItem('HFM4_DB_URL')) showLoginPage();
   // else stay on setup
 };
 </script>
