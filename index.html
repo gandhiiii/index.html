@@ -2035,11 +2035,23 @@ function showLanding(){
 function empLogin(){
   const id=document.getElementById('el-id').value.trim().toUpperCase();
   const pwd=document.getElementById('el-pwd').value.trim();
-  // Case-insensitive ID, exact password match
+  // Check transport employees first
+  const transEmp=(cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===id && e.password===pwd);
+  if(transEmp){
+    document.getElementById('el-err').style.display='none';
+    currentTransEmp=transEmp;
+    currentEmp=null;
+    document.getElementById('el-id').value='';document.getElementById('el-pwd').value='';
+    showToast2('🚑 Transport employee — redirecting to Transport page');
+    loadTransportHome();
+    return;
+  }
+  // Then check FM employees
   const emp=cfg.employees.find(e=>e.loginId.toUpperCase()===id && e.password===pwd);
   if(!emp){document.getElementById('el-err').style.display='block';return;}
   document.getElementById('el-err').style.display='none';
   currentEmp=emp;
+  currentTransEmp=null;
   document.getElementById('el-id').value='';document.getElementById('el-pwd').value='';
   loadEmployeeHome();
 }
@@ -2150,6 +2162,7 @@ function transportLogin(){
   if(!emp){document.getElementById('tl-err').style.display='block';return;}
   document.getElementById('tl-err').style.display='none';
   currentTransEmp=emp;
+  currentEmp=null;
   document.getElementById('tl-id').value='';document.getElementById('tl-pwd').value='';
   loadTransportHome();
 }
