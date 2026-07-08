@@ -152,6 +152,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
       </div>
     </div>
+    <div style="text-align:center;margin-top:16px;padding:10px;border-top:1px solid #ECEFF1">
+      <button onclick="showLoginPage()" style="background:transparent;border:2px solid #7C4DFF;color:#7C4DFF;padding:10px 24px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer">🔑 Already have an account? Login</button>
+    </div>
   </div>
 </div>
 
@@ -619,11 +622,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div style="display:flex;align-items:flex-end"><button class="btn red" style="margin:0;padding:11px" onclick="addProblem()">+ Add</button></div>
       </div>
     </div>
-    <div style="text-align:center;margin-top:16px;padding:10px;border-top:1px solid #ECEFF1">
-      <button onclick="showLoginPage()" style="background:transparent;border:2px solid #7C4DFF;color:#7C4DFF;padding:10px 24px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer">🔑 Already have an account? Login</button>
-    </div>
-  </div>
-</div>
     <div id="chk-body"></div>
     <div style="margin-top:18px;border-top:2px solid #E8EAF6;padding-top:14px">
       <button class="btn green" onclick="completeShift()" style="font-size:15px;padding:15px">✅ Complete Shift &amp; Send Report Automatically</button>
@@ -6464,13 +6462,13 @@ window.onload=function(){
     }
   }
   if(cfg.waNum||cfg.employees.length||cfg.transportEmployees.length||sessionStorage.getItem('HFM4_DB_URL')) showLoginPage();
-  // Safety: if setup page still showing after 2s, user has data — show login
+  // Fallback: show login anyway after 1s (user can connect from login page too)
   setTimeout(function(){
     const active=document.querySelector('.view.active');
-    if(active&&active.id==='view-setup'&&(cfg.employees.length||cfg.transportEmployees.length||sessionStorage.getItem('HFM4_DB_URL'))){
+    if(active&&active.id==='view-setup'){
       showLoginPage();
     }
-  },2000);
+  },1000);
   // else stay on setup
 };
 </script>
