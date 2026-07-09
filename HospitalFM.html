@@ -97,9 +97,12 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div><label>Admin Password (you will use this to login)</label><input id="s-pwd" type="password" placeholder="Set a password"></div>
         <div><label>Admin WhatsApp Number (country code + number, no +)</label><input id="s-wa" type="tel" placeholder="e.g. 919876543210"></div>
         <div><label>Admin Email (for email reports)</label><input id="s-email" type="email" placeholder="admin@hospital.com"></div>
+        <div><label>MD Email (for purchase approval)</label><input id="s-mdEmail" type="email" placeholder="md@hospital.com"></div>
         <div style="background:#E8F5E9;border-radius:10px;padding:12px;border:2px solid #A5D6A7">
           <label style="color:#2E7D32">≡ƒö┤ LIVE TRACKING ΓÇö Firebase Database URL (free)</label>
           <input id="s-db" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" style="margin-top:6px;border-color:#A5D6A7">
+          <label style="color:#2E7D32;margin-top:8px;display:block">≡ƒöæ Firebase Database Secret <span style="font-weight:400;font-size:11px">(get from Project Settings → Service Accounts → Database Secrets)</span></label>
+          <input id="s-fb-secret" type="text" placeholder="Paste your Database Secret here" style="margin-top:4px;border-color:#A5D6A7;font-size:13px">
           <div style="display:flex;gap:8px;margin-top:8px">
             <button onclick="testDbConnection()" type="button" style="background:#2E7D32;border:none;color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;flex:1">≡ƒöî Test Connection</button>
           </div>
@@ -119,10 +122,13 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <em style="color:#1565C0">https://hospital-fm-12345-default-rtdb.firebaseio.com</em><br>
           Copy that URL and paste it in the field above<br><br>
           <strong>Step 6:</strong> Tap <strong>"≡ƒöî Test Connection"</strong> ΓÇö it should say Γ£à Connected<br><br>
-          <strong>ΓÜá∩╕Å If live data is not showing on dashboard:</strong><br>
-          Go to Firebase Console ΓåÆ Realtime Database ΓåÆ <strong>Rules</strong> tab ΓåÆ Change rules to:<br>
-          <code style="background:#E8EAF6;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{"rules":{".read":true,".write":true}}</code>
-          Click <strong>Publish</strong>. Test mode rules expire after 30 days ΓÇö this makes them permanent.<br><br>
+          <strong>≡ƒöæ Step 7: Get Database Secret (REQUIRED for security)</strong><br>
+          Go to Firebase Console ΓåÆ <strong>Project Settings</strong> (gear icon) ΓåÆ <strong>Service Accounts</strong> ΓåÆ <strong>Database Secrets</strong><br>
+          Copy the secret and paste it in the <strong>"Firebase Database Secret"</strong> field above<br><br>
+          <strong>ΓÜá∩╕Å Step 8: Update Firebase Rules for secure access</strong><br>
+          Firebase Console ΓåÆ Realtime Database ΓåÆ <strong>Rules</strong> tab ΓåÆ Replace with:<br>
+          <code style="background:#1a1a2e;color:#e0e0e0;display:block;padding:10px;border-radius:5px;margin:4px 0;font-size:11px;white-space:pre">{<br>  "rules": {<br>    ".read": "auth !== null",<br>    ".write": "auth !== null"<br>  }<br>}</code>
+          Click <strong>Publish</strong>. This ensures only requests with your secret can read/write data.<br><br>
           <strong>Γ£à Free forever. No credit card. No terminal. No code. Works on iPhone, Android &amp; Desktop.</strong>
         </div>
       </details>
@@ -719,6 +725,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('staff',this)">≡ƒæ╖ Staff</div>
       <div class="tab" onclick="admTab('materials',this)" style="position:relative">≡ƒôª Materials<span id="adm-mat-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">≡ƒ¢Æ Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
+            <div class="tab" onclick="admTab('approval',this)" style="position:relative">✅ Approval<span id="adm-appr-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#E65100;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('report',this)">≡ƒôÑ Reports</div>
     </div>
 
@@ -926,9 +933,20 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
 
     <!-- STAFF -->
     <div id="tab-staff" style="display:none">
+      <!-- HOSPITAL SETTINGS -->
+      <div class="card" style="border-left:4px solid #0D1B4B;background:#E8EAF6">
+        <h3 style="font-size:14px;font-weight:800;color:#0D1B4B;margin-bottom:8px">🏥 Hospital Settings</h3>
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;font-weight:700;color:#37474F;min-width:80px">MD Email:</span>
+            <input id="settings-mdEmail" type="email" placeholder="md@hospital.com" style="flex:1;font-size:13px" value="">
+            <button onclick="saveMdEmail()" style="background:#0D1B4B;border:none;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">Save</button>
+          </div>
+        </div>
+      </div>
       <!-- ADMIN MANAGEMENT -->
       <div class="card" style="border-left:4px solid #7C4DFF;background:#EDE7F6">
-        <h3 style="font-size:14px;font-weight:800;color:#4527A0;margin-bottom:8px">≡ƒöÉ Admin Users</h3>
+        <h3 style="font-size:14px;font-weight:800;color:#4527A0;margin-bottom:8px">🔐 Admin Users</h3>
         <div id="admin-list" style="margin-bottom:12px"></div>
         <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #D1C4E9">
           <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">Γ₧ò Add New Admin</div>
@@ -966,8 +984,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div id="fb-current-url" style="font-size:12px;color:#BF360C;margin-bottom:10px;padding:7px 10px;background:#FFE0B2;border-radius:7px;word-break:break-all;font-weight:700"></div>
         <div style="display:grid;gap:8px">
           <input id="settings-db-url" type="url" placeholder="https://hospital-fm-xxxxx-default-rtdb.firebaseio.com" style="font-size:13px">
+          <input id="settings-fb-secret" type="text" placeholder="Firebase Database Secret (get from Project Settings → Service Accounts → Database Secrets)" style="font-size:12px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button onclick="testAndSaveFirebaseUrl()" style="background:#E65100;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">≡ƒöî Test &amp; Save URL</button>
+            <button onclick="testAndSaveFirebaseUrl()" style="background:#E65100;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">≡ƒöî Test &amp; Save</button>
             <button onclick="resendSetupWithUrl()" style="background:#25D366;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">≡ƒô▓ Save &amp; Resend to All</button>
           </div>
           <div id="settings-test-result" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
@@ -977,10 +996,14 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div style="margin-top:8px;font-size:12px;line-height:1.9;color:#4E342E;background:#FBE9E7;padding:10px;border-radius:8px">
             1. Go to <strong>console.firebase.google.com</strong><br>
             2. Open your project ΓåÆ <strong>Realtime Database ΓåÆ Rules</strong><br>
-            3. Replace everything with:<br>
-            <code style="background:#333;color:#4FC3F7;display:block;padding:8px;border-radius:5px;margin:4px 0;font-size:11px">{<br>&nbsp;&nbsp;"rules": {<br>&nbsp;&nbsp;&nbsp;&nbsp;".read": true,<br>&nbsp;&nbsp;&nbsp;&nbsp;".write": true<br>&nbsp;&nbsp;}<br>}</code>
+            3. <strong>SECURE RULES (RECOMMENDED):</strong><br>
+            <code style="background:#1a1a2e;color:#e0e0e0;display:block;padding:10px;border-radius:5px;margin:4px 0;font-size:11px;white-space:pre">{<br>  "rules": {<br>    ".read": "auth !== null",<br>    ".write": "auth !== null"<br>  }<br>}</code>
             4. Click <strong>Publish</strong> ΓåÆ Done<br>
-            5. Come back and tap <strong>Test &amp; Save URL</strong>
+            5. Get your <strong>Database Secret</strong>:<br>
+            &nbsp;&nbsp;Firebase Console ΓåÆ Project Settings (gear icon) ΓåÆ Service Accounts ΓåÆ Database Secrets<br>
+            &nbsp;&nbsp;Copy the secret and paste it in the <strong>"Firebase Database Secret"</strong> field above<br>
+            6. Tap <strong>Test &amp; Save</strong> to verify Γ£ô<br><br>
+            <strong>⚠️ Keep your secret private!</strong> Anyone with this secret has full access to your database.
           </div>
         </details>
       </div>
@@ -1184,6 +1207,24 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
 
+    <!-- APPROVAL FORMAT -->
+    <div id="tab-approval" style="display:none">
+      <div class="card" style="border-left:4px solid #E65100">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:800;font-size:15px">✅ MD Approval Format</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="generateApprovalEmail()" style="background:#E65100;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✉️ Generate Email Draft to MD</button>
+            <button onclick="document.getElementById('appr-md-email').value='';renderApprovalTab();" style="background:#F5F5F5;color:#555;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">↻ Refresh</button>
+          </div>
+        </div>
+        <div style="padding:10px 16px;border-bottom:1px solid #F0F4F8;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;color:#37474F">MD Email:</span>
+          <input id="appr-md-email" type="email" placeholder="md@hospital.com" style="flex:1;min-width:180px;font-size:13px" value="">
+          <button onclick="saveApprMdEmail()" style="background:#0D1B4B;border:none;color:#fff;padding:6px 12px;border-radius:7px;font-weight:700;cursor:pointer;font-size:11px">Save</button>
+        </div>
+        <div id="adm-appr-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No approved requests pending MD approval.</div></div>
+      </div>
+    </div>
     <!-- REPORT -->
     <div id="tab-report" style="display:none">
       <!-- Period picker -->
@@ -1529,7 +1570,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 // STATE
 // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{}};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',fbSecret:'',customItems:[],empChecklists:{}};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} ΓÇö active admin session
 let _notifHistory=[]; // in-app notification history
@@ -1542,6 +1583,14 @@ let _admKnownEmpShifts={}; // {empLoginId: shiftCompleted} detect shift completi
 let _admKnownProjStatuses={}; // {projId: status} detect project completions
 let _localPollTimer=null; // local notification poll timer (runs without Firebase)
 let statuses={},values={},problems=[];
+
+function saveMdEmail(){
+  const el=document.getElementById('settings-mdEmail');
+  if(!el)return;
+  cfg.mdEmail=el.value.trim();
+  saveCfg();
+  showToast2('MD Email saved ✓');
+}
 
 function pad(n){return String(n).padStart(2,'0');}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
@@ -1625,20 +1674,21 @@ function sendNotif(title,body,tag){
 
 // Push a cross-device notification to Firebase so the other device picks it up
 function fbNotifPush(targetKey,title,body,tag){
-  const base=getDbUrl();if(!base)return;
-  const path='/hfm_notifs/'+targetKey+'/'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  const url=fbUrl('/hfm_notifs/'+targetKey+'/'+Date.now()+'_'+Math.floor(Math.random()*9999));
+  if(!url)return;
   const payload={title,body,tag:tag||'hfm-'+Date.now(),ts:Date.now(),read:false};
   const xhr=new XMLHttpRequest();
-  xhr.open('PUT',base+path+'.json',true);
+  xhr.open('PUT',url,true);
   xhr.setRequestHeader('Content-Type','application/json');
   xhr.send(JSON.stringify(payload));
 }
 
 // Read+clear cross-device notifications from Firebase for a given key
 async function fbNotifPull(targetKey){
-  const base=getDbUrl();if(!base)return;
+  const url=fbUrl('/hfm_notifs/'+targetKey);
+  if(!url)return;
   try{
-    const r=await fetchWithTimeout(base+'/hfm_notifs/'+targetKey+'.json',{},5000);
+    const r=await fetchWithTimeout(url,{},5000);
     if(!r.ok)return;
     const data=await r.json();
     if(!data||typeof data!=='object')return;
@@ -1651,7 +1701,7 @@ async function fbNotifPull(targetKey){
     });
     // Delete all pulled notifications
     const xhr=new XMLHttpRequest();
-    xhr.open('DELETE',base+'/hfm_notifs/'+targetKey+'.json',true);
+    xhr.open('DELETE',url,true);
     xhr.send();
   }catch(e){}
 }
@@ -1777,9 +1827,11 @@ function saveSetup(){
   const pwd=document.getElementById('s-pwd').value.trim();
   const wa=document.getElementById('s-wa').value.trim().replace(/\D/g,'');
   const email=document.getElementById('s-email').value.trim();
+  const mdEmail=document.getElementById('s-mdEmail').value.trim();
   const dbUrl=document.getElementById('s-db').value.trim();
+  const fbSecret=document.getElementById('s-fb-secret').value.trim();
   if(!hosp||!pwd||!wa){alert('Please fill Hospital Name, Admin Password, and WhatsApp Number.');return;}
-  cfg={hosp,adminPwd:pwd,waNum:wa,email,employees:[],dbUrl,convexUrl:dbUrl};
+  cfg={hosp,adminPwd:pwd,waNum:wa,email,mdEmail,employees:[],dbUrl,convexUrl:dbUrl,fbSecret};
   saveCfg();
   updateLiveBadge(!!getDbUrl());
   showLanding();
@@ -2092,14 +2144,15 @@ async function testFirebaseEmployee(){
   res.style.display='block';res.textContent='Testing...\n';
   const base=getDbUrl();
   res.textContent+='1. Firebase URL: '+(base?base:'Γ¥î NOT SET')+'\n';
-  if(!base){res.textContent+='ΓåÆ Get the setup code from admin and re-import it.';return;}
+  const pingUrl=fbUrl('/hfm_ping');
+  if(!pingUrl){res.textContent+='ΓåÆ Get the setup code from admin and re-import it.';return;}
   try{
     res.textContent+='2. Testing write...\n';
-    const wr=await xhrRequest(base+'/hfm_ping.json','PUT',{ts:Date.now(),device:navigator.userAgent.substring(0,50)},8000);
-    if(wr.ok){res.textContent+='   Γ£à Write OK\n';}else{res.textContent+='   Γ¥î Write failed (HTTP '+wr.status+')\nΓåÆ Open Firebase console ΓåÆ Rules ΓåÆ set: {".read":true,".write":true}\n';return;}
+    const wr=await xhrRequest(pingUrl,'PUT',{ts:Date.now(),device:navigator.userAgent.substring(0,50)},8000);
+    if(wr.ok){res.textContent+='   Γ£à Write OK\n';}else{res.textContent+='   Γ¥î Write failed (HTTP '+wr.status+')\nΓåÆ Open Firebase console ΓåÆ Rules ΓåÆ update to secure rules\n';return;}
     res.textContent+='3. Testing read...\n';
-    const rr=await xhrRequest(base+'/hfm_ping.json','GET',null,8000);
-    if(rr.ok){res.textContent+='   Γ£à Read OK\n';}else{res.textContent+='   Γ¥î Read failed (HTTP '+rr.status+')\nΓåÆ Check Firebase rules allow .read:true\n';return;}
+    const rr=await xhrRequest(pingUrl,'GET',null,8000);
+    if(rr.ok){res.textContent+='   Γ£à Read OK\n';}else{res.textContent+='   Γ¥î Read failed (HTTP '+rr.status+')\nΓåÆ Check Firebase rules\n';return;}
     res.textContent+='Γ£à Firebase working! If admin still can\'t see you, tap "Start Checklist" and mark at least one item.';
   }catch(e){
     res.textContent+='Γ¥î Connection failed: '+e.message+'\nΓåÆ Check internet connection and Firebase URL is correct.';
@@ -2523,7 +2576,7 @@ function getPatientRoundData(loginId,date){
 // ADMIN DASHBOARD
 // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','materials','requests','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','materials','requests','approval','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -2534,6 +2587,7 @@ function admTab(tab,el){
   if(tab==='staff'){renderStaff();renderAdminList();}
   if(tab==='materials'){renderMatAdmin();}
   if(tab==='requests'){renderRequestsAdmin();}
+  if(tab==='approval'){renderApprovalTab();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
@@ -2869,6 +2923,9 @@ function deleteTask(id){if(!confirm('Remove task?'))return;saveTasks(getTasks().
 // STAFF MANAGEMENT
 // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 function renderStaff(){
+  // Populate MD Email
+  const mdEl=document.getElementById('settings-mdEmail');
+  if(mdEl) mdEl.value=cfg.mdEmail||'';
   // Populate Firebase URL settings card
   const cur=getDbUrl();
   const curEl=document.getElementById('fb-current-url');
@@ -2914,25 +2971,28 @@ function shareCredsWA(i){
 
 async function testAndSaveFirebaseUrl(){
   const url=(document.getElementById('settings-db-url').value||'').trim().replace(/\/+$/,'');
+  const secret=(document.getElementById('settings-fb-secret').value||'').trim();
   const res=document.getElementById('settings-test-result');
   res.style.display='block';res.style.background='#E3F2FD';res.style.color='#1565C0';res.textContent='≡ƒöä Testing Firebase connection...';
   if(!url){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Please enter the Firebase URL first.';return;}
+  const authParam=secret ? '?auth='+encodeURIComponent(secret) : '';
   try{
     // Test write
-    const wr=await fetchWithTimeout(url+'/hfm_test.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ok:true,ts:Date.now()})},8000);
-    if(!wr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Firebase write blocked (HTTP '+wr.status+'). Fix the Rules ΓÇö see instructions above, then try again.';return;}
+    const wr=await fetchWithTimeout(url+'/hfm_test.json'+authParam,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ok:true,ts:Date.now()})},8000);
+    if(!wr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Firebase write blocked (HTTP '+wr.status+'). Check the Rules and Database Secret, then try again.';return;}
     // Test read
-    const rr=await fetchWithTimeout(url+'/hfm_test.json',{},8000);
-    if(!rr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Firebase read blocked. Fix the Rules and try again.';return;}
+    const rr=await fetchWithTimeout(url+'/hfm_test.json'+authParam,{},8000);
+    if(!rr.ok){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Firebase read blocked. Check Rules and try again.';return;}
     const data=await rr.json();
     if(!data||!data.ok){res.style.background='#FFF8E1';res.style.color='#E65100';res.textContent='ΓÜá∩╕Å Connected but test failed. Try again.';return;}
     // All good ΓÇö save
-    cfg.dbUrl=url;cfg.convexUrl=url;
+    cfg.dbUrl=url;cfg.convexUrl=url;cfg.fbSecret=secret;
     saveCfg();
     updateLiveBadge(true);
     document.getElementById('fb-current-url').textContent='Current: '+url;
     res.style.background='#E8F5E9';res.style.color='#1B5E20';
-    res.textContent='Γ£à Firebase working! URL saved. Now tap "Save & Resend to All" to update employee devices.';
+    res.textContent='Γ£à Firebase working with auth! URL & secret saved. Tap "Save & Resend to All" to update employee devices.';
+    document.getElementById('settings-fb-secret').value=secret;
     // Restart live tracking with new URL
     startLiveTracking();
   }catch(e){
@@ -3175,6 +3235,8 @@ function getDbUrl(){
 }
 // Legacy alias
 function getConvexUrl(){return getDbUrl();}
+function fbAuth(){return cfg.fbSecret ? '?auth='+encodeURIComponent(cfg.fbSecret) : '';}
+function fbUrl(path){const b=getDbUrl();return b ? b+path+'.json'+fbAuth() : '';}
 
 // ΓöÇΓöÇ Universal HTTP helper using XMLHttpRequest ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 // XHR works on ALL browsers including iOS WKWebView (WhatsApp in-app browser)
@@ -3213,31 +3275,31 @@ function fetchWithTimeout(url,options,ms){
 
 // Firebase REST helpers ΓÇö all via XHR (works on iOS, Android, Desktop, WKWebView)
 async function fbPatch(path,data){
-  const base=getDbUrl();
-  if(!base){console.warn('Firebase URL not set ΓÇö data saved locally only');return;}
+  const url=fbUrl(path);
+  if(!url){console.warn('Firebase URL not set ΓÇö data saved locally only');return;}
   try{
-    const r=await xhrRequest(base+path+'.json','PATCH',data,8000);
+    const r=await xhrRequest(url,'PATCH',data,8000);
     if(!r.ok) console.warn('FB PATCH failed:',r.status,'Path:',path);
   }catch(e){console.warn('FB PATCH',path,'failed:',e.message);}
 }
 async function fbPut(path,data){
-  const base=getDbUrl();if(!base)return;
+  const url=fbUrl(path);if(!url)return;
   try{
-    const r=await xhrRequest(base+path+'.json','PUT',data,8000);
+    const r=await xhrRequest(url,'PUT',data,8000);
     if(!r.ok) console.warn('FB PUT failed:',r.status);
   }catch(e){console.warn('FB PUT',path,'failed:',e.message);}
 }
 async function fbGet(path){
-  const base=getDbUrl();if(!base)return null;
+  const url=fbUrl(path);if(!url)return null;
   try{
-    const r=await xhrRequest(base+path+'.json','GET',null,8000);
+    const r=await xhrRequest(url,'GET',null,8000);
     if(!r.ok){console.warn('FB GET failed:',r.status);return null;}
     return r.data;
   }catch(e){console.warn('FB GET',path,'failed:',e.message);return null;}
 }
 async function fbDelete(path){
-  const base=getDbUrl();if(!base)return;
-  try{await xhrRequest(base+path+'.json','DELETE',null,5000);}
+  const url=fbUrl(path);if(!url)return;
+  try{await xhrRequest(url,'DELETE',null,5000);}
   catch(e){console.warn('FB DELETE',path,'failed:',e.message);}
 }
 
@@ -3248,15 +3310,17 @@ function updateLiveBadge(on){
 
 async function testDbConnection(){
   const url=(document.getElementById('s-db')||{}).value.trim()||getDbUrl()||'';
+  const secret=(document.getElementById('s-fb-secret')||{}).value.trim()||cfg.fbSecret||'';
   const res=document.getElementById('fb-test-result');
   if(!url){res.style.display='block';res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Please enter your Firebase Database URL first.';return;}
   res.style.display='block';res.style.background='#E3F2FD';res.style.color='#1565C0';res.textContent='≡ƒöä Testing connection...';
+  const authParam=secret ? '?auth='+encodeURIComponent(secret) : '';
   try{
-    const r=await fetchWithTimeout(url.replace(/\/+$/,'')+'/ping.json',{},8000);
+    const r=await fetchWithTimeout(url.replace(/\/+$/,'')+'/ping.json'+authParam,{},8000);
     if(r.ok||r.status===200){
       res.style.background='#E8F5E9';res.style.color='#1B5E20';
       res.textContent='Γ£à Connected! Firebase is working. You can now save and share.';}
-    else{res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Error '+r.status+'. Check your Firebase URL and make sure database rules allow read/write.';}
+    else{res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Error '+r.status+'. Check your Firebase URL and secret, and make sure database rules allow auth access.';}
   }catch(e){res.style.background='#FFEBEE';res.style.color='#C62828';res.textContent='Γ¥î Could not connect: '+e.message+'. Check your Firebase URL.';}
 }
 
@@ -3466,7 +3530,7 @@ function syncTasksFromConvex(cb){
 // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
 function exportConfig(){
   // Export hospital info + employees + dbUrl (NO admin password for security)
-  const data={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,employees:cfg.employees,dbUrl:cfg.convexUrl||cfg.dbUrl||'',convexUrl:cfg.convexUrl||cfg.dbUrl||''};
+  const data={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,dbUrl:cfg.convexUrl||cfg.dbUrl||'',convexUrl:cfg.convexUrl||cfg.dbUrl||''};
   try{return btoa(unescape(encodeURIComponent(JSON.stringify(data))));}
   catch(e){return btoa(JSON.stringify(data));}
 }
@@ -4562,7 +4626,107 @@ function rejectRequest(id,note){
   showToast('Request rejected');
 }
 
-// ΓöÇΓöÇ PROJECT DOWNLOADS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ── APPROVAL FORMAT TAB ─────────────────────────────────
+function saveApprMdEmail(){
+  const el=document.getElementById('appr-md-email');
+  if(!el)return;
+  cfg.mdEmail=el.value.trim();
+  saveCfg();
+  showToast('MD Email saved ✓');
+}
+
+function renderApprovalTab(){
+  const mdEl=document.getElementById('appr-md-email');
+  if(mdEl) mdEl.value=cfg.mdEmail||'';
+  const approved=getRequests().filter(r=>r.status==='approved');
+  const el=document.getElementById('adm-appr-list');
+  if(!el)return;
+  if(!approved.length){
+    el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No approved requests pending MD approval.</div>';
+    return;
+  }
+  const total=approved.reduce((s,r)=>s+(r.estCost||0),0);
+  el.innerHTML='<div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-bottom:14px;border:2px solid #FFE0B2">'+
+    '<div style="font-size:14px;font-weight:800;color:#E65100">Total Est. Cost: ₹'+total.toLocaleString('en-IN')+'</div>'+
+    '<div style="font-size:12px;color:#BF360C;margin-top:3px">'+approved.length+' approved request(s) awaiting MD confirmation</div>'+
+    '</div>'+
+    '<div style="display:grid;gap:8px;margin-bottom:14px">'+
+    '<button onclick="generateApprovalEmail()" class="btn orange" style="margin:0">✉️ Generate Email Draft to MD</button>'+
+    '</div>'+
+    approved.map(function(r){
+      var urgBadge=r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px">🔴 URGENT</span>':'';
+      return '<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:8px;background:#fff">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">'+
+        '<div>'+
+        '<span style="font-weight:800;font-size:14px">'+r.itemName+'</span>'+urgBadge+
+        '<div style="font-size:12px;color:#607D8B;margin-top:2px">👷 '+r.empName+'  ·  Qty: '+r.qty+' '+r.unit+(r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):'')+'</div>'+
+        '</div>'+
+        '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#E8F5E9;color:#2E7D32">MD PENDING</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:#546E7A;margin-top:6px"><strong>Reason:</strong> '+r.reason+'</div>'+
+        '<div style="font-size:11px;color:#B0BEC5;margin-top:6px">'+new Date(r.createdAt).toLocaleString('en-IN')+'  ·  Approved by '+(r.reviewedBy||'Admin')+'</div>'+
+        '</div>';
+    }).join('')+
+    '<div style="margin-top:12px">'+
+    '<button onclick="generateApprovalEmail()" class="btn orange" style="margin:0">✉️ Generate Email Draft to MD</button>'+
+    '</div>';
+  var badge=document.getElementById('adm-appr-badge');
+  if(badge){
+    badge.textContent=approved.length>0?approved.length:'';
+    badge.style.display=approved.length>0?'block':'none';
+  }
+}
+
+function buildApprovalText(){
+  var approved=getRequests().filter(function(r){return r.status==='approved';});
+  var total=approved.reduce(function(s,r){return s+(r.estCost||0);},0);
+  var msg='🏥 *'+(cfg.hosp||'Hospital')+' — Purchase Approval Request*\n\n';
+  msg+='The following purchase requests have been approved and require MD confirmation:\n\n';
+  approved.forEach(function(r,i){
+    msg+=(i+1)+'. *'+r.itemName+'*\n';
+    msg+='   👷 Employee: '+r.empName+'\n';
+    msg+='   📦 Qty: '+r.qty+' '+r.unit+'\n';
+    if(r.estCost) msg+='   💰 Est. Cost: ₹'+r.estCost.toLocaleString('en-IN')+'\n';
+    msg+='   📝 Reason: '+r.reason+'\n';
+    if(r.urgency==='urgent') msg+='   🔴 URGENT\n';
+    msg+='\n';
+  });
+  msg+='─── ─── ─── ─── ─── ─── ─── ───\n';
+  msg+='*Total Items: '+approved.length+'*\n';
+  msg+='*Total Est. Cost: ₹'+total.toLocaleString('en-IN')+'*\n\n';
+  msg+='_Hospital Facility Management System_';
+  return msg;
+}
+
+function generateApprovalEmail(){
+  var approved=getRequests().filter(function(r){return r.status==='approved';});
+  if(!approved.length){showToast('No approved requests to send.');return;}
+  var mdEmail=cfg.mdEmail||(document.getElementById('appr-md-email')?document.getElementById('appr-md-email').value:'')||'';
+  if(!mdEmail){showToast('⚠️ Set MD Email first in the Approval tab or Staff settings.');return;}
+  var total=approved.reduce(function(s,r){return s+(r.estCost||0);},0);
+  var body='';
+  body+=(cfg.hosp||'Hospital')+' — Purchase Approval Request\n\n';
+  body+='The following purchase requests have been approved and require MD confirmation:\n\n';
+  approved.forEach(function(r,i){
+    body+=(i+1)+'. Item: '+r.itemName+'\n';
+    body+='   Employee: '+r.empName+'\n';
+    body+='   Quantity: '+r.qty+' '+r.unit+'\n';
+    if(r.estCost) body+='   Est. Cost: ₹'+r.estCost.toLocaleString('en-IN')+'\n';
+    body+='   Reason: '+r.reason+'\n';
+    if(r.urgency==='urgent') body+='   ** URGENT **\n';
+    body+='\n';
+  });
+  body+='────────────────────────────\n';
+  body+='Total Items: '+approved.length+'\n';
+  body+='Total Est. Cost: ₹'+total.toLocaleString('en-IN')+'\n\n';
+  body+='Please review and confirm the above purchases.\n\n';
+  body+='Regards,\n'+(currentAdmin?currentAdmin.name:'Admin')+'\n'+(cfg.hosp||'Hospital')+' — Facility Management';
+  var sub=encodeURIComponent((cfg.hosp||'Hospital')+' — Purchase Approval Required — '+approved.length+' item(s) — ₹'+total.toLocaleString('en-IN'));
+  window.location.href='mailto:'+mdEmail+'?subject='+sub+'&body='+encodeURIComponent(body);
+  showToast('Email draft opened ✓');
+}
+
+// ── PROJECT DOWNLOADS ─────────────────────────────────
 function downloadProjectExcel(id){
   const p=getProjectById(id);if(!p)return;
   try{
