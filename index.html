@@ -363,6 +363,11 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
   </div>
+  <!-- Notification permission banner — only shows if permission not yet granted -->
+  <div id="notif-banner-emp" style="display:none;background:#FFF8E1;border-bottom:2px solid #FFC107;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span style="font-size:12px;font-weight:700;color:#E65100">🔔 Enable notifications to get automatic alerts for tasks, shift updates &amp; requests</span>
+    <button onclick="requestNotifPermission()" style="background:#E65100;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">Enable</button>
+  </div>
   <div class="wrap" style="padding-bottom:20px">
     <div class="card" style="background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;text-align:center;padding:24px">
       <div style="font-size:48px;margin-bottom:8px" id="emp-icon">👷</div>
@@ -836,6 +841,11 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
   </div>
+  <!-- Notification permission banner — only shows if permission not yet granted -->
+  <div id="notif-banner-adm" style="display:none;background:#FFF8E1;border-bottom:2px solid #FFC107;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span style="font-size:12px;font-weight:700;color:#E65100">🔔 Enable notifications to get automatic alerts for task completions, shift reports &amp; requests</span>
+    <button onclick="requestNotifPermission()" style="background:#E65100;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">Enable</button>
+  </div>
   <div class="wrap" style="padding-bottom:20px">
     <div class="tabs" style="flex-wrap:wrap;gap:3px">
       <div class="tab on" onclick="admTab('dash',this)">📊 Dash</div>
@@ -1050,6 +1060,35 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
           <div id="recovery-code-display" style="margin-top:8px;font-size:12px;color:#4527A0;font-weight:700"></div>
         </div>
+      </div>
+      <!-- SMS NOTIFICATION SETTINGS -->
+      <div class="card" style="border-left:4px solid #1565C0;background:#E3F2FD">
+        <h3 style="font-size:14px;font-weight:800;color:#0D47A1;margin-bottom:4px">📱 SMS Text Notifications</h3>
+        <p style="font-size:12px;color:#1565C0;margin-bottom:12px;line-height:1.6">Auto-SMS when task assigned/completed, shift done, project done, requests approved/rejected. Uses Fast2SMS (India) — free to sign up, very cheap per SMS.</p>
+        <div style="display:grid;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#0D47A1;text-transform:uppercase;display:block;margin-bottom:3px">SMS Provider</label>
+            <select id="sms-provider" onchange="renderSmsProviderHelp()" style="font-size:13px;padding:9px;border:2px solid #90CAF9;border-radius:8px">
+              <option value="fast2sms">Fast2SMS (India — Recommended)</option>
+              <option value="textbelt">Textbelt (International)</option>
+              <option value="msg91">MSG91 (India)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#0D47A1;text-transform:uppercase;display:block;margin-bottom:3px">API Key / Authorization Key</label>
+            <input id="sms-api-key" type="text" placeholder="Paste your SMS API key here" style="font-size:13px;border-color:#90CAF9" autocorrect="off" autocapitalize="none" spellcheck="false">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#0D47A1;text-transform:uppercase;display:block;margin-bottom:3px">Admin Mobile Number (10 digits, for receiving alerts)</label>
+            <input id="sms-admin-phone" type="tel" placeholder="e.g. 9876543210" style="font-size:13px;border-color:#90CAF9">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="saveSmsSettings()" style="background:#1565C0;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">💾 Save SMS Settings</button>
+            <button onclick="testSmsNotification()" style="background:#0D47A1;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">📲 Send Test SMS</button>
+          </div>
+          <div id="sms-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;text-align:center"></div>
+        </div>
+        <div id="sms-provider-help" style="margin-top:10px;font-size:11px;color:#1565C0;line-height:1.8;background:#fff;border-radius:8px;padding:10px;border:1px solid #BBDEFB"></div>
       </div>
       <!-- FIREBASE SETTINGS -->
       <div class="card" style="border-left:4px solid #F57C00;background:#FFF3E0">
@@ -1719,12 +1758,17 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}]};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},smsApiKey:'',smsProvider:'fast2sms',smsAdminPhone:'',transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}]};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
 let _empKnownTaskIds=[]; // for detecting new task assignments
 let _empKnownProjIds=[]; // for detecting new project assignments
+let _empKnownReqStatuses={}; // for detecting purchase request status changes (employee side)
+let _admKnownTaskStatuses={}; // for detecting task completions (admin side)
+let _admKnownEmpShifts={}; // for detecting shift completions (admin side)
+let _admKnownReqIds=[]; // for detecting new purchase requests (admin side)
+const _firedNotifs=new Set(); // deduplicate notifications that were already fired
 let statuses={},values={},problems=[];
 
 function pad(n){return String(n).padStart(2,'0');}
@@ -1768,12 +1812,31 @@ function initNotifications(){
   }catch(e){}
 }
 
+function playNotifSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=880;o.type='sine';
+    g.gain.setValueAtTime(0.25,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.35);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.35);
+  }catch(e){}
+}
+
 function sendNotif(title,body,tag){
-  // Browser notification
+  // Deduplicate: same tag = same notification, fire only once
+  if(tag&&_firedNotifs.has(tag))return;
+  if(tag)_firedNotifs.add(tag);
+  // Browser push notification
   if('Notification' in window&&Notification.permission==='granted'){
     try{new Notification(title,{body,icon:'',tag:tag||'hfm-'+Date.now(),requireInteraction:false});}catch(e){}
   }
-  // In-app notification
+  // Sound alert
+  playNotifSound();
+  // Vibration (mobile)
+  if(navigator.vibrate)try{navigator.vibrate([150,80,150]);}catch(e){}
+  // In-app notification history
   _notifHistory.unshift({title,body,time:Date.now(),read:false});
   if(_notifHistory.length>60)_notifHistory=_notifHistory.slice(0,60);
   _notifUnread++;
@@ -1828,6 +1891,43 @@ function clearAllNotifs(){
   localStorage.setItem('HFM4_NOTIF_UNREAD','0');
   updateNotifBadge();
   const m=document.getElementById('notif-modal');if(m)m.remove();
+}
+
+// ── CROSS-DEVICE FIREBASE NOTIFICATION BRIDGE ─────────
+// Push a notification to another device via Firebase /hfm_notifs/{targetKey}
+function fbNotifPush(targetKey,title,body,tag){
+  const base=getDbUrl();if(!base)return;
+  const notifTag=tag||('hfm-'+Date.now());
+  const key=Date.now()+'_'+Math.floor(Math.random()*9999);
+  fbPut('/hfm_notifs/'+targetKey+'/'+key,{title,body,tag:notifTag,ts:Date.now()}).catch(()=>{});
+}
+// Pull pending notifications for this device from Firebase, fire them, then clear
+async function fbNotifPull(targetKey){
+  const base=getDbUrl();if(!base)return;
+  try{
+    const data=await fbGet('/hfm_notifs/'+targetKey);
+    if(!data||typeof data!=='object')return;
+    const keys=Object.keys(data);
+    if(!keys.length)return;
+    keys.forEach(k=>{
+      const n=data[k];if(!n||!n.title)return;
+      const tag=n.tag||('fb-'+k);
+      sendNotif(n.title,n.body||'',tag);
+    });
+    // Delete all pulled notifications so they're not re-fired
+    fbPut('/hfm_notifs/'+targetKey,null).catch(()=>{});
+  }catch(e){}
+}
+// Ask user to enable browser notifications (called on login, if not yet granted)
+function requestNotifPermission(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default'){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted') sendNotif('🔔 Notifications On','You will now receive automatic alerts for all activity.','notif-enabled');
+    }).catch(()=>{});
+  }
+  // Hide the banner if shown
+  ['notif-banner-adm','notif-banner-emp'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
 }
 
 function showChangePwdModal(){
@@ -2017,6 +2117,7 @@ function universalLogin(){
     sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:foundAdmin.id,name:foundAdmin.name,loginId:foundAdmin.loginId,password:foundAdmin.password}));
     go('view-admin');
     resetAdminTabs();
+    maybeShowNotifBanner('admin');
     updateLiveBadge(!!url);
     startLiveTracking();
     if(url){
@@ -2042,6 +2143,14 @@ function universalLogin(){
   currentEmp=emp;currentTransEmp=null;currentAdmin=null;
   document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
   loadEmployeeHome();
+  maybeShowNotifBanner('emp');
+}
+// Show notification banner if permission not yet granted
+function maybeShowNotifBanner(role){
+  if(!('Notification' in window)||Notification.permission==='granted')return;
+  const bannerId=role==='admin'?'notif-banner-adm':'notif-banner-emp';
+  const el=document.getElementById(bannerId);
+  if(el) el.style.display='flex';
 }
 function getAdmins(){
   // Ensure default admin always exists (backward compat)
@@ -2073,6 +2182,7 @@ function adminLogin(){
   sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:found.id,name:found.name,loginId:found.loginId,password:found.password}));
   go('view-admin');
   resetAdminTabs();
+  maybeShowNotifBanner('admin');
   updateLiveBadge(!!url);
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
@@ -3092,9 +3202,21 @@ async function empPoll(){
     if(fbReqs.length){
       const localReqs=getRequests();
       const merged=mergeReqArrays(fbReqs,localReqs);
+      // Detect approve/reject changes for my requests and notify
+      merged.filter(r=>r.empLoginId===currentEmp.loginId).forEach(r=>{
+        const prev=_empKnownReqStatuses[r.id];
+        if(prev==='pending'&&r.status==='approved'){
+          sendNotif('✅ Request Approved','Your request for "'+r.itemName+'" was approved!','req-emp-appr-'+r.id);
+        } else if(prev==='pending'&&r.status==='rejected'){
+          sendNotif('❌ Request Rejected','Your request for "'+r.itemName+'" was rejected.'+(r.reviewNote?' Reason: '+r.reviewNote:''),'req-emp-rej-'+r.id);
+        }
+        _empKnownReqStatuses[r.id]=r.status;
+      });
       localStorage.setItem('HFM4_REQUESTS',JSON.stringify(merged));
       if(merged.length!==localReqs.length||JSON.stringify(merged)!==JSON.stringify(localReqs)) fbPut('/purchaseReqs',merged).catch(()=>{});
     }
+    // Pull cross-device notifications for this employee
+    fbNotifPull('emp_'+currentEmp.loginId).catch(()=>{});
     updateReqBadges();
     if(document.getElementById('view-my-requests').classList.contains('active')) renderMyRequests();
     updateEmpSyncBadge('ok');
@@ -3257,6 +3379,7 @@ function addProblem(){
   document.getElementById('p-loc-other').value='';
   document.getElementById('p-loc-other').style.display='none';
   document.getElementById('p-desc').value='';
+  fbNotifPush('admin','⚠️ Problem Reported',(currentEmp?currentEmp.name:'Employee')+' — '+loc+': '+desc,'prob-'+Date.now());
   renderProbs();saveProgress();showToast('Problem added ✓');
 }
 function toggleOtherLoc(sel){
@@ -3311,7 +3434,8 @@ function completeShift(){
   const pct=vals.length>0?Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
-  sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-'+Date.now());
+  sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-self-'+todayStr()+'-'+currentEmp.loginId);
+  fbNotifPush('admin','✅ Shift Completed',currentEmp.name+' completed their shift!','shift-done-'+currentEmp.loginId+'-'+todayStr());
   // Auto-send WhatsApp
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
@@ -3392,6 +3516,7 @@ function endTask(id){
   setTimeout(()=>fbDelete('/tasks/'+id),120000);
   const _doneTask=tasks[i];
   sendNotif('✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','done-'+id);
+  fbNotifPush('admin','✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','task-done-'+id);
   renderMyTasks();
   showToast('Task done ✓ — admin notified');
 }
@@ -3649,6 +3774,7 @@ function assignTask(){
   const tasks=getTasks();
   tasks.push({id:Date.now().toString(),assignedTo:empId,assignedName:emp?emp.name:empId,desc,dueDate:date,dueTime:time,pri,createdAt:Date.now(),startedAt:null,endedAt:null});
   saveTasks(tasks);
+  fbNotifPush('emp_'+empId,'📌 New Task Assigned','Task: "'+desc+'"'+(date?' · Due: '+date:''),'task-assign-'+tasks[tasks.length-1].id);
   document.getElementById('t-desc').value='';
   renderAdminTasks();showToast2('Task assigned to '+(emp?emp.name:empId)+' ✓');
 }
@@ -4283,6 +4409,59 @@ function startLiveTracking(){
         updateReqBadges();anyOk=true;
       }
     }catch(e){/* purchaseReqs fetch failed — non-blocking */}
+    // Detect shift completions (admin-side)
+    try{
+      const r2=await fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},5000);
+      if(r2.ok){
+        const d2=await r2.json();
+        if(d2&&typeof d2==='object'&&!Array.isArray(d2)){
+          Object.values(d2).filter(Boolean).forEach(emp=>{
+            if(!emp.loginId)return;
+            const prev=_admKnownEmpShifts[emp.loginId];
+            if(prev===false&&emp.shiftCompleted){
+              const k='shift-done-'+emp.loginId+'-'+todayStr();
+              sendNotif('✅ Shift Completed',(emp.name||emp.loginId)+' completed their shift!',k);
+            }
+            _admKnownEmpShifts[emp.loginId]=!!emp.shiftCompleted;
+          });
+        }
+      }
+    }catch(e){/* shift detection non-blocking */}
+    // Detect task completions (admin-side)
+    try{
+      const tr2=await fetchWithTimeout(base+'/tasks.json',{},5000);
+      if(tr2.ok){
+        const tdata=await tr2.json();
+        if(tdata&&typeof tdata==='object'&&!Array.isArray(tdata)){
+          const arr=Object.values(tdata).filter(Boolean);
+          arr.forEach(t=>{
+            const prev=_admKnownTaskStatuses[t.id];
+            if(prev!==undefined&&prev!=='done'&&t.status==='done'){
+              const k='task-done-'+t.id;
+              sendNotif('✅ Task Completed',(t.doneBy||'Employee')+' completed: "'+(t.desc||'').substring(0,40)+'"',k);
+            }
+            _admKnownTaskStatuses[t.id]=t.status||'pending';
+          });
+        }
+      }
+    }catch(e){/* task completion detection non-blocking */}
+    // Detect new purchase requests (admin-side)
+    try{
+      const pr2=await fetchWithTimeout(base+'/purchaseReqs.json',{},5000);
+      if(pr2.ok){
+        const preqs2=fbToArray(await pr2.json());
+        preqs2.forEach(r=>{
+          if(!_admKnownReqIds.includes(r.id)){
+            if(_admKnownReqIds.length>0){
+              sendNotif('📦 New Purchase Request',(r.empName||'Employee')+' requested: "'+(r.itemName||'')+'" ×'+(r.qty||''),'req-adm-new-'+r.id);
+            }
+            _admKnownReqIds.push(r.id);
+          }
+        });
+      }
+    }catch(e){/* new req detection non-blocking */}
+    // Pull cross-device notifications for admin
+    fbNotifPull('admin').catch(()=>{});
     // Refresh visible tabs
     try{
       const tasksTab=document.getElementById('tab-tasks');
@@ -4725,6 +4904,7 @@ function createProject(){
   document.getElementById('np-custom-list').innerHTML='';
   renderScopeForm();
   updateCostSummary();
+  fbNotifPush('emp_'+empId,'🏗️ New Project Assigned','Project: "'+name+'"'+(due?' · Due: '+due:''),'proj-assign-'+proj.id);
   renderAdminProjects();
   renderProjectKPIs();
   showToast2('Project created & assigned to '+(emp?emp.name:empId)+' ✓');
@@ -5026,6 +5206,123 @@ function updateReqBadges(){
   }
 }
 
+// ══════════════════════════════════════════════════════
+// SMS NOTIFICATION ENGINE
+// ══════════════════════════════════════════════════════
+function _smsAdminPhone(){
+  const ph=(cfg.smsAdminPhone||cfg.waNum||'').replace(/\D/g,'');
+  return ph.length>=10?ph.slice(-10):'';
+}
+function _smsEmpPhone(loginId){
+  const e=cfg.employees.find(x=>x.loginId===loginId)||(cfg.transportEmployees||[]).find(x=>x.loginId===loginId);
+  if(!e||!e.phone)return'';
+  const ph=e.phone.replace(/\D/g,'');
+  return ph.length>=10?ph.slice(-10):'';
+}
+async function sendSMS(phones,message){
+  const key=(cfg.smsApiKey||'').trim();
+  if(!key){return;}
+  const nums=(Array.isArray(phones)?phones:[phones]).map(p=>(p||'').replace(/\D/g,'').slice(-10)).filter(p=>p.length===10);
+  if(!nums.length)return;
+  const hosp=(cfg.hosp||'Hospital FM').substring(0,20);
+  const fullMsg=hosp+': '+message;
+  const provider=cfg.smsProvider||'fast2sms';
+  try{
+    if(provider==='fast2sms'){
+      // Fast2SMS Quick SMS — GET method (avoids CORS preflight)
+      const url='https://www.fast2sms.com/dev/bulkV2?authorization='+encodeURIComponent(key)+'&variables_values='+encodeURIComponent(fullMsg)+'&route=q&numbers='+nums.join(',');
+      await fetchWithTimeout(url,{},10000);
+    } else if(provider==='textbelt'){
+      // Textbelt — one call per number (international)
+      for(const num of nums){
+        await fetchWithTimeout('https://textbelt.com/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:num.length===10?'+91'+num:num,message:fullMsg,key})},10000);
+      }
+    } else if(provider==='msg91'){
+      // MSG91 Flow API
+      const url='https://api.msg91.com/api/v5/flow/';
+      await fetchWithTimeout(url,{method:'POST',headers:{'authkey':key,'content-type':'application/JSON'},body:JSON.stringify({template_id:'',short_url:'0',mobiles:'91'+nums.join(',91'),VAR1:fullMsg})},10000);
+    }
+  }catch(e){console.warn('SMS failed:',e.message);}
+}
+// Convenience wrappers called at each event
+function smsNotify(type,data){
+  if(!(cfg.smsApiKey||'').trim())return; // SMS not configured — skip silently
+  const H=cfg.hosp||'HFM';
+  switch(type){
+    case'task-assigned':{
+      const ph=_smsEmpPhone(data.loginId);
+      if(ph) sendSMS([ph],'New task assigned to you: "'+data.desc.substring(0,80)+'"'+(data.due?' Due: '+data.due:'')).catch(()=>{});
+      break;}
+    case'task-done':{
+      const ph=_smsAdminPhone();
+      if(ph) sendSMS([ph],'Task DONE by '+data.empName+': "'+data.desc.substring(0,60)+'"').catch(()=>{});
+      break;}
+    case'shift-done':{
+      const ph=_smsAdminPhone();
+      if(ph) sendSMS([ph],'Shift completed by '+data.empName+' at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})).catch(()=>{});
+      break;}
+    case'project-assigned':{
+      const ph=_smsEmpPhone(data.loginId);
+      if(ph) sendSMS([ph],'New project assigned to you: "'+data.name.substring(0,80)+'"'+(data.due?' Due: '+data.due:'')).catch(()=>{});
+      break;}
+    case'project-done':{
+      const ph=_smsAdminPhone();
+      if(ph) sendSMS([ph],'Project DONE by '+data.empName+': "'+data.name.substring(0,60)+'"').catch(()=>{});
+      break;}
+    case'req-submitted':{
+      const ph=_smsAdminPhone();
+      if(ph) sendSMS([ph],'New purchase request from '+data.empName+': "'+data.item+'" x'+data.qty+(data.cost?' ~Rs'+data.cost:'')).catch(()=>{});
+      break;}
+    case'req-approved':{
+      const ph=_smsEmpPhone(data.loginId);
+      if(ph) sendSMS([ph],'Purchase request APPROVED: "'+data.item+'" — collect from admin').catch(()=>{});
+      break;}
+    case'req-rejected':{
+      const ph=_smsEmpPhone(data.loginId);
+      if(ph) sendSMS([ph],'Purchase request REJECTED: "'+data.item+'"'+(data.note?' Reason: '+data.note:'')).catch(()=>{});
+      break;}
+  }
+}
+// SMS Settings UI helpers
+function renderSmsProviderHelp(){
+  const p=(document.getElementById('sms-provider')||{}).value||'fast2sms';
+  const help={
+    fast2sms:'<strong>Fast2SMS (Recommended for India)</strong><br>1. Go to <strong>fast2sms.com</strong> → Sign Up (free)<br>2. Dashboard → API → Copy your <strong>Authorization Key</strong><br>3. Paste above. Top-up wallet (₹50 = ~200 SMS). Very cheap!<br>✅ Supports all Indian numbers. Instant delivery.',
+    textbelt:'<strong>Textbelt (International)</strong><br>1. Go to <strong>textbelt.com</strong> → Buy API key<br>2. Or use key = <em>textbelt</em> for 1 free SMS/day (testing only)<br>3. Numbers must be in +91XXXXXXXXXX format.<br>✅ Works globally. $10 for 1000 SMS.',
+    msg91:'<strong>MSG91 (India)</strong><br>1. Go to <strong>msg91.com</strong> → Sign Up<br>2. Create an SMS Template & Flow<br>3. API → Auth Key → Paste above<br>4. Add Template ID in cfg.smsTemplateId<br>✅ Enterprise-grade. DLT registered.'
+  };
+  const el=document.getElementById('sms-provider-help');
+  if(el) el.innerHTML=help[p]||'';
+}
+function saveSmsSettings(){
+  const key=(document.getElementById('sms-api-key').value||'').trim();
+  const provider=(document.getElementById('sms-provider').value||'fast2sms');
+  const phone=(document.getElementById('sms-admin-phone').value||'').replace(/\D/g,'');
+  cfg.smsApiKey=key;cfg.smsProvider=provider;cfg.smsAdminPhone=phone;
+  saveCfg();
+  const st=document.getElementById('sms-status');
+  if(st){st.style.display='block';st.style.background='#E8F5E9';st.style.color='#1B5E20';st.textContent='✅ SMS settings saved!';}
+  setTimeout(()=>{if(st)st.style.display='none';},2500);
+}
+async function testSmsNotification(){
+  const key=(document.getElementById('sms-api-key').value||cfg.smsApiKey||'').trim();
+  const phone=(document.getElementById('sms-admin-phone').value||cfg.smsAdminPhone||cfg.waNum||'').replace(/\D/g,'').slice(-10);
+  const st=document.getElementById('sms-status');
+  if(!key){if(st){st.style.display='block';st.style.background='#FFEBEE';st.style.color='#C62828';st.textContent='❌ Enter API key first.';}return;}
+  if(!phone||phone.length!==10){if(st){st.style.display='block';st.style.background='#FFEBEE';st.style.color='#C62828';st.textContent='❌ Enter valid 10-digit admin phone number.';}return;}
+  if(st){st.style.display='block';st.style.background='#E3F2FD';st.style.color='#1565C0';st.textContent='🔄 Sending test SMS...';}
+  const origKey=cfg.smsApiKey,origPhone=cfg.smsAdminPhone,origProv=cfg.smsProvider;
+  cfg.smsApiKey=key;cfg.smsAdminPhone=phone;cfg.smsProvider=(document.getElementById('sms-provider').value||'fast2sms');
+  try{
+    await sendSMS([phone],'Test notification from '+cfg.hosp+' — SMS system is working!');
+    if(st){st.style.background='#E8F5E9';st.style.color='#1B5E20';st.textContent='✅ Test SMS sent to '+phone+'! Check your phone.';}
+  }catch(e){
+    if(st){st.style.background='#FFEBEE';st.style.color='#C62828';st.textContent='❌ Failed: '+e.message;}
+  }
+  cfg.smsApiKey=origKey;cfg.smsAdminPhone=origPhone;cfg.smsProvider=origProv;
+  setTimeout(()=>{if(st)st.style.display='none';},5000);
+}
+
 // ── EMPLOYEE SIDE ──────────────────────────────────────
 function openMyRequests(){
   const d=document.getElementById('req-date-hdr');
@@ -5127,8 +5424,9 @@ function submitPurchaseRequest(){
   const reqs=getRequests();
   reqs.unshift(req);
   saveRequests(reqs);
-  // Notify admin
+  // Notify admin (local toast + cross-device push)
   sendNotif('📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
+  fbNotifPush('admin','📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
   // Clear form
   document.getElementById('rq-item').value='';
   document.getElementById('rq-qty').value='';
@@ -5227,7 +5525,8 @@ function approveRequest(id){
   reqs[i].reviewedAt=Date.now();
   reqs[i].empRead=false;
   saveRequests(reqs);
-  sendNotif('✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
+  sendNotif('✅ Request Approved','Request for "'+reqs[i].itemName+'" approved','req-appr-'+id);
+  fbNotifPush('emp_'+reqs[i].empLoginId,'✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
   renderRequestsAdmin();
   showToast('Request approved ✓');
 }
@@ -5248,7 +5547,8 @@ function rejectRequest(id,note){
   reqs[i].reviewNote=note||'';
   reqs[i].empRead=false;
   saveRequests(reqs);
-  sendNotif('❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'req-rej-'+id);
+  sendNotif('❌ Request Rejected','Request for "'+reqs[i].itemName+'" rejected'+(note?' · '+note:''),'req-rej-'+id);
+  fbNotifPush('emp_'+reqs[i].empLoginId,'❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+(note?' Reason: '+note:''),'req-rej-'+id);
   renderRequestsAdmin();
   showToast('Request rejected');
 }
@@ -6447,6 +6747,7 @@ window.onload=function(){
       if(savedSession.password && !currentAdmin.password) currentAdmin.password=savedSession.password;
       go('view-admin');
       resetAdminTabs();
+      maybeShowNotifBanner('admin');
       updateLiveBadge(!!getDbUrl());
       startLiveTracking();
       updateReqBadges();
