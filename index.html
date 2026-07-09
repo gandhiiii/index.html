@@ -1273,7 +1273,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="filterReqs('all',this)" class="req-filter-btn" style="background:#6A1B9A;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
             <button onclick="filterReqs('pending',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">⏳ Pending</button>
-            <button onclick="filterReqs('md_pending',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">👔 MD Pending</button>
             <button onclick="filterReqs('approved',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Approved</button>
             <button onclick="filterReqs('rejected',this)" class="req-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">❌ Rejected</button>
           </div>
@@ -3567,7 +3566,7 @@ function renderAdminProblems(){
 
 function renderDashRequests(){
   const reqs=getRequests();
-  const pending=reqs.filter(r=>r.status==='pending'||r.status==='md_pending');
+  const pending=reqs.filter(r=>r.status==='pending');
   const approved=reqs.filter(r=>r.status==='approved');
   const rejected=reqs.filter(r=>r.status==='rejected');
   const pel=document.getElementById('dash-req-pending');if(pel)pel.textContent=pending.length;
@@ -3584,7 +3583,6 @@ function renderDashRequests(){
         <div style="font-size:11px;color:#90A4AE">👷 ${r.empName} · ${r.qty} ${r.unit}${r.estCost?'  ·  ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
       </div>
       <div style="display:flex;gap:5px">
-        <button onclick="sendToMD('${r.id}');renderDashRequests();renderAdmin();" style="padding:5px 10px;background:#6A1B9A;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer" title="Send to MD">👔</button>
         <button onclick="approveRequest('${r.id}');renderDashRequests();renderAdmin();" style="padding:5px 10px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✅</button>
         <button onclick="promptRejectRequest('${r.id}');renderDashRequests();renderAdmin();" style="padding:5px 10px;background:#C62828;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">❌</button>
       </div>
@@ -4000,7 +3998,7 @@ function downloadExcel(){
     ['PURCHASE REQUESTS — '+cfg.hosp,'','','','','','','','','','',''],
     ['Report Date',repDate,'','','','','','','','','',''],
     [''],
-    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending'||r.status==='md_pending').length,'','',''],
+    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending').length,'','',''],
     ['Est. Total Spend','₹'+reqEstTotal.toLocaleString('en-IN'),'Approved Est. Spend','₹'+reqApprovedEst.toLocaleString('en-IN'),'','','','','','','',''],
     [''],
     ['#','Employee','Item / Material','Qty','Unit','Est. Cost (₹)','Reason','Urgency','Status','Reviewed By','Review Note','Submitted On'],
@@ -5016,8 +5014,8 @@ function mergeReqArrays(fbArr,localArr){
 
 function updateReqBadges(){
   const reqs=getRequests();
-  // Admin badge — pending + md_pending count
-  const pendingCount=reqs.filter(r=>r.status==='pending'||r.status==='md_pending').length;
+  // Admin badge — pending count
+  const pendingCount=reqs.filter(r=>r.status==='pending').length;
   const admBadge=document.getElementById('adm-req-badge');
   if(admBadge){
     admBadge.style.display=pendingCount>0?'inline-block':'none';
@@ -5025,7 +5023,7 @@ function updateReqBadges(){
   }
   // Employee badge — approved/rejected (unread) for current employee
   if(currentEmp){
-    const myNew=reqs.filter(r=>r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&r.status!=='md_pending'&&!r.empRead).length;
+    const myNew=reqs.filter(r=>r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&!r.empRead).length;
     const empBadge=document.getElementById('req-pending-badge');
     if(empBadge){
       empBadge.style.display=myNew>0?'inline-block':'none';
@@ -5130,8 +5128,7 @@ function submitPurchaseRequest(){
     reason,urgency,
     status:'pending',
     createdAt:Date.now(),
-    reviewedBy:null,reviewedAt:null,reviewNote:'',empRead:false,
-    sentToBy:null,sentToAt:null
+    reviewedBy:null,reviewedAt:null,reviewNote:'',empRead:false
   };
   const reqs=getRequests();
   reqs.unshift(req);
@@ -5156,32 +5153,21 @@ function renderMyRequests(){
   if(!el)return;
   if(!reqs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests submitted yet.</div>';return;}
   el.innerHTML=reqs.map(r=>{
-    let statusColor,statusIcon,statusDisplay;
-    if(r.status==='approved'){statusColor='#2E7D32';statusIcon='✅';statusDisplay='Approved';}
-    else if(r.status==='rejected'){statusColor='#C62828';statusIcon='❌';statusDisplay='Rejected';}
-    else if(r.status==='md_pending'){statusColor='#6A1B9A';statusIcon='👔';statusDisplay='MD Pending';}
-    else{statusColor='#F57F17';statusIcon='⏳';statusDisplay='Pending';}
+    const statusColor=r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':'#F57F17';
+    const statusIcon=r.status==='approved'?'✅':r.status==='rejected'?'❌':'⏳';
     const urgBadge=r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px">🔴 URGENT</span>':'';
-    let reviewSection='';
-    if(r.status==='md_pending'){
-      reviewSection=`
-      <div style="margin-top:8px;padding:8px;background:#EDE7F6;border-radius:8px;font-size:12px">
-        <strong>👔 Sent to MD</strong> for approval${r.sentToBy?' by '+r.sentToBy:''}
-      </div>`;
-    } else if(r.status!=='pending'){
-      reviewSection=`
+    const reviewSection=r.status!=='pending'?`
       <div style="margin-top:8px;padding:8px;background:${r.status==='approved'?'#E8F5E9':'#FFEBEE'};border-radius:8px;font-size:12px">
         <strong>${r.status==='approved'?'✅ Approved':'❌ Rejected'}</strong> by ${r.reviewedBy||'Admin'}
         ${r.reviewNote?'<br>Note: '+r.reviewNote:''}
-      </div>`;
-    }
+      </div>`:'';
     return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
           <span style="font-weight:800;font-size:14px">${r.itemName}</span>${urgBadge}
           <div style="font-size:12px;color:#607D8B;margin-top:2px">Qty: ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}</div>
         </div>
-        <span style="font-size:12px;font-weight:700;color:${statusColor};white-space:nowrap">${statusIcon} ${statusDisplay}</span>
+        <span style="font-size:12px;font-weight:700;color:${statusColor};white-space:nowrap">${statusIcon} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
       </div>
       <div style="font-size:12px;color:#546E7A;margin-top:6px">${r.reason}</div>
       ${reviewSection}
@@ -5191,7 +5177,7 @@ function renderMyRequests(){
   // Mark admin-reviewed ones as read
   let changed=false;
   const all=getRequests();
-  all.forEach(r=>{if(r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&r.status!=='md_pending'&&!r.empRead){r.empRead=true;changed=true;}});
+  all.forEach(r=>{if(r.empLoginId===currentEmp.loginId&&r.status!=='pending'&&!r.empRead){r.empRead=true;changed=true;}});
   if(changed)saveRequests(all);
 }
 
@@ -5211,27 +5197,15 @@ function renderRequestsAdmin(){
   if(!el)return;
   if(!list.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No requests found.</div>';return;}
   el.innerHTML=list.map(r=>{
-    const statusColor=r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':r.status==='md_pending'?'#6A1B9A':'#E65100';
-    const statusBg=r.status==='approved'?'#E8F5E9':r.status==='rejected'?'#FFEBEE':r.status==='md_pending'?'#EDE7F6':'#FFF3E0';
-    const statusLabel=r.status==='md_pending'?'MD PENDING':r.status.toUpperCase();
+    const statusColor=r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':'#E65100';
+    const statusBg=r.status==='approved'?'#E8F5E9':r.status==='rejected'?'#FFEBEE':'#FFF3E0';
     const urgBadge=r.urgency==='urgent'?'<span style="background:#FFEBEE;color:#C62828;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px">🔴 URGENT</span>':'';
-    let actionBtns='';
-    if(r.status==='pending'){
-      actionBtns=`
+    const actionBtns=r.status==='pending'?`
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="sendToMD('${r.id}')" style="flex:1;padding:9px;background:#6A1B9A;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">👔 Send to MD</button>
         <button onclick="approveRequest('${r.id}')" style="flex:1;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">✅ Approve</button>
         <button onclick="promptRejectRequest('${r.id}')" style="flex:1;padding:9px;background:#C62828;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
-      </div>`;
-    } else if(r.status==='md_pending'){
-      actionBtns=`
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="markMDApproved('${r.id}')" style="flex:1;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">✅ Mark MD Approved</button>
-        <button onclick="promptRejectRequest('${r.id}')" style="flex:1;padding:9px;background:#C62828;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
-        <button onclick="sendToMD('${r.id}')" style="padding:9px;background:#6A1B9A;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">📧 Resend Email</button>
-      </div>`;
-    }
-    const reviewLine=r.status!=='pending'?`<div style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:700">${r.status==='approved'?'✅':r.status==='rejected'?'❌':'👔'} ${statusLabel}${r.sentToBy?' — Sent by '+r.sentToBy:''}${r.reviewNote?' — "'+r.reviewNote+'"':''}</div>`:'';
+      </div>`:'';
+    const reviewLine=r.status!=='pending'?`<div style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:700">${r.status==='approved'?'✅':'❌'} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)} by ${r.reviewedBy||'Admin'}${r.reviewNote?' — "'+r.reviewNote+'"':''}</div>`:'';
     return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
@@ -5240,7 +5214,7 @@ function renderRequestsAdmin(){
             👷 ${r.empName}  ·  Qty: ${r.qty} ${r.unit}${r.estCost?'  ·  Est. ₹'+r.estCost.toLocaleString('en-IN'):''}
           </div>
         </div>
-        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:${statusBg};color:${statusColor};white-space:nowrap">${statusLabel}</span>
+        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:${statusBg};color:${statusColor};white-space:nowrap">${r.status.toUpperCase()}</span>
       </div>
       <div style="font-size:12px;color:#546E7A;margin-top:6px"><strong>Reason:</strong> ${r.reason}</div>
       ${reviewLine}
@@ -5260,6 +5234,34 @@ function approveRequest(id){
   reqs[i].empRead=false;
   saveRequests(reqs);
   sendNotif('✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
+  // Open email draft to MD if email is configured
+  if(cfg.mdEmail){
+    const hosp=cfg.hosp||'Hospital';
+    const item=reqs[i].itemName;
+    const qty=reqs[i].qty;
+    const unit=reqs[i].unit;
+    const estCost=reqs[i].estCost?'₹'+reqs[i].estCost.toLocaleString('en-IN'):'Not specified';
+    const reason=reqs[i].reason;
+    const urgency=reqs[i].urgency;
+    const sub=encodeURIComponent('Purchase Approved — '+item+' — '+hosp);
+    const body=encodeURIComponent(
+      'Dear MD,\n\n'+
+      'The following purchase request has been approved:\n\n'+
+      '━━━━━━━━━━━━━━━━━━━━\n'+
+      '🏥 HOSPITAL: '+hosp+'\n'+
+      '👷 REQUESTED BY: '+reqs[i].empName+'\n'+
+      '✅ APPROVED BY: '+(currentAdmin?currentAdmin.name:'Admin')+'\n'+
+      '📦 ITEM: '+item+'\n'+
+      '🔢 QUANTITY: '+qty+' '+unit+'\n'+
+      '💰 EST. COST: '+estCost+'\n'+
+      '📋 REASON: '+reason+'\n'+
+      '⚡ URGENCY: '+urgency.toUpperCase()+'\n'+
+      '━━━━━━━━━━━━━━━━━━━━\n\n'+
+      'This request has been reviewed and approved. Please proceed as needed.\n\n'+
+      'Regards,\n'+(currentAdmin?currentAdmin.name:'Admin')+' — '+hosp
+    );
+    window.location.href='mailto:'+cfg.mdEmail+'?subject='+sub+'&body='+body;
+  }
   renderRequestsAdmin();
   showToast('Request approved ✓');
 }
@@ -5283,62 +5285,6 @@ function rejectRequest(id,note){
   sendNotif('❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'req-rej-'+id);
   renderRequestsAdmin();
   showToast('Request rejected');
-}
-
-function sendToMD(id){
-  if(!cfg.mdEmail){alert('⚠️ Please set the MD email address first in Admin → Staff tab → MD Email.');return;}
-  const reqs=getRequests();
-  const i=reqs.findIndex(r=>r.id===id);
-  if(i<0)return;
-  reqs[i].status='md_pending';
-  reqs[i].sentToBy=currentAdmin?currentAdmin.name:'Admin';
-  reqs[i].sentToAt=Date.now();
-  reqs[i].empRead=false;
-  saveRequests(reqs);
-  // Open email draft to MD
-  const hosp=cfg.hosp||'Hospital';
-  const empName=reqs[i].empName;
-  const item=reqs[i].itemName;
-  const qty=reqs[i].qty;
-  const unit=reqs[i].unit;
-  const estCost=reqs[i].estCost?'₹'+reqs[i].estCost.toLocaleString('en-IN'):'Not specified';
-  const reason=reqs[i].reason;
-  const urgency=reqs[i].urgency;
-  const sub=encodeURIComponent('Purchase Approval Required — '+item+' — '+hosp);
-  const body=encodeURIComponent(
-    'Dear MD,\n\n'+
-    'A purchase request requires your approval.\n\n'+
-    '━━━━━━━━━━━━━━━━━━━━\n'+
-    '🏥 HOSPITAL: '+hosp+'\n'+
-    '👷 EMPLOYEE: '+empName+'\n'+
-    '📦 ITEM: '+item+'\n'+
-    '🔢 QUANTITY: '+qty+' '+unit+'\n'+
-    '💰 EST. COST: '+estCost+'\n'+
-    '📋 REASON: '+reason+'\n'+
-    '⚡ URGENCY: '+urgency.toUpperCase()+'\n'+
-    '━━━━━━━━━━━━━━━━━━━━\n\n'+
-    'Please review and approve this request at your earliest convenience.\n\n'+
-    'Regards,\n'+(currentAdmin?currentAdmin.name:'Admin')+' — '+hosp
-  );
-  window.location.href='mailto:'+cfg.mdEmail+'?subject='+sub+'&body='+body;
-  sendNotif('👔 Sent to MD','Request for "'+item+'" has been sent to MD for approval.','req-md-'+id);
-  renderRequestsAdmin();
-  showToast('📧 Email draft opened for MD approval');
-}
-
-function markMDApproved(id){
-  const reqs=getRequests();
-  const i=reqs.findIndex(r=>r.id===id);
-  if(i<0)return;
-  reqs[i].status='approved';
-  reqs[i].reviewedBy=currentAdmin?currentAdmin.name:'Admin';
-  reqs[i].reviewedAt=Date.now();
-  reqs[i].reviewNote=(reqs[i].reviewNote||'')+' | MD Approved';
-  reqs[i].empRead=false;
-  saveRequests(reqs);
-  sendNotif('✅ MD Approved','Your request for "'+reqs[i].itemName+'" has been approved by MD!','req-md-appr-'+id);
-  renderRequestsAdmin();
-  showToast('✅ Marked as MD Approved');
 }
 
 // ── PROJECT DOWNLOADS ─────────────────────────────────
@@ -6067,7 +6013,7 @@ function downloadCurrentExcel(){
     ['PURCHASE REQUESTS','','','','','','','','','','',''],
     ['Report Period',`${from} to ${to}`,'','','','','','','','','',''],
     [''],
-    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending'||r.status==='md_pending').length,'','',''],
+    ['Summary','Total Submitted',allReqs.length,'Approved',allReqs.filter(r=>r.status==='approved').length,'Rejected',allReqs.filter(r=>r.status==='rejected').length,'Pending',allReqs.filter(r=>r.status==='pending').length,'','',''],
     ['Est. Total Spend','₹'+reqEstTotal.toLocaleString('en-IN'),'Approved Est. Spend','₹'+reqApprovedEst.toLocaleString('en-IN'),'','','','','','','',''],
     [''],
     ['#','Employee','Item / Material','Qty','Unit','Est. Cost (₹)','Reason','Urgency','Status','Reviewed By','Review Note','Submitted On'],
