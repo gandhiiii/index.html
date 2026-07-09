@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Hospital Facility Management</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@novu/js@2/dist/umd/index.js"></script>
 <!-- Firebase REST: no SDK needed — plain fetch() to Realtime Database REST API -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1114,6 +1115,34 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
         </details>
       </div>
+      <!-- NOVU PUSH NOTIFICATIONS -->
+      <div class="card" style="border-left:4px solid #6A1B9A;background:#F3E5F5">
+        <h3 style="font-size:14px;font-weight:800;color:#6A1B9A;margin-bottom:6px">🔔 Novu Push Notifications</h3>
+        <p style="font-size:11px;color:#4A148C;margin-bottom:10px;line-height:1.7">Novu delivers real-time push notifications to all devices. Get your <strong>App ID</strong> and <strong>API Secret Key</strong> from <strong>app.novu.co → Settings → API Keys</strong>.</p>
+        <div style="display:grid;gap:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#6A1B9A;display:block;margin-bottom:3px">App ID (Application Identifier)</label>
+            <input id="novu-app-id" type="text" placeholder="your-novu-app-id" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#6A1B9A;display:block;margin-bottom:3px">API Secret Key</label>
+            <input id="novu-api-key" type="password" placeholder="your-novu-api-secret-key" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false">
+          </div>
+          <button onclick="saveNovuSettings()" style="background:#6A1B9A;border:none;color:#fff;padding:11px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">💾 Save Novu Settings</button>
+          <div id="novu-save-status" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
+        </div>
+        <details style="margin-top:10px">
+          <summary style="font-size:12px;font-weight:700;color:#6A1B9A;cursor:pointer">📖 How to set up Novu (3 minutes)</summary>
+          <div style="margin-top:8px;font-size:12px;line-height:2;color:#4A148C;background:#fff;border-radius:8px;padding:10px;border:1px solid #CE93D8">
+            <strong>Step 1:</strong> Sign up free at <strong>app.novu.co</strong><br>
+            <strong>Step 2:</strong> Go to <strong>Settings → API Keys</strong> → copy your <em>Application Identifier</em> and <em>API Secret Key</em><br>
+            <strong>Step 3:</strong> Go to <strong>Workflows → Create Workflow</strong> → name it <code>hfm-notification</code> → add an <strong>In-App</strong> step (or Push step for mobile)<br>
+            <strong>Step 4:</strong> In the In-App step, set body to <code>&#123;&#123;body&#125;&#125;</code> and title to <code>&#123;&#123;title&#125;&#125;</code><br>
+            <strong>Step 5:</strong> Paste your App ID and API Key above → Save<br>
+            ✅ All status changes will now push through Novu to every device!
+          </div>
+        </details>
+      </div>
       <!-- Share App Config -->
       <div class="card" style="border-left:4px solid #00897B;background:#E0F2F1;padding:15px">
         <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:5px">📤 Share App with Employees</h3>
@@ -1758,7 +1787,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},smsApiKey:'',smsProvider:'fast2sms',smsAdminPhone:'',transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}]};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},smsApiKey:'',smsProvider:'fast2sms',smsAdminPhone:'',transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}],novuApiKey:'',novuAppId:''};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
@@ -1896,7 +1925,7 @@ function clearAllNotifs(){
   const m=document.getElementById('notif-modal');if(m)m.remove();
 }
 
-// ── CROSS-DEVICE FIREBASE NOTIFICATION BRIDGE ─────────
+// ── CROSS-DEVICE FIREBASE NOTIFICATION BRIDGE (fallback) ─────────
 // Push a notification to another device via Firebase /hfm_notifs/{targetKey}
 function fbNotifPush(targetKey,title,body,tag){
   const base=getDbUrl();if(!base)return;
@@ -1931,6 +1960,84 @@ function requestNotifPermission(){
   }
   // Hide the banner if shown
   ['notif-banner-adm','notif-banner-emp'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+}
+
+// ══════════════════════════════════════════════════════
+// NOVU PUSH NOTIFICATIONS
+// ══════════════════════════════════════════════════════
+let _novuClient=null;
+const NOVU_API_BASE='https://api.novu.co';
+const NOVU_WORKFLOW_ID='hfm-notification';
+
+// Save Novu settings from staff tab
+function saveNovuSettings(){
+  const appId=(document.getElementById('novu-app-id').value||'').trim();
+  const apiKey=(document.getElementById('novu-api-key').value||'').trim();
+  const statusEl=document.getElementById('novu-save-status');
+  if(!appId||!apiKey){
+    statusEl.style.display='block';statusEl.style.background='#FFEBEE';statusEl.style.color='#C62828';
+    statusEl.textContent='❌ Enter both App ID and API Key.';return;
+  }
+  cfg.novuAppId=appId;cfg.novuApiKey=apiKey;saveCfg();
+  statusEl.style.display='block';statusEl.style.background='#E8F5E9';statusEl.style.color='#1B5E20';
+  statusEl.textContent='✅ Novu settings saved! Notifications will now push via Novu.';
+  // Re-init with current user if logged in
+  if(currentAdmin) novuIdentify('hfm-admin',currentAdmin.name);
+  else if(currentEmp) novuIdentify('emp_'+currentEmp.loginId,currentEmp.name);
+}
+
+// Identify / create a Novu subscriber and set up in-app listener
+async function novuIdentify(subscriberId,displayName){
+  if(!cfg.novuApiKey||!cfg.novuAppId)return;
+  try{
+    // Upsert subscriber via Novu API
+    await fetch(NOVU_API_BASE+'/v1/subscribers',{
+      method:'POST',
+      headers:{'Authorization':'ApiKey '+cfg.novuApiKey,'Content-Type':'application/json'},
+      body:JSON.stringify({subscriberId,firstName:displayName||subscriberId})
+    });
+  }catch(e){}
+  // Initialize Novu in-app client for real-time inbox
+  try{
+    if(window.Novu){
+      _novuClient=new window.Novu({applicationIdentifier:cfg.novuAppId,subscriberId});
+      // Listen for new in-app notifications and surface them locally
+      _novuClient.on('notifications.notification_received',evt=>{
+        try{
+          const n=evt.result||evt;
+          const title=(n.content&&n.content[0]&&n.content[0].value)||n.subject||'🔔 Notification';
+          const body=(n.content&&n.content[1]&&n.content[1].value)||n.body||'';
+          const tag='novu-'+n._id;
+          sendNotif(title,body,tag);
+        }catch(err){}
+      });
+    }
+  }catch(e){}
+}
+
+// Trigger a Novu notification to a specific subscriber
+// Falls back to Firebase bridge if Novu is not configured or network fails
+async function novuTrigger(targetSubscriberId,title,body,tag){
+  if(!cfg.novuApiKey){
+    // Novu not configured — use Firebase bridge directly
+    fbNotifPush(targetSubscriberId,title,body,tag);
+    return;
+  }
+  try{
+    const res=await fetch(NOVU_API_BASE+'/v1/events/trigger',{
+      method:'POST',
+      headers:{'Authorization':'ApiKey '+cfg.novuApiKey,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:NOVU_WORKFLOW_ID,
+        to:{subscriberId:targetSubscriberId},
+        payload:{title,body,tag:tag||('hfm-'+Date.now()),hospitalName:cfg.hosp||'Hospital FM'}
+      })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+  }catch(e){
+    // Fallback to Firebase bridge if Novu API fails
+    fbNotifPush(targetSubscriberId,title,body,tag);
+  }
 }
 
 function showChangePwdModal(){
@@ -2121,6 +2228,7 @@ function universalLogin(){
     go('view-admin');
     resetAdminTabs();
     maybeShowNotifBanner('admin');
+    novuIdentify('hfm-admin',foundAdmin.name);
     updateLiveBadge(!!url);
     startLiveTracking();
     if(url){
@@ -2145,6 +2253,7 @@ function universalLogin(){
   errEl.style.display='none';
   currentEmp=emp;currentTransEmp=null;currentAdmin=null;
   document.getElementById('ul-id').value='';document.getElementById('ul-pwd').value='';
+  novuIdentify('emp_'+emp.loginId,emp.name);
   loadEmployeeHome();
   maybeShowNotifBanner('emp');
 }
@@ -2186,6 +2295,7 @@ function adminLogin(){
   go('view-admin');
   resetAdminTabs();
   maybeShowNotifBanner('admin');
+  novuIdentify('hfm-admin',found.name);
   updateLiveBadge(!!url);
   startLiveTracking();
   // Push config to Firebase immediately on login so employees can auto-setup
@@ -2385,7 +2495,7 @@ function startTrip(){
   document.getElementById('trans-distance-info').style.display='none';
   document.getElementById('trans-dest-coords').dataset.lat='';
   document.getElementById('trans-dest-coords').dataset.lng='';
-  fbNotifPush('admin','🚗 Trip Started',currentTransEmp.name+' → '+dest+(patient?' (Patient: '+patient+')':''),'trip-start-'+tripId);
+  novuTrigger('admin','🚗 Trip Started',currentTransEmp.name+' → '+dest+(patient?' (Patient: '+patient+')':''),'trip-start-'+tripId);
   showToast('🚀 Journey started to '+dest);
 }
 function completeTrip(){
@@ -2411,7 +2521,7 @@ function completeTrip(){
     }).catch(()=>{});
   }
   stopGpsTracking();
-  fbNotifPush('admin','✅ Trip Completed',currentTransEmp.name+' returned from '+(trip.destination||'destination'),'trip-done-'+trip.id);
+  novuTrigger('admin','✅ Trip Completed',currentTransEmp.name+' returned from '+(trip.destination||'destination'),'trip-done-'+trip.id);
   _currentTripId=null;
   updateTripUI(saved);
   renderTransTrips();
@@ -2815,7 +2925,7 @@ function reportBreakdown(){
   saveBreakdowns(bds);
   const _bdSeverity=severity||'';
   const _reporter=currentTransEmp?currentTransEmp.name:'Employee';
-  fbNotifPush('admin','🔴 Vehicle Breakdown',_reporter+' — '+vehicle+': '+desc+(_bdSeverity?' ['+_bdSeverity+']':''),'bd-'+bds[bds.length-1].id);
+  novuTrigger('admin','🔴 Vehicle Breakdown',_reporter+' — '+vehicle+': '+desc+(_bdSeverity?' ['+_bdSeverity+']':''),'bd-'+bds[bds.length-1].id);
   document.getElementById('trans-bd-desc').value='';
   showToast('✅ Breakdown reported');
   if(currentTransEmp) renderTransBreakdowns();
@@ -3347,7 +3457,7 @@ function setStatus(si,ii,btn,v){
       const itemLabel=itemDef?(typeof itemDef==='object'?itemDef.t:itemDef):'Item';
       const secLabel=sec?sec.name.split('—')[0].trim():'';
       const notifKey='fault-'+currentEmp.loginId+'-'+todayStr()+'-'+key;
-      fbNotifPush('admin','⚠️ Fault Reported',currentEmp.name+' — '+secLabel+': '+itemLabel,notifKey);
+      novuTrigger('admin','⚠️ Fault Reported',currentEmp.name+' — '+secLabel+': '+itemLabel,notifKey);
     }catch(e){}
   }
 }
@@ -3400,7 +3510,7 @@ function addProblem(){
   document.getElementById('p-loc-other').value='';
   document.getElementById('p-loc-other').style.display='none';
   document.getElementById('p-desc').value='';
-  fbNotifPush('admin','⚠️ Problem Reported',(currentEmp?currentEmp.name:'Employee')+' — '+loc+': '+desc,'prob-'+Date.now());
+  novuTrigger('admin','⚠️ Problem Reported',(currentEmp?currentEmp.name:'Employee')+' — '+loc+': '+desc,'prob-'+Date.now());
   renderProbs();saveProgress();showToast('Problem added ✓');
 }
 function toggleOtherLoc(sel){
@@ -3456,7 +3566,7 @@ function completeShift(){
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
   sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-self-'+todayStr()+'-'+currentEmp.loginId);
-  fbNotifPush('admin','✅ Shift Completed',currentEmp.name+' completed their shift!','shift-done-'+currentEmp.loginId+'-'+todayStr());
+  novuTrigger('admin','✅ Shift Completed',currentEmp.name+' completed their shift!','shift-done-'+currentEmp.loginId+'-'+todayStr());
   // Auto-send WhatsApp
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
@@ -3537,7 +3647,7 @@ function endTask(id){
   setTimeout(()=>fbDelete('/tasks/'+id),120000);
   const _doneTask=tasks[i];
   sendNotif('✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','done-'+id);
-  fbNotifPush('admin','✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','task-done-'+id);
+  novuTrigger('admin','✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','task-done-'+id);
   renderMyTasks();
   showToast('Task done ✓ — admin notified');
 }
@@ -3795,7 +3905,7 @@ function assignTask(){
   const tasks=getTasks();
   tasks.push({id:Date.now().toString(),assignedTo:empId,assignedName:emp?emp.name:empId,desc,dueDate:date,dueTime:time,pri,createdAt:Date.now(),startedAt:null,endedAt:null});
   saveTasks(tasks);
-  fbNotifPush('emp_'+empId,'📌 New Task Assigned','Task: "'+desc+'"'+(date?' · Due: '+date:''),'task-assign-'+tasks[tasks.length-1].id);
+  novuTrigger('emp_'+empId,'📌 New Task Assigned','Task: "'+desc+'"'+(date?' · Due: '+date:''),'task-assign-'+tasks[tasks.length-1].id);
   document.getElementById('t-desc').value='';
   renderAdminTasks();showToast2('Task assigned to '+(emp?emp.name:empId)+' ✓');
 }
@@ -3846,6 +3956,11 @@ function renderStaff(){
   if(curEl) curEl.textContent=cur?('Current: '+cur):'⚠️ No Firebase URL set — live tracking is OFF';
   const inp=document.getElementById('settings-db-url');
   if(inp&&cur&&!inp.value) inp.value=cur;
+  // Populate Novu settings
+  const novuAppEl=document.getElementById('novu-app-id');
+  const novuKeyEl=document.getElementById('novu-api-key');
+  if(novuAppEl&&cfg.novuAppId&&!novuAppEl.value) novuAppEl.value=cfg.novuAppId;
+  if(novuKeyEl&&cfg.novuApiKey&&!novuKeyEl.value) novuKeyEl.value=cfg.novuApiKey;
   const el=document.getElementById('staff-list');
   const allStaff=[
     ...cfg.employees.map((e,i)=>({...e,_idx:i,_src:'emp'})),
@@ -4984,7 +5099,7 @@ function createProject(){
   document.getElementById('np-custom-list').innerHTML='';
   renderScopeForm();
   updateCostSummary();
-  fbNotifPush('emp_'+empId,'🏗️ New Project Assigned','Project: "'+name+'"'+(due?' · Due: '+due:''),'proj-assign-'+proj.id);
+  novuTrigger('emp_'+empId,'🏗️ New Project Assigned','Project: "'+name+'"'+(due?' · Due: '+due:''),'proj-assign-'+proj.id);
   renderAdminProjects();
   renderProjectKPIs();
   showToast2('Project created & assigned to '+(emp?emp.name:empId)+' ✓');
@@ -5506,7 +5621,7 @@ function submitPurchaseRequest(){
   saveRequests(reqs);
   // Notify admin (local toast + cross-device push)
   sendNotif('📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
-  fbNotifPush('admin','📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
+  novuTrigger('admin','📦 New Purchase Request',currentEmp.name+' requested: "'+item+'" ×'+qty+' '+unit,'req-new-'+req.id);
   // Clear form
   document.getElementById('rq-item').value='';
   document.getElementById('rq-qty').value='';
@@ -5606,7 +5721,7 @@ function approveRequest(id){
   reqs[i].empRead=false;
   saveRequests(reqs);
   sendNotif('✅ Request Approved','Request for "'+reqs[i].itemName+'" approved','req-appr-'+id);
-  fbNotifPush('emp_'+reqs[i].empLoginId,'✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
+  novuTrigger('emp_'+reqs[i].empLoginId,'✅ Request Approved','Your request for "'+reqs[i].itemName+'" has been approved!','req-appr-'+id);
   renderRequestsAdmin();
   showToast('Request approved ✓');
 }
@@ -5628,7 +5743,7 @@ function rejectRequest(id,note){
   reqs[i].empRead=false;
   saveRequests(reqs);
   sendNotif('❌ Request Rejected','Request for "'+reqs[i].itemName+'" rejected'+(note?' · '+note:''),'req-rej-'+id);
-  fbNotifPush('emp_'+reqs[i].empLoginId,'❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+(note?' Reason: '+note:''),'req-rej-'+id);
+  novuTrigger('emp_'+reqs[i].empLoginId,'❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+(note?' Reason: '+note:''),'req-rej-'+id);
   renderRequestsAdmin();
   showToast('Request rejected');
 }
@@ -6828,6 +6943,7 @@ window.onload=function(){
       go('view-admin');
       resetAdminTabs();
       maybeShowNotifBanner('admin');
+      novuIdentify('hfm-admin',adminUser.name);
       updateLiveBadge(!!getDbUrl());
       startLiveTracking();
       updateReqBadges();
