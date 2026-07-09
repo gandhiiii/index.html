@@ -1768,6 +1768,9 @@ let _empKnownReqStatuses={}; // for detecting purchase request status changes (e
 let _admKnownTaskStatuses={}; // for detecting task completions (admin side)
 let _admKnownEmpShifts={}; // for detecting shift completions (admin side)
 let _admKnownReqIds=[]; // for detecting new purchase requests (admin side)
+let _admKnownFaults={}; // for detecting new Fault items per employee (admin side)
+let _admKnownBreakdownIds=[]; // for detecting new breakdown reports (admin side)
+let _admKnownTripStatuses={}; // for detecting transport trip status changes (admin side)
 const _firedNotifs=new Set(); // deduplicate notifications that were already fired
 let statuses={},values={},problems=[];
 
@@ -2382,6 +2385,7 @@ function startTrip(){
   document.getElementById('trans-distance-info').style.display='none';
   document.getElementById('trans-dest-coords').dataset.lat='';
   document.getElementById('trans-dest-coords').dataset.lng='';
+  fbNotifPush('admin','🚗 Trip Started',currentTransEmp.name+' → '+dest+(patient?' (Patient: '+patient+')':''),'trip-start-'+tripId);
   showToast('🚀 Journey started to '+dest);
 }
 function completeTrip(){
@@ -2407,6 +2411,7 @@ function completeTrip(){
     }).catch(()=>{});
   }
   stopGpsTracking();
+  fbNotifPush('admin','✅ Trip Completed',currentTransEmp.name+' returned from '+(trip.destination||'destination'),'trip-done-'+trip.id);
   _currentTripId=null;
   updateTripUI(saved);
   renderTransTrips();
@@ -2808,6 +2813,9 @@ function reportBreakdown(){
     resolvedBy:'',resolvedAt:null,resolutionNote:''
   });
   saveBreakdowns(bds);
+  const _bdSeverity=severity||'';
+  const _reporter=currentTransEmp?currentTransEmp.name:'Employee';
+  fbNotifPush('admin','🔴 Vehicle Breakdown',_reporter+' — '+vehicle+': '+desc+(_bdSeverity?' ['+_bdSeverity+']':''),'bd-'+bds[bds.length-1].id);
   document.getElementById('trans-bd-desc').value='';
   showToast('✅ Breakdown reported');
   if(currentTransEmp) renderTransBreakdowns();
@@ -3325,10 +3333,23 @@ function toggleSec(si){
 }
 
 function setStatus(si,ii,btn,v){
-  statuses[si+','+ii]=v;
+  const key=si+','+ii;
+  const prev=statuses[key];
+  statuses[key]=v;
   btn.closest('.item-row').querySelectorAll('.sb').forEach(b=>b.className='sb');
   btn.className='sb '+v.toLowerCase().replace('/','');
   updateCounts();saveProgress();showToast('Saved ✓');
+  // Instantly push fault notification to admin
+  if(v==='Fault'&&prev!=='Fault'&&currentEmp){
+    try{
+      const sec=SECTIONS[si];
+      const itemDef=sec?sec.items[ii]:null;
+      const itemLabel=itemDef?(typeof itemDef==='object'?itemDef.t:itemDef):'Item';
+      const secLabel=sec?sec.name.split('—')[0].trim():'';
+      const notifKey='fault-'+currentEmp.loginId+'-'+todayStr()+'-'+key;
+      fbNotifPush('admin','⚠️ Fault Reported',currentEmp.name+' — '+secLabel+': '+itemLabel,notifKey);
+    }catch(e){}
+  }
 }
 
 function updateCounts(){
@@ -4460,6 +4481,65 @@ function startLiveTracking(){
         });
       }
     }catch(e){/* new req detection non-blocking */}
+    // Detect new fault checklist items from employee daily data (admin-side cross-device)
+    try{
+      const r3=await fetchWithTimeout(base+'/daily/'+todayStr()+'.json',{},5000);
+      if(r3.ok){
+        const d3=await r3.json();
+        if(d3&&typeof d3==='object'&&!Array.isArray(d3)){
+          Object.values(d3).filter(Boolean).forEach(emp=>{
+            if(!emp.loginId||!emp.statuses)return;
+            const known=_admKnownFaults[emp.loginId]||{};
+            Object.entries(emp.statuses).forEach(([k,v])=>{
+              if(v==='Fault'&&known[k]!=='Fault'){
+                const notifKey='fault-admpoll-'+emp.loginId+'-'+todayStr()+'-'+k;
+                if(!_firedNotifs.has(notifKey)){
+                  _firedNotifs.add(notifKey);
+                  sendNotif('⚠️ Fault Reported',(emp.name||emp.loginId)+' reported a fault','fault-'+emp.loginId+'-'+todayStr()+'-'+k);
+                }
+              }
+            });
+            _admKnownFaults[emp.loginId]={...(emp.statuses||{})};
+          });
+        }
+      }
+    }catch(e){/* fault detection non-blocking */}
+    // Detect new breakdowns (admin-side)
+    try{
+      const bd2=await fetchWithTimeout(base+'/transportBreakdowns.json',{},5000);
+      if(bd2.ok){
+        const bdArr=await bd2.json();
+        if(Array.isArray(bdArr)){
+          bdArr.filter(Boolean).forEach(bd=>{
+            if(!_admKnownBreakdownIds.includes(bd.id)){
+              if(_admKnownBreakdownIds.length>0){
+                sendNotif('🔴 Vehicle Breakdown',(bd.reportedBy||'Employee')+' — '+bd.vehicle+': '+(bd.desc||'').substring(0,60),'bd-adm-'+bd.id);
+              }
+              _admKnownBreakdownIds.push(bd.id);
+            }
+          });
+        }
+      }
+    }catch(e){/* breakdown detection non-blocking */}
+    // Detect transport trip status changes (admin-side)
+    try{
+      const live2=await fetchWithTimeout(base+'/transport-live.json',{},5000);
+      if(live2.ok){
+        const liveData2=await live2.json();
+        if(liveData2&&typeof liveData2==='object'){
+          Object.entries(liveData2).forEach(([loginId,d])=>{
+            if(!d)return;
+            const prev=_admKnownTripStatuses[loginId];
+            if(prev&&prev!==d.status){
+              const empName=d.name||loginId;
+              if(d.status==='on-trip') sendNotif('🚗 Trip Started',empName+' started a journey'+(d.destination?' → '+d.destination:''),'trip-live-start-'+loginId+'-'+(d.tripId||Date.now()));
+              else if(d.status==='available') sendNotif('✅ Trip Completed',empName+' returned and is now available','trip-live-done-'+loginId+'-'+Date.now());
+            }
+            _admKnownTripStatuses[loginId]=d.status;
+          });
+        }
+      }
+    }catch(e){/* transport live detection non-blocking */}
     // Pull cross-device notifications for admin
     fbNotifPull('admin').catch(()=>{});
     // Refresh visible tabs
