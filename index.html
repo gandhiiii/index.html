@@ -958,7 +958,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div><label>Patient Name *</label><input id="padm-name" type="text" placeholder="e.g. Suresh Kumar"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label>Room *</label>
-            <select id="padm-room" style="font-size:14px;padding:11px;font-weight:600">
+            <select id="padm-room" onchange="populateBeds(this,'padm-bed')" style="font-size:14px;padding:11px;font-weight:600">
               <option value="">— Select Room —</option>
               <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
                 <option>4F — 402</option><option>4F — 403</option><option>4F — 404</option>
@@ -1712,7 +1712,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div><label>Patient Name *</label><input id="adm-padm-name" type="text" placeholder="e.g. Suresh Kumar"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div><label>Room *</label>
-              <select id="adm-padm-room" style="font-size:14px;padding:11px;font-weight:600">
+              <select id="adm-padm-room" onchange="populateBeds(this,'adm-padm-bed')" style="font-size:14px;padding:11px;font-weight:600">
                 <option value="">— Select Room —</option>
                 <optgroup label="🛏️ FOURTH FLOOR">
                   <option>4F — 402</option><option>4F — 403</option><option>4F — 404</option>
@@ -7311,6 +7311,19 @@ function getAdmissions(){
 function saveAdmissions(arr){
   localStorage.setItem('HFM4_ADMISSIONS',JSON.stringify(arr));
   if(getDbUrl()) fbPut('/admissions',arr).catch(()=>{});
+}
+function populateBeds(roomSel,bedId){
+  const bedEl=document.getElementById(bedId);
+  if(!bedEl)return;
+  const v=roomSel.value;
+  // Only patient rooms have "—" pattern; wards and empty don't
+  const m=v.match(/—\s*(\d+)/);
+  const roomNum=m?parseInt(m[1],10):0;
+  const hasC=roomNum===412||roomNum===512||roomNum===612;
+  bedEl.innerHTML='<option value="">— Select Bed —</option>'+
+    '<option value="A">🛏️ Bed A</option>'+
+    '<option value="B">🛏️ Bed B</option>'+
+    (hasC?'<option value="C">🛏️ Bed C</option>':'');
 }
 function addPatientAdmission(){
   const name=document.getElementById('padm-name').value.trim();
