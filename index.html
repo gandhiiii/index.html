@@ -1383,9 +1383,77 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
 
     <!-- PATIENT COMPLAINTS -->
     <div id="tab-complaints" style="display:none">
+      <div class="card" style="border-left:4px solid #00695C">
+        <h3 style="color:#00695C;font-size:14px;margin-bottom:11px">➕ Register Complaint</h3>
+        <div style="display:grid;gap:9px">
+          <div>
+            <label>Patient Room *</label>
+            <select id="adm-pc-room" onchange="admToggleOtherRoom(this)">
+              <option value="">— Select Room —</option>
+              <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
+                <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+                <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+                <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+                <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+                <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+                <option>4F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ FIFTH FLOOR — PATIENT ROOMS">
+                <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+                <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+                <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+                <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+                <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+                <option>5F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ SIXTH FLOOR — PATIENT ROOMS">
+                <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+                <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+                <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+                <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+                <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+                <option>6F — Room 17</option>
+              </optgroup>
+              <optgroup label="🏥 OTHER WARDS">
+                <option>2F — ICU / CCU</option>
+                <option>2F — NICU</option>
+                <option>3F — HDU (High Dependency Unit)</option>
+                <option>3F — General Ward</option>
+                <option>3F — Semi-Private Ward</option>
+                <option>4F — Deluxe Rooms</option>
+                <option>4F — Private Rooms</option>
+                <option>5F — Recovery Room</option>
+                <option>6F — Maternity / Labor Room</option>
+              </optgroup>
+              <option value="Other">⚙ Other / Not Listed</option>
+            </select>
+            <input type="text" id="adm-pc-room-other" placeholder="Specify room..." style="display:none;margin-top:7px">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+            <div><label>Patient Name</label><input id="adm-pc-patient" type="text" placeholder="e.g. Ram Singh (optional)"></div>
+            <div><label>Reported By *</label>
+              <select id="adm-pc-emp">
+                <option value="">— Select Employee —</option>
+              </select>
+            </div>
+          </div>
+          <div><label>Complaint Description *</label><textarea id="adm-pc-desc" rows="2" placeholder="What is the complaint?"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+            <div><label>Priority</label>
+              <select id="adm-pc-pri">
+                <option>🔴 Critical</option>
+                <option>🟠 High</option>
+                <option selected>🟡 Medium</option>
+                <option>🟢 Low</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end"><button class="btn" style="margin:0;padding:11px;background:#00695C;color:#fff" onclick="adminAddPatientComplaint()">➕ Register</button></div>
+          </div>
+        </div>
+      </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <span style="font-weight:800;font-size:15px">🛏️ Patient Complaints</span>
+          <span style="font-weight:800;font-size:15px">🛏️ All Complaints</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="filterAdminComplaints('all',this)" class="comp-filter-btn" style="background:#00695C;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
             <button onclick="filterAdminComplaints('open',this)" class="comp-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🟡 Open</button>
@@ -3690,6 +3758,7 @@ function filterAdminComplaints(f,btn){
   renderAdminComplaints();
 }
 function renderAdminComplaints(){
+  populateAdminCompEmpDropdown();
   const all=getPatientComplaints();
   const filtered=_adminCompFilter==='all'?all:all.filter(c=>c.status===_adminCompFilter);
   const el=document.getElementById('adm-comp-list');
@@ -3737,6 +3806,47 @@ function adminDeleteComplaint(id){
   if(idx>-1) all.splice(idx,1);
   savePatientComplaints(all);
   renderAdminComplaints();
+}
+function admToggleOtherRoom(sel){
+  document.getElementById('adm-pc-room-other').style.display=sel.value==='Other'?'block':'none';
+}
+function adminAddPatientComplaint(){
+  const sel=document.getElementById('adm-pc-room');
+  const other=document.getElementById('adm-pc-room-other');
+  const room=sel.value==='Other'?other.value.trim():sel.value;
+  const patientName=(document.getElementById('adm-pc-patient').value||'').trim();
+  const empSel=document.getElementById('adm-pc-emp');
+  const empLoginId=empSel.value;
+  const empName=empSel.options[empSel.selectedIndex]?.text.split(' (')[0]||'Admin';
+  const desc=document.getElementById('adm-pc-desc').value.trim();
+  const pri=document.getElementById('adm-pc-pri').value;
+  if(!room||room==='— Select Room —'){showToast2('⚠️ Select a room');return;}
+  if(!desc){showToast2('⚠️ Enter complaint description');return;}
+  const complaints=getPatientComplaints();
+  complaints.unshift({
+    id:'comp_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    empLoginId:empLoginId||'admin',
+    empName:empName,
+    room,patientName,desc,pri,
+    status:'open',
+    createdAt:Date.now(),
+    adminNote:'',
+    resolvedAt:null,
+    resolvedBy:null
+  });
+  savePatientComplaints(complaints);
+  sel.value='';other.value='';other.style.display='none';
+  document.getElementById('adm-pc-patient').value='';
+  document.getElementById('adm-pc-desc').value='';
+  renderAdminComplaints();
+  showToast2('✅ Complaint registered');
+}
+function populateAdminCompEmpDropdown(){
+  const sel=document.getElementById('adm-pc-emp');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Select Employee —</option>'+
+    cfg.employees.map(e=>'<option value="'+e.loginId+'">'+e.name+' ('+e.loginId+')</option>').join('')+
+    '<option value="admin">Admin (self)</option>';
 }
 
 function renderDashRequests(){
