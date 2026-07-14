@@ -2851,7 +2851,7 @@ function universalLogin(){
       startLiveTracking();
       if(url){
       const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
-      fbPut('/config',pubCfg).catch(()=>{});
+    fbPut('/config',pubCfg).catch(()=>{showToast2('⚠️ Config saved locally but failed to sync to Firebase. Check your database URL and network connection.');});
       }
       updateReqBadges();
     }
@@ -4909,11 +4909,12 @@ function addEmployee(){
   const name=document.getElementById('ne-name').value.trim();
   if(!name){alert('Enter employee name.');return;}
   const initials=name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,3)||'EMP';
-  const num=String(cfg.employees.length+1).padStart(3,'0');
+  const dept=document.getElementById('ne-dept').value;
+  const count=dept==='transport'?(cfg.transportEmployees||[]).length+1:cfg.employees.length+1;
+  const num=String(count).padStart(3,'0');
   const loginId=(document.getElementById('ne-id').value.trim().toUpperCase()||initials+num);
   const password=(document.getElementById('ne-pwd').value.trim()||String(Math.floor(1000+Math.random()*9000)));
   const phone=(document.getElementById('ne-phone').value.trim().replace(/\D/g,'')||'');
-  const dept=document.getElementById('ne-dept').value;
   if(dept==='transport'){
     if((cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists in Transport. Change it.');return;}
     if(!cfg.transportEmployees) cfg.transportEmployees=[];
@@ -4927,9 +4928,10 @@ function addEmployee(){
   document.getElementById('ne-id').value='';
   document.getElementById('ne-pwd').value='';
   document.getElementById('ne-phone').value='';
-  document.getElementById('ne-dept').value='fm';
+  const depts=getDepts();
+  document.getElementById('ne-dept').value=depts.length?depts[0].id:'fm';
   renderStaff();
-  showToast2('✓ Added: '+name+' ('+(dept==='transport'?'Transport':'FM')+')  ID: '+loginId+'  Pass: '+password);
+  showToast2('✓ Added: '+name+' ('+(dept==='transport'?'Transport':(getInvLabel(dept)||'FM'))+')  ID: '+loginId+'  Pass: '+password);
 }
 
 function removeEmployee(i, src){
@@ -5599,16 +5601,18 @@ async function pushConfigToFirebase(){
   btn.disabled=true;
   setStatus('loading','☁️ Uploading config to Firebase...');
   try{
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||''};
+    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:base,convexUrl:base,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees||[],transportVehicles:cfg.transportVehicles||[]};
     const r=await xhrRequest(base+'/config.json','PUT',pubCfg,8000);
     if(r.ok){
       setStatus('ok','✅ Config uploaded! Employees can now set up using just the Firebase URL.');
       showToast2('Config pushed to Firebase ✓');
     } else {
       setStatus('error','❌ Upload failed (Error '+r.status+'). Check Firebase Rules allow .write:true');
+      showToast2('⚠️ Config upload failed. Check Firebase Rules.');
     }
   }catch(e){
     setStatus('error','❌ Error: '+e.message);
+    showToast2('⚠️ Config upload error: '+e.message);
   }
   btn.disabled=false;
 }
@@ -8521,7 +8525,7 @@ function getInvDeptIcons(){const m={};getDepts().forEach(d=>{m[d.id]=d.icon;});r
 function getInvDeptIcon(id){const d=getDepts().find(dp=>dp.id===id);return d?d.icon:'📦';}
 function getInvDeptIds(){return getDepts().map(d=>d.id);}
 function getInvLabel(d){const m={};const depts=getDepts();depts.forEach(dp=>{m[dp.id]=dp.label;});return m[d]||d;}
-function getDepts(){if(!cfg.departments||!cfg.departments.length)cfg.departments=[{id:'maintenance',label:'Maintenance',icon:'🔧'},{id:'housekeeping',label:'Housekeeping',icon:'🧹'},{id:'stationery',label:'Stationery',icon:'📎'},{id:'radiology',label:'Radiology',icon:'🔬'},{id:'ot',label:'OT',icon:'🏥'},{id:'medical',label:'Medical',icon:'💊'},{id:'canteen',label:'Canteen',icon:'🍽️'},{id:'cssd',label:'CSSD',icon:'🧪'},{id:'laundry',label:'Laundry',icon:'👕'},{id:'linen',label:'Linen',icon:'🛏️'},{id:'furniture',label:'Furniture',icon:'🪑'}];return cfg.departments;}
+function getDepts(){if(!cfg.departments||!cfg.departments.length)cfg.departments=[{id:'fm',label:'Facility Management',icon:'👷'},{id:'maintenance',label:'Maintenance',icon:'🔧'},{id:'housekeeping',label:'Housekeeping',icon:'🧹'},{id:'stationery',label:'Stationery',icon:'📎'},{id:'radiology',label:'Radiology',icon:'🔬'},{id:'ot',label:'OT',icon:'🏥'},{id:'medical',label:'Medical',icon:'💊'},{id:'canteen',label:'Canteen',icon:'🍽️'},{id:'cssd',label:'CSSD',icon:'🧪'},{id:'laundry',label:'Laundry',icon:'👕'},{id:'linen',label:'Linen',icon:'🛏️'},{id:'furniture',label:'Furniture',icon:'🪑'}];return cfg.departments;}
 function saveDepts(arr){cfg.departments=arr;saveCfg();}
 function getInventory(){return JSON.parse(localStorage.getItem('HFM4_INVENTORY')||'{}');}
 function saveInventory(data){localStorage.setItem('HFM4_INVENTORY',JSON.stringify(data));if(getDbUrl())fbPut('/inventory',data).catch(()=>{});}
