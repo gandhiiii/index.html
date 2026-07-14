@@ -1170,6 +1170,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div id="emp-bars"></div>
         <p style="font-size:10px;color:#90A4AE;margin-top:8px">Grade: A ≥95% · B ≥85% · C ≥70% · D &lt;70%</p>
         <div id="fb-url-info" style="margin-top:8px;font-size:10px;color:#B0BEC5;word-break:break-all"></div>
+        <div id="openwa-dash-status" style="margin-top:4px;font-size:10px;font-weight:600;color:#90A4AE"></div>
       </div>
       <!-- EMPLOYEE PROJECT WORK KPIs -->
       <div class="card" style="padding:0;overflow:hidden;border-left:4px solid #5C6BC0">
@@ -1374,6 +1375,25 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             5. Come back and tap <strong>Test &amp; Save URL</strong>
           </div>
         </details>
+      </div>
+      <!-- OpenWA WhatsApp Gateway -->
+      <div class="card" style="border-left:4px solid #25D366;background:#E8F5E9">
+        <h3 style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:4px">📲 OpenWA — Auto WhatsApp Notifications</h3>
+        <p style="font-size:12px;color:#558B2F;margin-bottom:10px;line-height:1.5">
+          Self-hosted WhatsApp API gateway. Sends automatic notifications for work changes, task assignments, pending/overdue tasks, and shift completions.<br>
+          <a href="https://www.open-wa.org" target="_blank" style="color:#2E7D32">www.open-wa.org</a> — deploy via Docker on any server.
+        </p>
+        <div id="openwa-current-info" style="font-size:12px;margin-bottom:10px;padding:7px 10px;border-radius:7px;word-break:break-all;font-weight:700"></div>
+        <div style="display:grid;gap:8px">
+          <div><label>OpenWA Server URL</label><input id="settings-openwa-url" type="url" placeholder="http://192.168.1.100:2785" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+          <div><label>API Key</label><input id="settings-openwa-key" type="password" placeholder="Your OpenWA API key" style="font-size:13px"></div>
+          <div><label>Session ID</label><input id="settings-openwa-session" type="text" placeholder="default" style="font-size:13px"></div>
+          <div style="display:flex;gap:8px">
+            <button onclick="testAndSaveOpenWA()" style="background:#2E7D32;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px;flex:1">🔌 Test &amp; Save</button>
+            <button onclick="clearOpenWA()" style="background:#EF5350;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">✕ Clear</button>
+          </div>
+          <div id="settings-openwa-result" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
+        </div>
       </div>
       <!-- Share App Config -->
       <div class="card" style="border-left:4px solid #00897B;background:#E0F2F1;padding:15px">
@@ -2119,7 +2139,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}]};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}],openwaUrl:'',openwaKey:'',openwaSession:''};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
@@ -2150,6 +2170,90 @@ function saveCfg(){
 // Use this on employee devices to avoid overwriting the admin's Firebase config.
 function saveCfgLocal(){
   localStorage.setItem('HFM4_CFG',JSON.stringify(cfg));
+}
+
+// ══════════════════════════════════════════════════════
+// OPENWA — AUTO WHATSAPP NOTIFICATION GATEWAY
+// ══════════════════════════════════════════════════════
+function isOpenWAConfigured(){
+  return cfg.openwaUrl&&cfg.openwaKey&&cfg.openwaSession;
+}
+function openwaApiPath(endpoint){
+  const base=cfg.openwaUrl.replace(/\/+$/,'');
+  return base+'/api/sessions/'+encodeURIComponent(cfg.openwaSession||'default')+endpoint;
+}
+async function sendOpenWA(to,text){
+  if(!isOpenWAConfigured()||!to||!text)return false;
+  try{
+    const r=await fetch(openwaApiPath('/messages/send-text'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':cfg.openwaKey},
+      body:JSON.stringify({to,text})
+    });
+    if(r.ok) return true;
+    const err=await r.text();
+    console.warn('OpenWA send failed:',r.status,err);
+    return false;
+  }catch(e){
+    console.warn('OpenWA send error:',e.message);
+    return false;
+  }
+}
+async function testOpenWAConnection(){
+  if(!cfg.openwaUrl||!cfg.openwaKey) return {ok:false,msg:'Enter server URL and API key'};
+  try{
+    const base=cfg.openwaUrl.replace(/\/+$/,'');
+    const r=await fetch(base+'/api/health',{
+      headers:{'x-api-key':cfg.openwaKey}
+    });
+    if(!r.ok) return {ok:false,msg:'Server returned status '+r.status};
+    const data=await r.json();
+    return {ok:true,msg:'✅ Connected — '+((data&&data.status)||'healthy')};
+  }catch(e){
+    return {ok:false,msg:'❌ Cannot connect — '+e.message};
+  }
+}
+function testAndSaveOpenWA(){
+  const url=document.getElementById('settings-openwa-url').value.trim();
+  const key=document.getElementById('settings-openwa-key').value.trim();
+  const session=document.getElementById('settings-openwa-session').value.trim()||'default';
+  if(!url||!key){showSettingsResult('settings-openwa-result','⚠️ Enter server URL and API key','#C62828');return;}
+  cfg.openwaUrl=url;cfg.openwaKey=key;cfg.openwaSession=session;
+  saveCfg();
+  testOpenWAConnection().then(res=>{
+    if(res.ok){
+      showSettingsResult('settings-openwa-result',res.msg+' • Saved!','#2E7D32');
+      updateOpenWAInfo();
+    } else {
+      showSettingsResult('settings-openwa-result',res.msg,'#C62828');
+    }
+  }).catch(()=>showSettingsResult('settings-openwa-result','❌ Connection test failed','#C62828'));
+}
+function clearOpenWA(){
+  cfg.openwaUrl='';cfg.openwaKey='';cfg.openwaSession='';
+  saveCfg();
+  document.getElementById('settings-openwa-url').value='';
+  document.getElementById('settings-openwa-key').value='';
+  document.getElementById('settings-openwa-session').value='';
+  updateOpenWAInfo();
+  showSettingsResult('settings-openwa-result','Cleared','#90A4AE');
+}
+function updateOpenWAInfo(){
+  const el=document.getElementById('openwa-current-info');
+  if(!el)return;
+  if(cfg.openwaUrl&&cfg.openwaKey){
+    el.style.background='#E8F5E9';el.style.color='#1B5E20';
+    el.innerHTML='✅ OpenWA: <strong>'+cfg.openwaUrl+'</strong>  ·  Session: <strong>'+(cfg.openwaSession||'default')+'</strong>';
+  } else {
+    el.style.background='#FFF3E0';el.style.color='#E65100';
+    el.textContent='⏸ OpenWA not configured — WhatsApp notifications will use wa.me links instead.';
+  }
+}
+function showSettingsResult(id,msg,color){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.display='block';el.textContent=msg;el.style.background=color+'18';el.style.color=color;
+  setTimeout(()=>{el.style.display='none';},5000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -3622,6 +3726,11 @@ function setStatus(si,ii,btn,v){
   btn.closest('.item-row').querySelectorAll('.sb').forEach(b=>b.className='sb');
   btn.className='sb '+v.toLowerCase().replace('/','');
   updateCounts();saveProgress();showToast('Saved ✓');
+  // OpenWA — notify admin on Fault
+  if(v==='Fault'&&cfg.waNum){
+    const itemLabel=btn.closest('.item-row')?.querySelector('.item-txt')?.textContent||'Item';
+    sendOpenWA(cfg.waNum,'❌ *Fault Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+'\n📍 '+itemLabel);
+  }
 }
 
 function updateCounts(){
@@ -3697,6 +3806,10 @@ function addProblem(){
   document.getElementById('p-loc-other').style.display='none';
   document.getElementById('p-desc').value='';
   renderProbs();saveProgress();showToast('Problem added ✓');
+  // OpenWA — notify admin
+  if(cfg.waNum) sendOpenWA(cfg.waNum,
+    '🚨 *Problem Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+
+    '\n📍 '+loc+'\n📝 '+desc+'\n'+pri+'\n🕐 '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
 }
 function toggleOtherLoc(sel){
   const otherId=sel.id==='emp-prob-loc'?'emp-prob-loc-other':'p-loc-other';
@@ -3764,7 +3877,12 @@ function completeShift(){
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
   sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-'+Date.now());
-  // Auto-send WhatsApp
+  // OpenWA — notify admin
+  if(cfg.waNum) sendOpenWA(cfg.waNum,
+    '✅ *Shift Completed*\n🏥 '+cfg.hosp+'\n\n👷 *'+currentEmp.name+'* completed their shift at '+
+    new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'\n📊 *'+pct+'%* completion  Grade: *'+
+    (pct>=95?'A':pct>=85?'B':pct>=70?'C':'D')+'*\n✅ OK: '+ok+'  ❌ Fault: '+fault+'  — N/A: '+na);
+  // Auto-send WhatsApp (fallback)
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
   showToast('Shift completed! Report sent ✓');
@@ -3844,6 +3962,11 @@ function endTask(id){
   setTimeout(()=>fbDelete('/tasks/'+id),120000);
   const _doneTask=tasks[i];
   sendNotif('✅ Task Completed',(currentEmp?currentEmp.name:'Employee')+' completed: "'+(_doneTask.desc||'').substring(0,40)+'"','done-'+id);
+  // OpenWA — notify admin
+  if(cfg.waNum) sendOpenWA(cfg.waNum,
+    '✅ *Task Completed*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+' completed:\n📌 *'+(_doneTask.desc||'')+'*'+
+    '\n⏱ Duration: '+duration(_doneTask.startedAt,_doneTask.endedAt)+
+    '\n\n_— Hospital FM_');
   renderMyTasks();
   showToast('Task done ✓ — admin notified');
 }
@@ -4221,6 +4344,9 @@ function assignTask(){
   saveTasks(tasks);
   document.getElementById('t-desc').value='';
   renderAdminTasks();showToast2('Task assigned to '+(emp?emp.name:empId)+' ✓');
+  // OpenWA — notify employee
+  if(emp&&emp.phone) sendOpenWA(emp.phone,
+    '📋 *New Task Assigned*\n🏥 '+cfg.hosp+'\n\nHi '+emp.name+',\n\nYou have a new task:\n📌 *'+desc+'*\n📅 Due: '+(date||'—')+(time?' at '+time:'')+'\n'+pri+'\n\nPlease acknowledge and complete on time.\n_— Admin_');
 }
 
 function renderAdminTasks(){
@@ -4269,6 +4395,14 @@ function renderStaff(){
   if(curEl) curEl.textContent=cur?('Current: '+cur):'⚠️ No Firebase URL set — live tracking is OFF';
   const inp=document.getElementById('settings-db-url');
   if(inp&&cur&&!inp.value) inp.value=cur;
+  // Populate OpenWA settings
+  const owUrl=document.getElementById('settings-openwa-url');
+  if(owUrl&&cfg.openwaUrl&&!owUrl.value) owUrl.value=cfg.openwaUrl;
+  const owKey=document.getElementById('settings-openwa-key');
+  if(owKey&&cfg.openwaKey&&!owKey.value) owKey.value=cfg.openwaKey;
+  const owSess=document.getElementById('settings-openwa-session');
+  if(owSess&&cfg.openwaSession&&!owSess.value) owSess.value=cfg.openwaSession;
+  updateOpenWAInfo();
   const el=document.getElementById('staff-list');
   const allStaff=[
     ...cfg.employees.map((e,i)=>({...e,_idx:i,_src:'emp'})),
@@ -4773,10 +4907,19 @@ function setFbStatus(type,msg){
 function startLiveTracking(){
   if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}
   renderAdmin();
+  // OpenWA — notify admin about overdue tasks on dashboard load
+  if(isOpenWAConfigured()&&cfg.waNum){
+    const allTasks=getTasks();
+    const overdue=allTasks.filter(t=>taskStatus(t)==='Overdue');
+    if(overdue.length>0) sendOpenWA(cfg.waNum,
+      '⚠️ *Overdue Tasks Summary*\n🏥 '+cfg.hosp+'\n\nYou have *'+overdue.length+' overdue task(s)*.\nCheck the Tasks tab for details.\n\n_— Hospital FM_');
+  }
   const base=getDbUrl();
   // Show Firebase URL in dashboard for verification
   const urlInfo=document.getElementById('fb-url-info');
   if(urlInfo) urlInfo.textContent=base?'Firebase: '+base:'⚠️ No Firebase URL set — go to setup to add it.';
+  const owaStatus=document.getElementById('openwa-dash-status');
+  if(owaStatus) owaStatus.textContent=isOpenWAConfigured()?'✅ OpenWA connected':'⏸ OpenWA off';
   if(!base){
     setFbStatus('error','Firebase URL not set. Go to setup page and enter your Firebase Database URL.');
     return;
@@ -4793,9 +4936,20 @@ function startLiveTracking(){
         const data=await r.json();
         if(data&&typeof data==='object'&&!Array.isArray(data)){
           const emps=Object.values(data).filter(Boolean);
+          const notifiedShifts=JSON.parse(localStorage.getItem('HFM4_NOTIFIED_SHIFTS')||'[]');
           emps.forEach(emp=>{
-            if(emp.loginId) localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));
+            if(emp.loginId){
+              localStorage.setItem('HFM4_'+todayStr()+'_'+emp.loginId,JSON.stringify(emp));
+              // OpenWA — notify admin of newly completed shifts
+              if(emp.shiftCompleted&&!notifiedShifts.includes(emp.loginId)&&isOpenWAConfigured()&&cfg.waNum){
+                notifiedShifts.push(emp.loginId);
+                sendOpenWA(cfg.waNum,
+                  '✅ *Shift Completed*\n🏥 '+cfg.hosp+'\n\n👷 *'+(emp.name||emp.loginId)+'* completed their shift'+
+                  '\n📊 '+(emp.pct||0)+'% completion\n✅ OK: '+(emp.ok||0)+'  ❌ Fault: '+(emp.fault||0));
+              }
+            }
           });
+          localStorage.setItem('HFM4_NOTIFIED_SHIFTS',JSON.stringify(notifiedShifts));
           setFbStatus('ok','Live · '+emps.length+' employee(s) synced · Last update: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
           renderAdmin();anyOk=true;
         } else {setFbStatus('ok','Connected · No data yet today · Waiting for employees to log in · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));anyOk=true;}
@@ -4844,6 +4998,20 @@ function startLiveTracking(){
           localStorage.setItem('HFM4_TASKS','[]');
         }
         anyOk=true;
+      }
+      // OpenWA — notify admin about newly overdue tasks
+      if(isOpenWAConfigured()&&cfg.waNum){
+        const allTasks=getTasks();
+        const overdue=allTasks.filter(t=>taskStatus(t)==='Overdue');
+        const lastOverdueNotif=parseInt(localStorage.getItem('HFM4_LAST_OVERDUE_NOTIF')||'0');
+        const newOverdue=overdue.filter(t=>t.createdAt>lastOverdueNotif);
+        if(newOverdue.length>0){
+          const msg='⚠️ *Overdue Tasks*\n🏥 '+cfg.hosp+'\n\n'+newOverdue.length+' task(s) are now overdue:\n\n'+
+            newOverdue.map((t,i)=>`${i+1}. *${t.desc}* — 👷 ${t.assignedName||'—'}\n   📅 Due: ${t.dueDate||'—'}${t.dueTime?' at '+t.dueTime:''}`).join('\n\n')+
+            '\n\nPlease send reminders to the concerned employees.';
+          sendOpenWA(cfg.waNum,msg);
+          localStorage.setItem('HFM4_LAST_OVERDUE_NOTIF',String(Date.now()));
+        }
       }
     }catch(e){/* tasks fetch failed — non-blocking */}
     // Sync purchase requests from Firebase — merge by ID
@@ -7079,7 +7247,9 @@ function sendPendingReminderWA(i){
   if(!emp.phone){alert('No phone number for '+emp.name+'.\nEdit employee to add a phone number.');return;}
   const pending=getPendingTasks(emp.loginId);
   if(!pending.length){alert('No pending tasks for '+emp.name+' ✅');return;}
-  window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(buildReminderMsg(emp,pending)),'_blank');
+  const msg=buildReminderMsg(emp,pending);
+  // Use OpenWA if configured, otherwise fallback to wa.me
+  sendOpenWA(emp.phone,msg) || window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(msg),'_blank');
 }
 
 function sendPendingReminderSMS(i){
@@ -7101,11 +7271,19 @@ function sendAllPendingReminders(){
     else alert('No pending tasks for any employee ✅');
     return;
   }
-  showToast2('Opening WhatsApp for '+withPending.length+' employee(s)...');
-  withPending.forEach((emp,idx)=>{
-    const msg=buildReminderMsg(emp,getPendingTasks(emp.loginId));
-    setTimeout(()=>window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(msg),'_blank'),idx*1000);
-  });
+  if(isOpenWAConfigured()){
+    showToast2('Sending reminders via OpenWA to '+withPending.length+' employee(s)...');
+    withPending.forEach(emp=>{
+      const msg=buildReminderMsg(emp,getPendingTasks(emp.loginId));
+      sendOpenWA(emp.phone,msg);
+    });
+  } else {
+    showToast2('Opening WhatsApp for '+withPending.length+' employee(s)...');
+    withPending.forEach((emp,idx)=>{
+      const msg=buildReminderMsg(emp,getPendingTasks(emp.loginId));
+      setTimeout(()=>window.open('https://wa.me/'+emp.phone+'?text='+encodeURIComponent(msg),'_blank'),idx*1000);
+    });
+  }
 }
 
 function renderReminderList(){
