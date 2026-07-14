@@ -395,6 +395,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div style="font-size:48px;margin-bottom:8px" id="emp-icon">👷</div>
       <div style="font-size:20px;font-weight:900" id="emp-name-display">Employee</div>
       <div style="font-size:12px;opacity:.8;margin-top:4px" id="emp-id-display">ID: —</div>
+      <div style="font-size:12px;opacity:.8;margin-top:2px" id="emp-phone-display">📱 Phone: —</div>
       <div style="margin-top:14px;display:inline-block;background:rgba(255,255,255,.15);padding:6px 16px;border-radius:20px;font-size:13px" id="shift-status-badge">Shift Not Started</div>
     </div>
     <div id="shift-done-msg" style="display:none" class="card" style="background:#E8F5E9;border:2px solid #A5D6A7;text-align:center">
@@ -417,6 +418,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn" style="background:#4A148C;color:#fff;font-size:15px" onclick="openPatientAdmission()">🏥 New Admission</button>
     <button class="btn" style="background:#37474F;color:#fff;font-size:15px" onclick="openDischargeChecklist()">🚪 Discharge Checklist</button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
+    <button class="btn outline" style="background:#25D366;color:#fff;border:2px solid #20BD5A" onclick="editMyPhone()">📱 My Phone Number</button>
   </div>
 </div>
 
@@ -3649,6 +3651,7 @@ async function loadEmployeeHome(){
   document.getElementById('home-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('emp-name-display').textContent=currentEmp.name;
   document.getElementById('emp-id-display').textContent='ID: '+currentEmp.loginId;
+  document.getElementById('emp-phone-display').textContent='📱 Phone: '+(currentEmp.phone||'Not set — tap to add');
   // Load from Firebase first (even mid-shift) so progress syncs across devices
   let saved=null;
   try{
@@ -4096,6 +4099,21 @@ function sendEmail(){
 function sendReportManual(){
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+}
+function editMyPhone(){
+  const current=currentEmp.phone||'';
+  const phone=prompt('Enter your WhatsApp number (country code + number, no spaces or +):\nExample: 919876543210',current);
+  if(phone===null)return;
+  const cleaned=phone.replace(/\D/g,'');
+  if(cleaned&&cleaned.length<8){alert('Enter a valid phone number with country code.');return;}
+  currentEmp.phone=cleaned;
+  // Update in cfg so it persists
+  const empInCfg=cfg.employees.find(e=>e.loginId===currentEmp.loginId);
+  if(empInCfg) empInCfg.phone=cleaned;
+  else{const trans=(cfg.transportEmployees||[]).find(e=>e.loginId===currentEmp.loginId);if(trans)trans.phone=cleaned;}
+  saveCfg();
+  document.getElementById('emp-phone-display').textContent='📱 Phone: '+(cleaned||'Not set');
+  showToast('✅ Phone number saved');
 }
 
 // ══════════════════════════════════════════════════════
