@@ -386,6 +386,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
     <button class="btn" style="background:#C62828;color:#fff;font-size:15px" onclick="openMyProblems()">⚠️ My Problems</button>
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openPatientComplaints()">🛏️ Patient Complaints</button>
+    <button class="btn" style="background:#00838F;color:#fff;font-size:15px" onclick="openRoomChecklist()">📋 Room Checklist</button>
+    <button class="btn" style="background:#4A148C;color:#fff;font-size:15px" onclick="openPatientAdmission()">🏥 New Admission</button>
+    <button class="btn" style="background:#37474F;color:#fff;font-size:15px" onclick="openDischargeChecklist()">🚪 Discharge Checklist</button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -878,6 +881,178 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- ══ ROOM CHECKLIST ═════════════════════════════════ -->
+<div id="view-room-checklist" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📋 Room Checklist</h1><p id="rchk-date"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #00838F">
+      <h3 style="color:#00838F;font-size:14px;margin-bottom:11px">🛏️ Select Room</h3>
+      <select id="rchk-room" onchange="onRoomChecklistRoomChange()" style="font-size:15px;padding:11px;font-weight:700">
+        <option value="">— Select Room —</option>
+        <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
+          <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+          <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+          <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+          <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+          <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+          <option>4F — Room 17</option>
+        </optgroup>
+        <optgroup label="🛏️ FIFTH FLOOR — PATIENT ROOMS">
+          <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+          <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+          <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+          <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+          <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+          <option>5F — Room 17</option>
+        </optgroup>
+        <optgroup label="🛏️ SIXTH FLOOR — PATIENT ROOMS">
+          <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+          <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+          <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+          <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+          <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+          <option>6F — Room 17</option>
+        </optgroup>
+        <optgroup label="🏥 OTHER WARDS">
+          <option>2F — ICU / CCU</option>
+          <option>2F — NICU</option>
+          <option>3F — HDU (High Dependency Unit)</option>
+          <option>3F — General Ward</option>
+          <option>3F — Semi-Private Ward</option>
+          <option>4F — Deluxe Rooms</option>
+          <option>4F — Private Rooms</option>
+          <option>5F — Recovery Room</option>
+          <option>6F — Maternity / Labor Room</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="card" style="border-left:4px solid #00838F">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="color:#00838F;font-size:14px">📋 Checklist Items</h3>
+        <span id="rchk-progress" style="font-size:12px;color:#00838F;font-weight:700">0/0</span>
+      </div>
+      <div id="rchk-items" style="display:grid;gap:6px">
+        <div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">Select a room above to see checklist items.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PATIENT ADMISSION ══════════════════════════════ -->
+<div id="view-patient-admission" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>🏥 New Patient Admission</h1><p id="padm-date"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #4A148C">
+      <h3 style="color:#4A148C;font-size:14px;margin-bottom:11px">➕ Admit New Patient</h3>
+      <div style="display:grid;gap:10px">
+        <div><label>Patient Name *</label><input id="padm-name" type="text" placeholder="e.g. Suresh Kumar"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label>Room *</label>
+            <select id="padm-room" style="font-size:14px;padding:11px;font-weight:600">
+              <option value="">— Select Room —</option>
+              <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
+                <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+                <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+                <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+                <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+                <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+                <option>4F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ FIFTH FLOOR — PATIENT ROOMS">
+                <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+                <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+                <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+                <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+                <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+                <option>5F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ SIXTH FLOOR — PATIENT ROOMS">
+                <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+                <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+                <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+                <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+                <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+                <option>6F — Room 17</option>
+              </optgroup>
+              <optgroup label="🏥 OTHER WARDS">
+                <option>2F — ICU / CCU</option>
+                <option>2F — NICU</option>
+                <option>3F — HDU (High Dependency Unit)</option>
+                <option>3F — General Ward</option>
+                <option>3F — Semi-Private Ward</option>
+                <option>4F — Deluxe Rooms</option>
+                <option>4F — Private Rooms</option>
+                <option>5F — Recovery Room</option>
+                <option>6F — Maternity / Labor Room</option>
+              </optgroup>
+            </select>
+          </div>
+          <div><label>Bed *</label>
+            <select id="padm-bed" style="font-size:14px;padding:11px;font-weight:600">
+              <option value="">— Select Bed —</option>
+              <option value="A">🛏️ Bed A</option>
+              <option value="B">🛏️ Bed B</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label>Doctor Name</label><input id="padm-doctor" type="text" placeholder="e.g. Dr. Sharma"></div>
+          <div><label>Admission Date</label><input id="padm-date-input" type="date"></div>
+          <div><label>Contact</label><input id="padm-contact" type="tel" placeholder="Phone number"></div>
+        </div>
+        <div><label>Reason / Notes</label><textarea id="padm-notes" rows="2" placeholder="Reason for admission, diagnosis, notes..."></textarea></div>
+        <button class="btn" style="background:#4A148C;color:#fff;font-size:15px;padding:14px" onclick="addPatientAdmission()">➕ Admit Patient</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Admitted Patients</div>
+      <div id="padm-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No admissions today.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DISCHARGE CHECKLIST ════════════════════════════ -->
+<div id="view-discharge-checklist" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>🚪 Discharge Checklist</h1><p id="dchk-date"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #37474F">
+      <h3 style="color:#37474F;font-size:14px;margin-bottom:11px">🚪 Select Patient for Discharge</h3>
+      <select id="dchk-patient" onchange="onDischargePatientSelect()" style="font-size:15px;padding:11px;font-weight:700">
+        <option value="">— Select Admitted Patient —</option>
+      </select>
+    </div>
+    <div class="card" style="border-left:4px solid #37474F">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="color:#37474F;font-size:14px">📋 Discharge Tasks</h3>
+        <span id="dchk-progress" style="font-size:12px;color:#37474F;font-weight:700">0/0</span>
+      </div>
+      <div id="dchk-items" style="display:grid;gap:6px">
+        <div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">Select a patient above.</div>
+      </div>
+      <button class="btn" style="background:#37474F;color:#fff;margin-top:12px;display:none" id="btn-complete-discharge" onclick="completeDischarge()">✅ Complete Discharge</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Discharged Patients Today</div>
+      <div id="dchk-discharged-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No discharges today.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -927,6 +1102,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('problems',this)">⚠️ Problems</div>
       <div class="tab" onclick="admTab('complaints',this)">🛏️ Complaints</div>
+      <div class="tab" onclick="admTab('roomchk',this)">📋 Room Chk</div>
+      <div class="tab" onclick="admTab('admissions',this)">🏥 Admissions</div>
+      <div class="tab" onclick="admTab('discharge',this)">🚪 Discharge</div>
       <div class="tab" onclick="admTab('transport',this)">🚑 Transport</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
@@ -1461,6 +1639,151 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
         </div>
         <div id="adm-comp-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No complaints yet.</div></div>
+      </div>
+    </div>
+
+    <!-- ROOM CHECKLIST MANAGEMENT -->
+    <div id="tab-roomchk" style="display:none">
+      <div class="card" style="border-left:4px solid #00838F">
+        <h3 style="color:#00838F;font-size:14px;margin-bottom:11px">➕ Add Room Checklist Item</h3>
+        <div style="display:grid;gap:9px">
+          <div><label>Room *</label>
+            <select id="adm-rchk-room" style="font-size:14px;padding:11px;font-weight:600">
+              <option value="">— Select Room —</option>
+              <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
+                <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+                <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+                <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+                <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+                <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+                <option>4F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ FIFTH FLOOR — PATIENT ROOMS">
+                <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+                <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+                <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+                <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+                <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+                <option>5F — Room 17</option>
+              </optgroup>
+              <optgroup label="🛏️ SIXTH FLOOR — PATIENT ROOMS">
+                <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+                <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+                <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+                <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+                <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+                <option>6F — Room 17</option>
+              </optgroup>
+              <optgroup label="🏥 OTHER WARDS">
+                <option>2F — ICU / CCU</option>
+                <option>2F — NICU</option>
+                <option>3F — HDU (High Dependency Unit)</option>
+                <option>3F — General Ward</option>
+                <option>3F — Semi-Private Ward</option>
+                <option>4F — Deluxe Rooms</option>
+                <option>4F — Private Rooms</option>
+                <option>5F — Recovery Room</option>
+                <option>6F — Maternity / Labor Room</option>
+              </optgroup>
+            </select>
+          </div>
+          <div><label>Item Description *</label><input id="adm-rchk-item" type="text" placeholder="e.g. Check AC, Clean bathroom, Restock linens..."></div>
+          <button class="btn" style="background:#00838F;color:#fff;margin:0" onclick="adminAddRoomChkItem()">➕ Add Item</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px">📋 Room Checklist Items</span>
+          <select id="adm-rchk-filter" onchange="renderAdminRoomChkItems()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
+            <option value="all">All Rooms</option>
+          </select>
+        </div>
+        <div id="adm-rchk-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No items added yet.</div></div>
+      </div>
+    </div>
+
+    <!-- PATIENT ADMISSIONS -->
+    <div id="tab-admissions" style="display:none">
+      <div class="card" style="border-left:4px solid #4A148C">
+        <h3 style="color:#4A148C;font-size:14px;margin-bottom:11px">➕ Admit Patient</h3>
+        <div style="display:grid;gap:10px">
+          <div><label>Patient Name *</label><input id="adm-padm-name" type="text" placeholder="e.g. Suresh Kumar"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Room *</label>
+              <select id="adm-padm-room" style="font-size:14px;padding:11px;font-weight:600">
+                <option value="">— Select Room —</option>
+                <optgroup label="🛏️ FOURTH FLOOR">
+                  <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+                  <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+                  <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+                  <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+                  <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+                  <option>4F — Room 17</option>
+                </optgroup>
+                <optgroup label="🛏️ FIFTH FLOOR">
+                  <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+                  <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+                  <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+                  <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+                  <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+                  <option>5F — Room 17</option>
+                </optgroup>
+                <optgroup label="🛏️ SIXTH FLOOR">
+                  <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+                  <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+                  <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+                  <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+                  <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+                  <option>6F — Room 17</option>
+                </optgroup>
+                <optgroup label="🏥 WARDS">
+                  <option>2F — ICU / CCU</option><option>2F — NICU</option>
+                  <option>3F — HDU</option><option>3F — General Ward</option>
+                  <option>3F — Semi-Private Ward</option>
+                  <option>4F — Deluxe Rooms</option><option>4F — Private Rooms</option>
+                  <option>5F — Recovery Room</option>
+                  <option>6F — Maternity / Labor Room</option>
+                </optgroup>
+              </select>
+            </div>
+            <div><label>Bed *</label>
+              <select id="adm-padm-bed" style="font-size:14px;padding:11px;font-weight:600">
+                <option value="">— Select Bed —</option>
+                <option value="A">🛏️ Bed A</option>
+                <option value="B">🛏️ Bed B</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div><label>Doctor</label><input id="adm-padm-doctor" type="text" placeholder="Dr. Name"></div>
+            <div><label>Date</label><input id="adm-padm-date" type="date"></div>
+            <div><label>Contact</label><input id="adm-padm-contact" type="tel" placeholder="Phone"></div>
+          </div>
+          <div><label>Notes</label><textarea id="adm-padm-notes" rows="2"></textarea></div>
+          <button class="btn" style="background:#4A148C;color:#fff;margin:0" onclick="adminAddPatientAdmission()">➕ Admit</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 All Admissions</div>
+        <div id="adm-padm-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No admissions yet.</div></div>
+      </div>
+    </div>
+
+    <!-- DISCHARGE MANAGEMENT -->
+    <div id="tab-discharge" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Discharge Checklist Items</div>
+        <div style="padding:13px;display:grid;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="adm-dchk-item" type="text" placeholder="New discharge task..." style="flex:1;min-width:160px">
+            <button onclick="adminAddDischargeItem()" style="background:#37474F;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add</button>
+          </div>
+          <div id="adm-dchk-list" style="margin-top:6px"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📋 Discharged Patients</div>
+        <div id="adm-dchk-discharged" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No discharges yet.</div></div>
       </div>
     </div>
 
@@ -3282,6 +3605,17 @@ async function empPoll(){
       localStorage.setItem('HFM4_COMPLAINTS',JSON.stringify(merged));
     }
     if(document.getElementById('view-patient-complaints').classList.contains('active')) renderPatientComplaints();
+    // Sync room checklist items
+    try{
+      const fbRci=await fbGet('/roomChecklist/items');
+      if(fbRci&&typeof fbRci==='object') localStorage.setItem('HFM4_ROOMCHK_ITEMS',JSON.stringify(fbRci));
+    }catch(e){}
+    // Sync admissions
+    try{
+      const fbAdm=fbToArray(await fbGet('/admissions'));
+      if(fbAdm.length) localStorage.setItem('HFM4_ADMISSIONS',JSON.stringify(fbAdm));
+    }catch(e){}
+    if(document.getElementById('view-patient-admission').classList.contains('active')) renderAdmissions();
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -3585,7 +3919,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','problems','complaints','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','problems','complaints','roomchk','admissions','discharge','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -3597,6 +3931,9 @@ function admTab(tab,el){
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='problems'){renderAdminProblems();}
   if(tab==='complaints'){syncPatientComplaints().then(()=>renderAdminComplaints());}
+  if(tab==='roomchk'){renderAdminRoomChkItems();}
+  if(tab==='admissions'){renderAdminAdmissions();}
+  if(tab==='discharge'){renderAdminDischarge();}
   if(tab==='transport'){renderAdminTransport();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
@@ -6970,6 +7307,444 @@ window.onload=function(){
   if(cfg.waNum||sessionStorage.getItem('HFM4_DB_URL')) showLoginPage();
   // else stay on setup
 };
+
+// ══════════════════════════════════════════════════════
+// ROOM CHECKLIST
+// ══════════════════════════════════════════════════════
+function openRoomChecklist(){
+  const d=document.getElementById('rchk-date');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  go('view-room-checklist');
+}
+function getRoomChkItems(room){
+  const all=JSON.parse(localStorage.getItem('HFM4_ROOMCHK_ITEMS')||'{}');
+  return room?all[room]||[]:all;
+}
+function saveRoomChkItems(all){
+  localStorage.setItem('HFM4_ROOMCHK_ITEMS',JSON.stringify(all));
+  if(getDbUrl()) fbPut('/roomChecklist/items',all).catch(()=>{});
+}
+function getRoomChkProgress(room){
+  const key='HFM4_ROOMCHK_PROGRESS_'+room?.replace?.(/\s+/g,'_')||'';
+  try{return JSON.parse(localStorage.getItem(key)||'{}');}catch(e){return{};}
+}
+function saveRoomChkProgress(room,progress){
+  const key='HFM4_ROOMCHK_PROGRESS_'+room?.replace?.(/\s+/g,'_')||'';
+  localStorage.setItem(key,JSON.stringify(progress));
+  progress.room=room;
+  progress.updated=Date.now();
+  if(getDbUrl()){
+    fbPut('/roomChecklist/progress/'+(room?.replace?.(/\s+/g,'_')||''),progress).catch(()=>{});
+  }
+}
+function onRoomChecklistRoomChange(){
+  const sel=document.getElementById('rchk-room');
+  const room=sel.value;
+  const el=document.getElementById('rchk-items');
+  const progEl=document.getElementById('rchk-progress');
+  if(!room){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">Select a room above to see checklist items.</div>';progEl.textContent='0/0';return;}
+  const allItems=getRoomChkItems();
+  const items=allItems[room]||[];
+  if(!items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No checklist items for this room. Ask admin to add items.</div>';progEl.textContent='0/0';return;}
+  const saved=getRoomChkProgress(room);
+  const done=items.filter((_,i)=>saved[i]).length;
+  progEl.textContent=done+'/'+items.length;
+  el.innerHTML=items.map((item,i)=>{
+    const checked=saved[i]||false;
+    const bg=checked?'#E8F5E9':'#fff';
+    return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer" onclick="toggleRoomChkItem(${i})">
+      <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
+      <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+    </div>`;
+  }).join('');
+}
+function toggleRoomChkItem(idx){
+  const sel=document.getElementById('rchk-room');
+  const room=sel.value; if(!room)return;
+  const saved=getRoomChkProgress(room);
+  saved[idx]=!saved[idx];
+  saved.empName=currentEmp?.name||'Employee';
+  saved.empLoginId=currentEmp?.loginId||'';
+  saveRoomChkProgress(room,saved);
+  onRoomChecklistRoomChange();
+}
+
+// ── ADMIN ROOM CHECKLIST ────────────────────────────
+function adminAddRoomChkItem(){
+  const room=document.getElementById('adm-rchk-room').value;
+  const item=document.getElementById('adm-rchk-item').value.trim();
+  if(!room){showToast2('⚠️ Select a room');return;}
+  if(!item){showToast2('⚠️ Enter item description');return;}
+  const all=getRoomChkItems();
+  if(!all[room]) all[room]=[];
+  all[room].push(item);
+  saveRoomChkItems(all);
+  document.getElementById('adm-rchk-item').value='';
+  renderAdminRoomChkItems();
+  showToast2('✅ Item added for '+room);
+}
+function adminRemoveRoomChkItem(room,idx){
+  if(!confirm('Remove this item?'))return;
+  const all=getRoomChkItems();
+  if(all[room]) all[room].splice(idx,1);
+  saveRoomChkItems(all);
+  renderAdminRoomChkItems();
+}
+function renderAdminRoomChkItems(){
+  const all=getRoomChkItems();
+  const filter=document.getElementById('adm-rchk-filter');
+  // Populate filter dropdown
+  const rooms=Object.keys(all).sort();
+  const currentFilter=filter?.value||'all';
+  if(filter){
+    const html='<option value="all">All Rooms</option>'+rooms.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
+    filter.innerHTML=html;
+    filter.value=currentFilter;
+  }
+  const el=document.getElementById('adm-rchk-list');
+  if(!el)return;
+  if(!rooms.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items added yet.</div>';return;}
+  const displayRooms=currentFilter==='all'?rooms:rooms.filter(r=>r===currentFilter);
+  el.innerHTML=displayRooms.map(room=>{
+    const items=all[room]||[];
+    return `<div style="margin-bottom:12px;border:1px solid #E0E0E0;border-radius:10px;overflow:hidden">
+      <div style="padding:10px 14px;background:#E0F7FA;font-weight:800;font-size:13px;color:#00838F">🛏️ ${room} <span style="font-weight:400;color:#90A4AE;font-size:12px">(${items.length} items)</span></div>
+      <div style="padding:8px 14px">${items.length?items.map((item,i)=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F5F5F5">
+          <span style="font-size:13px">📋 ${item}</span>
+          <button onclick="adminRemoveRoomChkItem('${room.replace(/'/g,"\\'")}',${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px">×</button>
+        </div>`).join(''):'<div style="color:#90A4AE;font-size:12px;padding:8px 0">No items</div>'}</div>
+    </div>`;
+  }).join('');
+  // Populate admin room dropdown for adding items
+  const roomSel=document.getElementById('adm-rchk-room');
+  if(roomSel){
+    const currentVal=roomSel.value;
+    roomSel.innerHTML='<option value="">— Select Room —</option>+'+rooms.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
+    roomSel.value=currentVal;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// PATIENT ADMISSION
+// ══════════════════════════════════════════════════════
+function openPatientAdmission(){
+  const d=document.getElementById('padm-date');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  const dateEl=document.getElementById('padm-date-input');
+  if(dateEl&&!dateEl.value) dateEl.value=todayStr();
+  renderAdmissions();
+  go('view-patient-admission');
+}
+function getAdmissions(){
+  try{return JSON.parse(localStorage.getItem('HFM4_ADMISSIONS')||'[]');}catch(e){return[];}
+}
+function saveAdmissions(arr){
+  localStorage.setItem('HFM4_ADMISSIONS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/admissions',arr).catch(()=>{});
+}
+function addPatientAdmission(){
+  const name=document.getElementById('padm-name').value.trim();
+  const room=document.getElementById('padm-room').value;
+  const bed=document.getElementById('padm-bed').value;
+  const doctor=document.getElementById('padm-doctor').value.trim();
+  const date=document.getElementById('padm-date-input').value||todayStr();
+  const contact=document.getElementById('padm-contact').value.trim();
+  const notes=document.getElementById('padm-notes').value.trim();
+  if(!name){showToast('⚠️ Enter patient name');return;}
+  if(!room){showToast('⚠️ Select a room');return;}
+  if(!bed){showToast('⚠️ Select a bed');return;}
+  const admissions=getAdmissions();
+  admissions.unshift({
+    id:'adm_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    name,room,bed,doctor,admissionDate:date,contact,notes,
+    status:'admitted',
+    admittedBy:currentEmp?.name||'Employee',
+    admittedByLoginId:currentEmp?.loginId||'',
+    createdAt:Date.now(),
+    dischargedAt:null
+  });
+  saveAdmissions(admissions);
+  document.getElementById('padm-name').value='';
+  document.getElementById('padm-room').value='';
+  document.getElementById('padm-bed').value='';
+  document.getElementById('padm-doctor').value='';
+  document.getElementById('padm-contact').value='';
+  document.getElementById('padm-notes').value='';
+  renderAdmissions();
+  showToast('✅ Patient admitted');
+}
+function renderAdmissions(){
+  const all=getAdmissions();
+  const el=document.getElementById('padm-list');
+  if(!el)return;
+  const active=all.filter(a=>a.status==='admitted');
+  if(!active.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No active admissions.</div>';return;}
+  el.innerHTML=active.map(a=>{
+    const ts=new Date(a.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="fi" style="border-color:#4A148C;background:#F3E5F5">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px">
+        <div>
+          <strong>👤 ${a.name}</strong> · 🛏️ ${a.room} · 🛌 Bed ${a.bed}
+          ${a.doctor?'<br>👨‍⚕️ '+a.doctor:''}${a.contact?'<br>📞 '+a.contact:''}
+          ${a.notes?'<br>📝 '+a.notes:''}
+          <div style="font-size:11px;color:#90A4AE;margin-top:4px">Admitted by ${a.admittedBy} at ${ts}</div>
+        </div>
+        <span style="background:#4A148C;color:#fff;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700">ADMITTED</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADMIN ADMISSIONS ────────────────────────────────
+function adminAddPatientAdmission(){
+  const name=document.getElementById('adm-padm-name').value.trim();
+  const room=document.getElementById('adm-padm-room').value;
+  const bed=document.getElementById('adm-padm-bed').value;
+  const doctor=document.getElementById('adm-padm-doctor').value.trim();
+  const date=document.getElementById('adm-padm-date').value||todayStr();
+  const contact=document.getElementById('adm-padm-contact').value.trim();
+  const notes=document.getElementById('adm-padm-notes').value.trim();
+  if(!name){showToast2('⚠️ Enter patient name');return;}
+  if(!room){showToast2('⚠️ Select a room');return;}
+  if(!bed){showToast2('⚠️ Select a bed');return;}
+  const admissions=getAdmissions();
+  admissions.unshift({
+    id:'adm_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    name,room,bed,doctor,admissionDate:date,contact,notes,
+    status:'admitted',
+    admittedBy:currentAdmin?.name||'Admin',
+    admittedByLoginId:currentAdmin?.loginId||'admin',
+    createdAt:Date.now(),
+    dischargedAt:null
+  });
+  saveAdmissions(admissions);
+  document.getElementById('adm-padm-name').value='';
+  document.getElementById('adm-padm-room').value='';
+  document.getElementById('adm-padm-bed').value='';
+  document.getElementById('adm-padm-doctor').value='';
+  document.getElementById('adm-padm-contact').value='';
+  document.getElementById('adm-padm-notes').value='';
+  renderAdminAdmissions();
+  showToast2('✅ Patient admitted');
+}
+function renderAdminAdmissions(){
+  const all=getAdmissions();
+  const el=document.getElementById('adm-padm-list');
+  if(!el)return;
+  if(!all.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No admissions yet.</div>';return;}
+  el.innerHTML=all.map(a=>{
+    const isDischarged=a.status==='discharged';
+    const ts=new Date(a.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="fi" style="border-color:${isDischarged?'#37474F':'#4A148C'};background:${isDischarged?'#F5F5F5':'#F3E5F5'};${isDischarged?'opacity:.6':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div style="flex:1">
+          <div><strong>${a.name}</strong> · 🛏️ ${a.room} · 🛌 Bed ${a.bed}${a.doctor?' · 👨‍⚕️ '+a.doctor:''}</div>
+          <div style="font-size:12px;color:#607D8B;margin-top:3px">📞 ${a.contact||'—'} · 📅 ${a.admissionDate||'—'} ${a.notes?'· 📝 '+a.notes:''}</div>
+          <div style="font-size:11px;color:#90A4AE;margin-top:2px">👤 ${a.admittedBy} · ${ts}${isDischarged?' · ✅ Discharged at '+new Date(a.dischargedAt).toLocaleString('en-IN'):''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          ${isDischarged?'<span style="font-size:11px;color:#37474F;font-weight:700;padding:4px 8px;background:#ECEFF1;border-radius:5px">✅ DISCHARGED</span>':'<span style="background:#4A148C;color:#fff;padding:4px 8px;border-radius:5px;font-size:11px;font-weight:700">ADMITTED</span>'}
+          ${!isDischarged?`<button onclick="adminDischargePatient('${a.id}')" style="background:#37474F;color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🚪 Discharge</button>`:''}
+          ${!isDischarged?`<button onclick="adminDeleteAdmission('${a.id}')" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:2px 4px">×</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function adminDischargePatient(id){
+  if(!confirm('Discharge this patient?')) return;
+  const all=getAdmissions();
+  const a=all.find(x=>x.id===id);
+  if(!a)return;
+  a.status='discharged';
+  a.dischargedAt=Date.now();
+  a.dischargedBy=currentAdmin?.name||'Admin';
+  saveAdmissions(all);
+  renderAdminAdmissions();
+  showToast2('✅ Patient discharged');
+}
+function adminDeleteAdmission(id){
+  if(!confirm('Delete this admission record?')) return;
+  const all=getAdmissions();
+  const idx=all.findIndex(x=>x.id===id);
+  if(idx>-1) all.splice(idx,1);
+  saveAdmissions(all);
+  renderAdminAdmissions();
+}
+
+// ══════════════════════════════════════════════════════
+// DISCHARGE CHECKLIST
+// ══════════════════════════════════════════════════════
+const DEFAULT_DISCHARGE_ITEMS=[
+  '✅ Medical bills cleared',
+  '✅ Medicines / prescriptions handed over',
+  '✅ Patient belongings returned',
+  '✅ Discharge summary given',
+  '✅ Follow-up appointment scheduled',
+  '✅ Bed linens removed for laundry',
+  '✅ Room cleaned and disinfected',
+  '✅ Medical equipment removed',
+  '✅ Diet instructions given',
+  '✅ Transportation arranged'
+];
+function getDischargeItems(){
+  try{return JSON.parse(localStorage.getItem('HFM4_DISCHARGE_ITEMS')||JSON.stringify(DEFAULT_DISCHARGE_ITEMS));}catch(e){return[...DEFAULT_DISCHARGE_ITEMS];}
+}
+function saveDischargeItems(arr){
+  localStorage.setItem('HFM4_DISCHARGE_ITEMS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/dischargeChecklist/items',arr).catch(()=>{});
+}
+function getDischargeProgress(patientId){
+  const key='HFM4_DISCHARGE_PROGRESS_'+patientId;
+  try{return JSON.parse(localStorage.getItem(key)||'{}');}catch(e){return{};}
+}
+function saveDischargeProgress(patientId,progress){
+  const key='HFM4_DISCHARGE_PROGRESS_'+patientId;
+  localStorage.setItem(key,JSON.stringify(progress));
+  if(getDbUrl()) fbPut('/dischargeChecklist/progress/'+patientId,progress).catch(()=>{});
+}
+function getDischargedPatients(){
+  try{return JSON.parse(localStorage.getItem('HFM4_DISCHARGED_PATIENTS')||'[]');}catch(e){return[];}
+}
+function saveDischargedPatients(arr){
+  localStorage.setItem('HFM4_DISCHARGED_PATIENTS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/dischargeChecklist/discharged',arr).catch(()=>{});
+}
+
+function openDischargeChecklist(){
+  const d=document.getElementById('dchk-date');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  // Populate patient dropdown with admitted patients
+  const sel=document.getElementById('dchk-patient');
+  const admissions=getAdmissions().filter(a=>a.status==='admitted');
+  sel.innerHTML='<option value="">— Select Admitted Patient —</option>'+
+    admissions.map(a=>'<option value="'+a.id+'">👤 '+a.name+' — '+a.room+' (Bed '+a.bed+')</option>').join('');
+  renderDischargedList();
+  go('view-discharge-checklist');
+}
+function onDischargePatientSelect(){
+  const sel=document.getElementById('dchk-patient');
+  const patientId=sel.value;
+  const el=document.getElementById('dchk-items');
+  const progEl=document.getElementById('dchk-progress');
+  const completeBtn=document.getElementById('btn-complete-discharge');
+  if(!patientId){
+    el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">Select a patient above.</div>';
+    progEl.textContent='0/0';
+    completeBtn.style.display='none';
+    return;
+  }
+  const items=getDischargeItems();
+  const saved=getDischargeProgress(patientId);
+  const done=items.filter((_,i)=>saved[i]).length;
+  progEl.textContent=done+'/'+items.length;
+  completeBtn.style.display=done===items.length?'block':'none';
+  el.innerHTML=items.map((item,i)=>{
+    const checked=saved[i]||false;
+    const bg=checked?'#E8F5E9':'#fff';
+    return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer" onclick="toggleDischargeItem(${i})">
+      <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
+      <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+    </div>`;
+  }).join('');
+}
+function toggleDischargeItem(idx){
+  const sel=document.getElementById('dchk-patient');
+  const patientId=sel.value; if(!patientId)return;
+  const saved=getDischargeProgress(patientId);
+  saved[idx]=!saved[idx];
+  saveDischargeProgress(patientId,saved);
+  onDischargePatientSelect();
+}
+function completeDischarge(){
+  const sel=document.getElementById('dchk-patient');
+  const patientId=sel.value;
+  if(!patientId)return;
+  const admissions=getAdmissions();
+  const patient=admissions.find(a=>a.id===patientId);
+  if(!patient)return;
+  patient.status='discharged';
+  patient.dischargedAt=Date.now();
+  patient.dischargedBy=currentEmp?.name||'Employee';
+  saveAdmissions(admissions);
+  // Log to discharged patients
+  const discharged=getDischargedPatients();
+  discharged.unshift({
+    patientId:patient.id,
+    patientName:patient.name,
+    room:patient.room,
+    bed:patient.bed,
+    admittedAt:patient.createdAt,
+    dischargedAt:Date.now(),
+    dischargedBy:currentEmp?.name||'Employee',
+    admissionDate:patient.admissionDate
+  });
+  saveDischargedPatients(discharged);
+  sel.value='';
+  onDischargePatientSelect();
+  renderDischargedList();
+  showToast('✅ Patient discharged successfully');
+}
+function renderDischargedList(){
+  const discharged=getDischargedPatients();
+  const el=document.getElementById('dchk-discharged-list');
+  if(!el)return;
+  const todayDischarged=discharged.filter(d=>{
+    const dDate=new Date(d.dischargedAt).toISOString().slice(0,10);
+    return dDate===todayStr();
+  });
+  if(!todayDischarged.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No discharges today.</div>';return;}
+  el.innerHTML=todayDischarged.map(d=>{
+    const ts=new Date(d.dischargedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="fi" style="border-color:#37474F;background:#F5F5F5">
+      <strong>${d.patientName}</strong> · 🛏️ ${d.room} · 🛌 Bed ${d.bed}
+      <span style="color:#90A4AE;font-size:11px;margin-left:6px">Discharged at ${ts} by ${d.dischargedBy}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── ADMIN DISCHARGE ─────────────────────────────────
+function adminAddDischargeItem(){
+  const item=document.getElementById('adm-dchk-item').value.trim();
+  if(!item){showToast2('⚠️ Enter a discharge task');return;}
+  const items=getDischargeItems();
+  items.push('✅ '+item);
+  saveDischargeItems(items);
+  document.getElementById('adm-dchk-item').value='';
+  renderAdminDischarge();
+  showToast2('✅ Item added');
+}
+function adminRemoveDischargeItem(idx){
+  if(!confirm('Remove this item?'))return;
+  const items=getDischargeItems();
+  items.splice(idx,1);
+  saveDischargeItems(items);
+  renderAdminDischarge();
+}
+function renderAdminDischarge(){
+  const items=getDischargeItems();
+  const el=document.getElementById('adm-dchk-list');
+  if(!el)return;
+  el.innerHTML=items.map((item,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5">
+      <span style="font-size:13px">${item}</span>
+      <button onclick="adminRemoveDischargeItem(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px">×</button>
+    </div>`).join('')||'<div style="color:#90A4AE;font-size:12px;padding:8px 0">No items. Add one above.</div>';
+  // Render discharged patients list
+  const discharged=getDischargedPatients();
+  const dEl=document.getElementById('adm-dchk-discharged');
+  if(!dEl)return;
+  if(!discharged.length){dEl.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No discharges yet.</div>';return;}
+  dEl.innerHTML=discharged.map(d=>{
+    const ad=new Date(d.admittedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    const dd=new Date(d.dischargedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="fi" style="border-color:#37474F;margin-bottom:6px">
+      <strong>${d.patientName}</strong> · 🛏️ ${d.room} · 🛌 Bed ${d.bed}<br>
+      <span style="font-size:11px;color:#90A4AE">Admitted: ${ad} · Discharged: ${dd} by ${d.dischargedBy||'—'}</span>
+    </div>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
