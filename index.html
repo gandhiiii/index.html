@@ -1740,6 +1740,16 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <button class="btn" style="background:#00838F;color:#fff;margin:0" onclick="adminAddRoomChkItem()">➕ Add Item</button>
         </div>
       </div>
+      <!-- Common Checklist Items (appear for ALL rooms) -->
+      <div class="card" style="border-left:4px solid #00695C;background:#E0F2F1">
+        <h3 style="color:#00695C;font-size:14px;margin-bottom:11px">📋 Common Checklist Items</h3>
+        <p style="font-size:12px;color:#558B2F;margin-bottom:10px">These items appear for EVERY room. Add once, seen on all rooms.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input id="adm-rchk-common-item" type="text" placeholder="e.g. Check fire extinguisher, Clean corridor..." style="flex:1">
+          <button onclick="adminAddCommonChkItem()" style="background:#00695C;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Common</button>
+        </div>
+        <div id="adm-rchk-common-list"></div>
+      </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:800;font-size:14px">📋 Room Checklist Items</span>
@@ -7469,20 +7479,44 @@ function onRoomChecklistRoomChange(){
   const el=document.getElementById('rchk-items');
   const progEl=document.getElementById('rchk-progress');
   if(!room){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">Select a room above to see checklist items.</div>';progEl.textContent='0/0';return;}
-  const allItems=getRoomChkItems();
-  const items=allItems[room]||[];
+  const all=getRoomChkAll();
+  const common=all.__common__||[];
+  const roomItems=all[room]||[];
+  const items=[...common,...roomItems];
   if(!items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No checklist items for this room. Ask admin to add items.</div>';progEl.textContent='0/0';return;}
   const saved=getRoomChkProgress(room);
+  const commonCount=common.length;
   const done=items.filter((_,i)=>saved[i]).length;
   progEl.textContent=done+'/'+items.length;
-  el.innerHTML=items.map((item,i)=>{
-    const checked=saved[i]||false;
-    const bg=checked?'#E8F5E9':'#fff';
-    return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer" onclick="toggleRoomChkItem(${i})">
-      <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
-      <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
-    </div>`;
-  }).join('');
+  let html='';
+  // Common items section
+  if(common.length){
+    html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:800;color:#1B5E20;padding:6px 0 4px;border-bottom:2px solid #A5D6A7;margin-bottom:6px">📋 Common Items</div>`;
+    html+=common.map((item,i)=>{
+      const checked=saved[i]||false;
+      const bg=checked?'#E8F5E9':'#fff';
+      return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer;margin-bottom:5px" onclick="toggleRoomChkItem(${i})">
+        <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
+        <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+      </div>`;
+    }).join('');
+    html+=`</div>`;
+  }
+  // Room-specific items section
+  if(roomItems.length){
+    html+=`<div style="margin-top:${common.length?'8px':'0'}"><div style="font-size:11px;font-weight:800;color:#00838F;padding:6px 0 4px;border-bottom:2px solid #80DEEA;margin-bottom:6px">🛏️ ${room} — Specific Items</div>`;
+    html+=roomItems.map((item,i)=>{
+      const idx=commonCount+i;
+      const checked=saved[idx]||false;
+      const bg=checked?'#E8F5E9':'#fff';
+      return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer;margin-bottom:5px" onclick="toggleRoomChkItem(${idx})">
+        <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
+        <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+      </div>`;
+    }).join('');
+    html+=`</div>`;
+  }
+  el.innerHTML=html;
 }
 function toggleRoomChkItem(idx){
   const sel=document.getElementById('rchk-room');
@@ -7496,6 +7530,26 @@ function toggleRoomChkItem(idx){
 }
 
 // ── ADMIN ROOM CHECKLIST ────────────────────────────
+function getRoomChkAll(){return JSON.parse(localStorage.getItem('HFM4_ROOMCHK_ITEMS')||'{}');}
+function getCommonChkItems(){return getRoomChkAll().__common__||[];}
+function adminAddCommonChkItem(){
+  const item=document.getElementById('adm-rchk-common-item').value.trim();
+  if(!item){showToast2('⚠️ Enter item description');return;}
+  const all=getRoomChkAll();
+  if(!all.__common__) all.__common__=[];
+  all.__common__.push(item);
+  saveRoomChkItems(all);
+  document.getElementById('adm-rchk-common-item').value='';
+  renderAdminRoomChkItems();
+  showToast2('✅ Common item added (appears in all rooms)');
+}
+function adminRemoveCommonChkItem(idx){
+  if(!confirm('Remove this common item from all rooms?'))return;
+  const all=getRoomChkAll();
+  if(all.__common__) all.__common__.splice(idx,1);
+  saveRoomChkItems(all);
+  renderAdminRoomChkItems();
+}
 function adminAddRoomChkItem(){
   const room=document.getElementById('adm-rchk-room').value;
   const item=document.getElementById('adm-rchk-item').value.trim();
@@ -7518,20 +7572,46 @@ function adminRemoveRoomChkItem(room,idx){
 }
 function renderAdminRoomChkItems(){
   const all=getRoomChkItems();
+  const common=all.__common__||[];
   const filter=document.getElementById('adm-rchk-filter');
   // Populate filter dropdown
-  const rooms=Object.keys(all).sort();
+  const roomKeys=Object.keys(all).filter(k=>k!=='__common__').sort();
   const currentFilter=filter?.value||'all';
   if(filter){
-    const html='<option value="all">All Rooms</option>'+rooms.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
+    const html='<option value="all">All Rooms</option>'+roomKeys.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
     filter.innerHTML=html;
     filter.value=currentFilter;
   }
+  // Render common items section
+  const commonEl=document.getElementById('adm-rchk-common-list');
+  if(commonEl){
+    if(!common.length){commonEl.innerHTML='<div style="color:#90A4AE;font-size:12px;padding:4px 0">No common items yet.</div>';}
+    else {
+      commonEl.innerHTML=common.map((item,i)=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#fff;border-radius:7px;margin-bottom:4px;border:1px solid #A5D6A7">
+          <span style="font-size:13px">✅ ${item}</span>
+          <button onclick="adminRemoveCommonChkItem(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px">×</button>
+        </div>`).join('');
+    }
+  }
+  // Render per-room items
   const el=document.getElementById('adm-rchk-list');
   if(!el)return;
-  if(!rooms.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items added yet.</div>';return;}
-  const displayRooms=currentFilter==='all'?rooms:rooms.filter(r=>r===currentFilter);
-  el.innerHTML=displayRooms.map(room=>{
+  if(!roomKeys.length&&!common.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items added yet.</div>';return;}
+  // Show common items in each room view too
+  const displayRooms=currentFilter==='all'?roomKeys:roomKeys.filter(r=>r===currentFilter);
+  let html='';
+  if(common.length&&currentFilter==='all'){
+    html+=`<div style="margin-bottom:12px;border:1px solid #A5D6A7;border-radius:10px;overflow:hidden;background:#E8F5E9">
+      <div style="padding:10px 14px;background:#C8E6C9;font-weight:800;font-size:13px;color:#1B5E20">📋 Common Items (all rooms) <span style="font-weight:400;color:#558B2F;font-size:12px">(${common.length} items)</span></div>
+      <div style="padding:8px 14px">${common.map((item,i)=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #E8F5E9">
+          <span style="font-size:13px">✅ ${item}</span>
+          <button onclick="adminRemoveCommonChkItem(${i})" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px">×</button>
+        </div>`).join('')}</div>
+    </div>`;
+  }
+  html+=displayRooms.map(room=>{
     const items=all[room]||[];
     return `<div style="margin-bottom:12px;border:1px solid #E0E0E0;border-radius:10px;overflow:hidden">
       <div style="padding:10px 14px;background:#E0F7FA;font-weight:800;font-size:13px;color:#00838F">🛏️ ${room} <span style="font-weight:400;color:#90A4AE;font-size:12px">(${items.length} items)</span></div>
@@ -7542,11 +7622,12 @@ function renderAdminRoomChkItems(){
         </div>`).join(''):'<div style="color:#90A4AE;font-size:12px;padding:8px 0">No items</div>'}</div>
     </div>`;
   }).join('');
+  el.innerHTML=html||'<div style="text-align:center;color:#90A4AE;padding:20px">No items for this filter.</div>';
   // Populate admin room dropdown for adding items
   const roomSel=document.getElementById('adm-rchk-room');
   if(roomSel){
     const currentVal=roomSel.value;
-    roomSel.innerHTML='<option value="">— Select Room —</option>'+rooms.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
+    roomSel.innerHTML='<option value="">— Select Room —</option>'+roomKeys.map(r=>'<option value="'+r+'">'+r+'</option>').join('');
     roomSel.value=currentVal;
   }
 }
