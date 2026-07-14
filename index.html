@@ -385,6 +385,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openMyProjects()">🏗️ My Projects</button>
     <button class="btn" style="background:#6A1B9A;color:#fff;font-size:15px;position:relative" onclick="openMyRequests()">🛒 My Purchase Requests<span id="req-pending-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:11px;font-weight:900;line-height:18px;text-align:center;padding:0 3px"></span></button>
     <button class="btn" style="background:#C62828;color:#fff;font-size:15px" onclick="openMyProblems()">⚠️ My Problems</button>
+    <button class="btn" style="background:#00695C;color:#fff;font-size:15px" onclick="openPatientComplaints()">🛏️ Patient Complaints</button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
   </div>
 </div>
@@ -797,6 +798,86 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
   </div>
 </div>
 
+<!-- ══ PATIENT COMPLAINTS ══════════════════════════════ -->
+<div id="view-patient-complaints" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>🛏️ Patient Complaints</h1><p id="pc-date-hdr"></p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #00695C;margin-bottom:8px">
+      <h3 style="color:#00695C;font-size:14px;margin-bottom:11px">🛏️ Register Patient Complaint</h3>
+      <div style="display:grid;gap:9px">
+        <div>
+          <label>Patient Room *</label>
+          <select id="pc-room" onchange="toggleOtherRoom(this)">
+            <option value="">— Select Room —</option>
+            <optgroup label="🛏️ FOURTH FLOOR — PATIENT ROOMS">
+              <option>4F — Room 2</option><option>4F — Room 3</option><option>4F — Room 4</option>
+              <option>4F — Room 5</option><option>4F — Room 6</option><option>4F — Room 7</option>
+              <option>4F — Room 8</option><option>4F — Room 9</option><option>4F — Room 10</option>
+              <option>4F — Room 11</option><option>4F — Room 12</option><option>4F — Room 13</option>
+              <option>4F — Room 14</option><option>4F — Room 15</option><option>4F — Room 16</option>
+              <option>4F — Room 17</option>
+            </optgroup>
+            <optgroup label="🛏️ FIFTH FLOOR — PATIENT ROOMS">
+              <option>5F — Room 2</option><option>5F — Room 3</option><option>5F — Room 4</option>
+              <option>5F — Room 5</option><option>5F — Room 6</option><option>5F — Room 7</option>
+              <option>5F — Room 8</option><option>5F — Room 9</option><option>5F — Room 10</option>
+              <option>5F — Room 11</option><option>5F — Room 12</option><option>5F — Room 13</option>
+              <option>5F — Room 14</option><option>5F — Room 15</option><option>5F — Room 16</option>
+              <option>5F — Room 17</option>
+            </optgroup>
+            <optgroup label="🛏️ SIXTH FLOOR — PATIENT ROOMS">
+              <option>6F — Room 2</option><option>6F — Room 3</option><option>6F — Room 4</option>
+              <option>6F — Room 5</option><option>6F — Room 6</option><option>6F — Room 7</option>
+              <option>6F — Room 8</option><option>6F — Room 9</option><option>6F — Room 10</option>
+              <option>6F — Room 11</option><option>6F — Room 12</option><option>6F — Room 13</option>
+              <option>6F — Room 14</option><option>6F — Room 15</option><option>6F — Room 16</option>
+              <option>6F — Room 17</option>
+            </optgroup>
+            <optgroup label="🏥 OTHER WARDS">
+              <option>2F — ICU / CCU</option>
+              <option>2F — NICU</option>
+              <option>3F — HDU (High Dependency Unit)</option>
+              <option>3F — General Ward</option>
+              <option>3F — Semi-Private Ward</option>
+              <option>4F — Deluxe Rooms</option>
+              <option>4F — Private Rooms</option>
+              <option>5F — Recovery Room</option>
+              <option>6F — Maternity / Labor Room</option>
+            </optgroup>
+            <option value="Other">⚙ Other / Not Listed</option>
+          </select>
+          <input type="text" id="pc-room-other" placeholder="Specify room..." style="display:none;margin-top:7px">
+        </div>
+        <div><label>Patient Name</label><input id="pc-patient-name" type="text" placeholder="e.g. Ram Singh (optional)"></div>
+        <div><label>Complaint Description *</label><textarea id="pc-desc" rows="2" placeholder="What is the complaint? e.g. AC not working, TV remote missing, bathroom leaking, food issue..."></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+          <div><label>Priority</label>
+            <select id="pc-pri">
+              <option>🔴 Critical</option>
+              <option>🟠 High</option>
+              <option selected>🟡 Medium</option>
+              <option>🟢 Low</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end"><button class="btn" style="margin:0;padding:11px;background:#00695C;color:#fff" onclick="addPatientComplaint()">+ Register</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:800;font-size:14px">📋 Registered Complaints</span>
+        <span id="pc-count" style="font-size:12px;color:#90A4AE;font-weight:700">0</span>
+      </div>
+      <div id="pc-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No complaints registered today.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PROJECT DETAIL (EMPLOYEE FILLS) ═══════════════ -->
 <div id="view-project-fill" class="view">
   <div class="hdr">
@@ -845,17 +926,19 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('staff',this)">👷 Staff</div>
       <div class="tab" onclick="admTab('requests',this)" style="position:relative">🛒 Requests<span id="adm-req-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#C62828;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 2px"></span></div>
       <div class="tab" onclick="admTab('problems',this)">⚠️ Problems</div>
+      <div class="tab" onclick="admTab('complaints',this)">🛏️ Complaints</div>
       <div class="tab" onclick="admTab('transport',this)">🚑 Transport</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
     <!-- DASHBOARD -->
     <div id="tab-dash">
-      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
         <div class="kpi"><div class="num" id="k-emp" style="color:#1565C0">0</div><div class="lbl">Active Today</div></div>
         <div class="kpi"><div class="num" id="k-avg" style="color:#2E7D32">0%</div><div class="lbl">Avg Completion</div></div>
         <div class="kpi"><div class="num" id="k-faults" style="color:#C62828">0</div><div class="lbl">Total Faults</div></div>
         <div class="kpi"><div class="num" id="k-issues" style="color:#E65100">0</div><div class="lbl">Problems</div></div>
+        <div class="kpi"><div class="num" id="k-complaints" style="color:#00695C">0</div><div class="lbl">Complaints</div></div>
         <div class="kpi"><div class="num" id="k-pending" style="color:#FF6F00">0</div><div class="lbl">Pending Tasks</div></div>
         <div class="kpi"><div class="num" id="k-overdue" style="color:#B71C1C">0</div><div class="lbl">Overdue Tasks</div></div>
       </div>
@@ -1298,6 +1381,21 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
 
+    <!-- PATIENT COMPLAINTS -->
+    <div id="tab-complaints" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:800;font-size:15px">🛏️ Patient Complaints</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="filterAdminComplaints('all',this)" class="comp-filter-btn" style="background:#00695C;color:#fff;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">All</button>
+            <button onclick="filterAdminComplaints('open',this)" class="comp-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🟡 Open</button>
+            <button onclick="filterAdminComplaints('resolved',this)" class="comp-filter-btn" style="background:#F5F5F5;color:#555;border:none;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Resolved</button>
+          </div>
+        </div>
+        <div id="adm-comp-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No complaints yet.</div></div>
+      </div>
+    </div>
+
     <!-- TRANSPORT -->
     <div id="tab-transport" style="display:none">
       <!-- Transport Dashboard KPIs -->
@@ -1454,6 +1552,11 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div class="card" style="padding:0;overflow:hidden">
           <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">⚠️ Problems Reported</div>
           <div id="rep-problems" style="padding:13px"></div>
+        </div>
+        <!-- Complaints -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">🛏️ Patient Complaints</div>
+          <div id="rep-complaints" style="padding:13px"></div>
         </div>
         <!-- Tasks -->
         <div class="card" style="padding:0;overflow:hidden">
@@ -3103,6 +3206,14 @@ async function empPoll(){
     }
     updateReqBadges();
     if(document.getElementById('view-my-requests').classList.contains('active')) renderMyRequests();
+    // Sync patient complaints
+    const fbComps=fbToArray(await fbGet('/patientComplaints'));
+    if(fbComps.length){
+      const localComps=getPatientComplaints();
+      const merged=mergeComplaintArrays(fbComps,localComps);
+      localStorage.setItem('HFM4_COMPLAINTS',JSON.stringify(merged));
+    }
+    if(document.getElementById('view-patient-complaints').classList.contains('active')) renderPatientComplaints();
     updateEmpSyncBadge('ok');
   }catch(e){
     updateEmpSyncBadge('error',e.message);
@@ -3406,7 +3517,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','problems','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','problems','complaints','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -3417,6 +3528,7 @@ function admTab(tab,el){
   if(tab==='staff'){renderStaff();renderAdminList();}
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='problems'){renderAdminProblems();}
+  if(tab==='complaints'){syncPatientComplaints().then(()=>renderAdminComplaints());}
   if(tab==='transport'){renderAdminTransport();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
@@ -3449,6 +3561,11 @@ function renderAdmin(){
   document.getElementById('k-avg').textContent=(count>0?Math.round(totalPct/count):0)+'%';
   document.getElementById('k-faults').textContent=totalFault;
   document.getElementById('k-issues').textContent=allProbs.length;
+  // Patient complaints KPI
+  const allComplaints=getPatientComplaints();
+  const openComplaints=allComplaints.filter(c=>c.status!=='resolved').length;
+  const compEl=document.getElementById('k-complaints');
+  if(compEl) compEl.textContent=openComplaints>0?openComplaints+' ⏳':allComplaints.length>0?'✅':'0';
   // Pending tasks KPI
   const allTasks=getTasks();
   const pendingCount=allTasks.filter(t=>taskStatus(t)==='Pending').length;
@@ -3562,6 +3679,64 @@ function renderAdminProblems(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── ADMIN PATIENT COMPLAINTS ────────────────────────
+let _adminCompFilter='all';
+function filterAdminComplaints(f,btn){
+  _adminCompFilter=f;
+  document.querySelectorAll('.comp-filter-btn').forEach(b=>{b.style.background='#F5F5F5';b.style.color='#555';});
+  if(btn){btn.style.background='#00695C';btn.style.color='#fff';}
+  renderAdminComplaints();
+}
+function renderAdminComplaints(){
+  const all=getPatientComplaints();
+  const filtered=_adminCompFilter==='all'?all:all.filter(c=>c.status===_adminCompFilter);
+  const el=document.getElementById('adm-comp-list');
+  if(!el)return;
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:14px">'+
+    (_adminCompFilter==='all'?'No patient complaints yet ✓':'No '+_adminCompFilter+' complaints')+'</div>';return;}
+  const priOrder={'🔴 Critical':0,'🟠 High':1,'🟡 Medium':2,'🟢 Low':3};
+  filtered.sort((a,b)=>a.status==='resolved'?1:-1);
+  el.innerHTML=filtered.map(c=>{
+    const isResolved=c.status==='resolved';
+    const ts=new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="fi" style="padding:12px 14px;margin-bottom:8px;border-left:4px solid ${isResolved?'#2E7D32':'#00695C'};background:${isResolved?'#F1F8E9':'#FAFAFA'};border-radius:0 8px 8px 0;${isResolved?'opacity:.65':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div style="flex:1;min-width:200px">
+          <div><strong>${c.pri}</strong> · <strong>${c.room}</strong>${c.patientName?' · 👤 '+c.patientName:''}</div>
+          <div style="font-size:13px;margin-top:3px">${c.desc}</div>
+          <div style="font-size:11px;color:#90A4AE;margin-top:4px">👷 ${c.empName} · 🕐 ${ts}${c.adminNote?'<br>📝 <span style="color:#00695C">Admin: '+c.adminNote+'</span>':''}${isResolved?'<br>✅ Resolved by '+(c.resolvedBy||'Admin')+' at '+c.resolvedAt:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          ${!isResolved?`<button onclick="adminResolveComplaint('${c.id}')" style="background:#2E7D32;color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">✅ Resolve</button>
+          <button onclick="adminDeleteComplaint('${c.id}')" style="background:#f5f5f5;color:#C62828;border:1px solid #ddd;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>`:`<span style="font-size:11px;color:#2E7D32;font-weight:700;padding:4px 8px;background:#E8F5E9;border-radius:5px">✅ Resolved</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function adminResolveComplaint(id){
+  const all=getPatientComplaints();
+  const c=all.find(x=>x.id===id);
+  if(!c || c.status==='resolved') return;
+  const note=prompt('Add resolution note (optional):');
+  if(note===null) return;
+  c.status='resolved';
+  c.adminNote=note||'';
+  c.resolvedAt=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  c.resolvedBy=currentAdmin?currentAdmin.name:'Admin';
+  savePatientComplaints(all);
+  renderAdminComplaints();
+  showToast2('✅ Complaint resolved');
+}
+function adminDeleteComplaint(id){
+  if(!confirm('Delete this complaint?')) return;
+  const all=getPatientComplaints();
+  const idx=all.findIndex(x=>x.id===id);
+  if(idx>-1) all.splice(idx,1);
+  savePatientComplaints(all);
+  renderAdminComplaints();
 }
 
 function renderDashRequests(){
@@ -5110,6 +5285,98 @@ function renderEmployeeProblems(){
   }).join('');
 }
 
+// ── PATIENT COMPLAINTS (Centralized, like purchase requests) ──
+function openPatientComplaints(){
+  const d=document.getElementById('pc-date-hdr');
+  if(d)d.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  syncPatientComplaints().then(()=>renderPatientComplaints());
+  go('view-patient-complaints');
+}
+function getPatientComplaints(){
+  try{return JSON.parse(localStorage.getItem('HFM4_COMPLAINTS')||'[]');}catch(e){return[];}
+}
+function savePatientComplaints(arr){
+  localStorage.setItem('HFM4_COMPLAINTS',JSON.stringify(arr));
+  if(getDbUrl()) fbPut('/patientComplaints',arr).catch(()=>{});
+}
+function toggleOtherRoom(sel){
+  document.getElementById('pc-room-other').style.display=sel.value==='Other'?'block':'none';
+}
+function addPatientComplaint(){
+  const sel=document.getElementById('pc-room');
+  const other=document.getElementById('pc-room-other');
+  const room=sel.value==='Other'?other.value.trim():sel.value;
+  const patientName=(document.getElementById('pc-patient-name').value||'').trim();
+  const desc=document.getElementById('pc-desc').value.trim();
+  const pri=document.getElementById('pc-pri').value;
+  if(!room||room==='— Select Room —'){showToast('⚠️ Select a room');return;}
+  if(!desc){showToast('⚠️ Enter complaint description');return;}
+  const complaints=getPatientComplaints();
+  complaints.unshift({
+    id:'comp_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    empLoginId:currentEmp.loginId,
+    empName:currentEmp.name,
+    room,patientName,desc,pri,
+    status:'open',
+    createdAt:Date.now(),
+    adminNote:'',
+    resolvedAt:null,
+    resolvedBy:null
+  });
+  savePatientComplaints(complaints);
+  sel.value='';other.value='';other.style.display='none';
+  document.getElementById('pc-patient-name').value='';
+  document.getElementById('pc-desc').value='';
+  renderPatientComplaints();
+  showToast('✅ Complaint registered');
+}
+function renderPatientComplaints(){
+  const all=getPatientComplaints();
+  const complaints=currentEmp?all.filter(c=>c.empLoginId===currentEmp.loginId):all;
+  const el=document.getElementById('pc-list');
+  const countEl=document.getElementById('pc-count');
+  if(!el)return;
+  if(!complaints.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No complaints registered.</div>';if(countEl)countEl.textContent='0';return;}
+  if(countEl)countEl.textContent=complaints.length;
+  el.innerHTML=complaints.map((c,i)=>{
+    const isResolved=c.status==='resolved';
+    const ts=new Date(c.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const ds=new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    return `<div class="fi" style="margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start;${isResolved?'opacity:.6':''}">
+      <div style="${isResolved?'text-decoration:line-through;color:#90A4AE':''};flex:1">
+        <div><strong>${c.pri}</strong> · <strong>${c.room}</strong>${c.patientName?' · 👤 '+c.patientName:''}</div>
+        <div style="font-size:13px;margin-top:2px">${c.desc}</div>
+        <div style="color:#90A4AE;font-size:11px;margin-top:3px">
+          ${isResolved?'✅ Resolved by Admin at '+c.resolvedAt:'🕐 '+ds+' '+ts}
+          ${c.adminNote?'<br>📝 Admin note: '+c.adminNote:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;align-items:flex-start">
+        ${c.status==='resolved'?'<span style="font-size:11px;color:#2E7D32;font-weight:700;padding:3px 6px;background:#E8F5E9;border-radius:5px">Resolved</span>':'<span style="font-size:11px;color:#E65100;font-weight:700;padding:3px 6px;background:#FFF3E0;border-radius:5px">Open</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function syncPatientComplaints(){
+  const base=getDbUrl(); if(!base) return;
+  try{
+    const r=await fetchWithTimeout(base+'/patientComplaints.json',{},8000);
+    if(r.ok){
+      const fbData=await r.json();
+      const fbArr=fbToArray(fbData);
+      const localArr=getPatientComplaints();
+      const merged=mergeComplaintArrays(fbArr,localArr);
+      localStorage.setItem('HFM4_COMPLAINTS',JSON.stringify(merged));
+    }
+  }catch(e){/* offline */ }
+}
+function mergeComplaintArrays(fbArr,localArr){
+  const map={};
+  fbArr.forEach(c=>{if(c&&c.id) map[c.id]=c;});
+  localArr.forEach(c=>{if(c&&c.id){if(!map[c.id]) map[c.id]=c;}});
+  return Object.values(map);
+}
+
 function submitPurchaseRequest(){
   const item=(document.getElementById('rq-item').value||'').trim();
   const qty=parseFloat(document.getElementById('rq-qty').value)||0;
@@ -5611,9 +5878,16 @@ async function generateRangeReport(){
   renderRangeReport(from,to,label,rangeData);
 }
 
+function getComplaintsForRange(from,to){
+  const all=getPatientComplaints();
+  const fromMs=new Date(from+'T00:00:00').getTime();
+  const toMs=new Date(to+'T23:59:59').getTime();
+  return all.filter(c=>c.createdAt>=fromMs&&c.createdAt<=toMs);
+}
 function renderRangeReport(from,to,label,rangeData){
   const dates=Object.keys(rangeData).sort();
   const allProblems=[],allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
+  const rangeComplaints=getComplaintsForRange(from,to);
   // Aggregate per-employee stats
   const empStats={};
   cfg.employees.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0,totalOK:0,totalNA:0};});
@@ -5683,6 +5957,29 @@ function renderRangeReport(from,to,label,rangeData){
       <span style="font-weight:800">${p.pri||''} ${p.loc}</span> — ${p.desc}
       <span style="font-size:11px;color:#90A4AE;margin-left:6px">${p.date} ${p.time||''} · ${p.emp}</span>
     </div>`).join(''):'<p style="color:#90A4AE;font-size:13px">No problems reported in this period.</p>';
+  // Patient Complaints section
+  const compSection=document.getElementById('rep-complaints');
+  if(compSection){
+    const openComps=rangeComplaints.filter(c=>c.status==='open');
+    const resolvedComps=rangeComplaints.filter(c=>c.status==='resolved');
+    if(!rangeComplaints.length){
+      compSection.innerHTML='<p style="color:#90A4AE;font-size:13px">No patient complaints in this period.</p>';
+    } else {
+      const allCompHtml=rangeComplaints.map(c=>{
+        const ts=new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+        const isResolved=c.status==='resolved';
+        return `<div class="fi" style="border-color:${isResolved?'#2E7D32':'#00695C'};background:${isResolved?'#F1F8E9':'#FFF'};${isResolved?'opacity:.65':''}">
+          <span style="font-weight:800">${c.pri}</span> · <strong>${c.room}</strong>${c.patientName?' · 👤 '+c.patientName:''} — ${c.desc}
+          <span style="font-size:11px;color:#90A4AE;margin-left:6px">${ts} · 👷 ${c.empName}${isResolved?' · ✅ Resolved':''}${c.adminNote?' · 📝 '+c.adminNote:''}</span>
+        </div>`;
+      }).join('');
+      compSection.innerHTML=`<div style="margin-bottom:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:13px;color:#00695C">🛏️ ${rangeComplaints.length} Total</span>
+        <span style="font-weight:700;font-size:13px;color:#E65100">🟡 ${openComps.length} Open</span>
+        <span style="font-weight:700;font-size:13px;color:#2E7D32">✅ ${resolvedComps.length} Resolved</span>
+      </div>${allCompHtml}`;
+    }
+  }
   // Tasks summary
   document.getElementById('rep-tasks-summary').innerHTML=allTasks.length?allTasks.map(t=>`
     <div style="padding:9px 0;border-bottom:1px solid #F0F4F8">
@@ -5781,6 +6078,12 @@ function downloadCurrentReport(){
       <div style="font-size:11px;color:#607D8B;margin-top:3px">${pct}% complete · ${completedItems}/${totalItems} items</div>
     </div>`;
   }).join(''):'<p style="color:#90A4AE">No projects created yet.</p>';
+  const rangeComplaints=getComplaintsForRange(from,to);
+  const compHtml=rangeComplaints.length?rangeComplaints.map(c=>{
+    const ts=new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const isResolved=c.status==='resolved';
+    return `<div class="prob" style="border-color:${isResolved?'#2E7D32':'#00695C'};background:${isResolved?'#F1F8E9':'#FFF5F5'}"><strong>${c.pri} ${c.room}</strong>${c.patientName?' · 👤 '+c.patientName:''} — ${c.desc} <span style="color:#90A4AE;font-size:11px">${ts} · 👷 ${c.empName}${isResolved?' · ✅ Resolved':''}${c.adminNote?' · 📝 '+c.adminNote:''}</span></div>`;
+  }).join(''):'<p style="color:#90A4AE">No patient complaints in this period.</p>';
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${label}</title>
   <style>body{font-family:Arial,sans-serif;background:#F0F4F8;margin:0;padding:20px;color:#263238}
   .page{max-width:900px;margin:0 auto;background:#fff;border-radius:14px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
@@ -5815,6 +6118,8 @@ function downloadCurrentReport(){
     return `<div class="trend-row"><div style="min-width:80px">${date}</div><div class="trend-bg"><div class="bar-fill" style="width:${avg}%;background:${col};height:100%"></div></div><div style="min-width:40px;font-weight:700;color:${col};text-align:right">${avg}%</div></div>`;}).join('')}
   <h2>⚠️ Problems Reported (${allProblems.length})</h2>
   ${allProblems.length?allProblems.map(p=>`<div class="prob"><strong>${p.pri||''} ${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.date} · ${p.emp}</span></div>`).join(''):'<p style="color:#90A4AE">No problems in this period.</p>'}
+  <h2>🛏️ Patient Complaints (${rangeComplaints.length})</h2>
+  ${compHtml}
   <h2>📌 Completed Tasks (${allTasks.length})</h2>
   ${allTasks.length?allTasks.map(t=>`<div class="task">✅ <strong>${t.desc}</strong> — ${t.assignedName} · ${t.archivedDate} · ${t.pri||''}</div>`).join(''):'<p style="color:#90A4AE">No completed tasks in this period.</p>'}
   <h2>🏗️ Employee Project Work Completion</h2>
@@ -6031,11 +6336,32 @@ function downloadCurrentExcel(){
   });
   if(reqRows.length===7) reqRows.push(['No purchase requests found','','','','','','','','','','','']);
 
+  // Sheet 7 — Patient Complaints
+  const rangeComplaints=getComplaintsForRange(from,to);
+  const compRows=[
+    ['PATIENT COMPLAINTS','','','','','','',''],
+    ['Report Period',`${from} to ${to}`,'','','','','',''],
+    [''],
+    ['#','Room','Patient Name','Complaint','Priority','Status','Reported By','Reported At','Resolved By','Admin Note'],
+  ];
+  let compNo=1;
+  rangeComplaints.forEach(c=>{
+    const ts=new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    compRows.push([
+      compNo++, c.room, c.patientName||'', c.desc, c.pri,
+      c.status==='resolved'?'RESOLVED':'OPEN',
+      c.empName, ts,
+      c.resolvedBy||'', c.adminNote||''
+    ]);
+  });
+  if(compRows.length===4) compRows.push(['No patient complaints found','','','','','','','','','']);
+
   // Build workbook
   try{
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summaryRows),'Daily Summary');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(problemRows),'Problems');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(compRows),'Patient Complaints');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(taskRows),'Completed Tasks');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(projKpiRows),'Project KPIs');
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(workItemRows),'Project Work Items');
