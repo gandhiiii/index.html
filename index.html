@@ -3703,21 +3703,27 @@ function buildChkItem(si,ii,item){
   </div>`;
 }
 
-function getFlatRoomItems(){
+function getFloorRoomSections(){
   const all=getRoomChkAll();
   const common=all.__common__||[];
   const roomKeys=Object.keys(all).filter(k=>k!=='__common__').sort();
-  const items=[];
-  common.forEach(t=>items.push({room:'__common__',text:t}));
-  roomKeys.forEach(r=>(all[r]||[]).forEach(t=>items.push({room:r,text:t})));
-  return items;
+  // Extract floor prefix (everything before " — ")
+  const floorMap={};
+  roomKeys.forEach(r=>{
+    const parts=r.split('—');
+    const floor=parts[0].trim();
+    if(!floorMap[floor]) floorMap[floor]={label:floor,rooms:[]};
+    (all[r]||[]).forEach(t=>floorMap[floor].rooms.push({room:r,text:t}));
+  });
+  const floors=Object.keys(floorMap).sort();
+  return {common,floors:floors.map(f=>floorMap[f])};
 }
 
 function buildChk(){
   // Build merged sections: standard items + custom items per section
   const customItems=cfg.customItems||[];
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
-  const roomItems=getFlatRoomItems();
+  const rs=getFloorRoomSections();
   document.getElementById('chk-body').innerHTML=SECTIONS.map((sec,si)=>{
     const secCustom=customItems.filter(c=>c.sectionIdx===si);
     const allItems=[...sec.items,...secCustom];
@@ -3727,13 +3733,21 @@ function buildChk(){
     <div class="sec-body" id="sb-${si}">
       ${allItems.map((item,ii)=>buildChkItem(si,ii,item)).join('')}
     </div>`;
-  }).join('')+(roomItems.length?`
-    <div class="sec-hdr" style="background:#00695C" onclick="toggleSec(98)">
-      <span>🛏️ Room Checklist</span><span id="arr-98">▾</span>
+  }).join('')+(rs.common.length?`
+    <div class="sec-hdr" style="background:#00695C" onclick="toggleSec(100)">
+      <span>📋 Common Room Items</span><span id="arr-100">▾</span>
     </div>
-    <div class="sec-body" id="sb-98">
-      ${roomItems.map((item,ii)=>buildChkItem(98,ii,{text:(item.room==='__common__'?'📋 ':item.room+': ')+item.text})).join('')}
-    </div>`:'')+(empItems.length?`
+    <div class="sec-body" id="sb-100">
+      ${rs.common.map((item,ii)=>buildChkItem(100,ii,item)).join('')}
+    </div>`:'')+rs.floors.map((floor,fi)=>{
+    const sectionIdx=101+fi;
+    return `<div class="sec-hdr" style="background:#00838F" onclick="toggleSec(${sectionIdx})">
+      <span>🛏️ ${floor.label}</span><span id="arr-${sectionIdx}">▾</span>
+    </div>
+    <div class="sec-body" id="sb-${sectionIdx}">
+      ${floor.rooms.map((item,ii)=>buildChkItem(sectionIdx,ii,{text:item.room+': '+item.text})).join('')}
+    </div>`;
+  }).join('')+(empItems.length?`
     <div class="sec-hdr" style="background:#6A1B9A" onclick="toggleSec(99)">
       <span>⭐ My Custom Items</span><span id="arr-99">▾</span>
     </div>
@@ -3775,8 +3789,12 @@ function updateCounts(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const roomItems=getFlatRoomItems();
-  for(let ii=0;ii<roomItems.length;ii++){const v=statuses['98,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const rs=getFloorRoomSections();
+  for(let ii=0;ii<rs.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  rs.floors.forEach((floor,fi)=>{
+    const sectionIdx=101+fi;
+    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[sectionIdx+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   document.getElementById('ok-n').textContent=ok;
   document.getElementById('fault-n').textContent=fault+' fault'+(fault!==1?'s':'');
@@ -3804,13 +3822,21 @@ function saveProgress(extra={}){
     if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
     total++;
   }
-  // Also count room checklist items (section 98)
-  const roomItems=getFlatRoomItems();
-  for(let ii=0;ii<roomItems.length;ii++){
-    const v=statuses['98,'+ii];
+  // Also count room checklist items (section 100 for common, 101+ for floors)
+  const rs=getFloorRoomSections();
+  for(let ii=0;ii<rs.common.length;ii++){
+    const v=statuses['100,'+ii];
     if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
     total++;
   }
+  rs.floors.forEach((floor,fi)=>{
+    const sectionIdx=101+fi;
+    for(let ii=0;ii<floor.rooms.length;ii++){
+      const v=statuses[sectionIdx+','+ii];
+      if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
+      total++;
+    }
+  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const data={...saved,statuses,values,problems,ok,fault,na,pct,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
   localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
@@ -3876,8 +3902,12 @@ function buildReport(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const roomItems2=getFlatRoomItems();
-  for(let ii=0;ii<roomItems2.length;ii++){const v=statuses['98,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const rs1=getFloorRoomSections();
+  for(let ii=0;ii<rs1.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  rs1.floors.forEach((floor,fi)=>{
+    const si=101+fi;
+    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const grade=pct>=95?'A ⭐':pct>=85?'B ✅':pct>=70?'C ⚠️':'D 🔴';
   const faultItems=[];
@@ -3916,8 +3946,12 @@ function completeShift(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const roomItems3=getFlatRoomItems();
-  for(let ii=0;ii<roomItems3.length;ii++){const v=statuses['98,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const rs2=getFloorRoomSections();
+  for(let ii=0;ii<rs2.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  rs2.floors.forEach((floor,fi)=>{
+    const si=101+fi;
+    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  });
   const pct=total>0?Math.min(100,Math.floor(ok/(total-na)*100)):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
