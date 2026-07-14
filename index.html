@@ -1252,6 +1252,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('admissions',this)">🏥 Admissions</div>
       <div class="tab" onclick="admTab('discharge',this)">🚪 Discharge</div>
       <div class="tab" onclick="admTab('transport',this)">🚑 Transport</div>
+      <div class="tab" onclick="admTab('depts',this)">🏢 Depts</div>
       <div class="tab" onclick="admTab('inventory',this)">📦 Inventory</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
@@ -2089,13 +2090,27 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       </div>
     </div>
 
+    <!-- DEPARTMENTS -->
+    <div id="tab-depts" style="display:none">
+      <div class="card" style="border-left:4px solid #7C4DFF">
+        <h3 style="font-size:14px;font-weight:800;color:#7C4DFF;margin-bottom:10px">🏢 Department Management</h3>
+        <p style="font-size:12px;color:#607D8B;margin-bottom:12px">Add or remove departments. Changes reflect across inventory, material requests, and employee forms.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <input id="dept-name" type="text" placeholder="Department name (e.g. Pharmacy)" style="flex:2;min-width:140px">
+          <input id="dept-icon" type="text" placeholder="Icon (e.g. 💊)" style="flex:1;min-width:60px;max-width:80px;text-align:center">
+          <button onclick="addDepartment()" style="background:#7C4DFF;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Department</button>
+        </div>
+        <div id="dept-list"></div>
+      </div>
+    </div>
+
     <!-- INVENTORY -->
     <div id="tab-inventory" style="display:none">
       <div class="card" style="border-left:4px solid #E65100">
         <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:10px">📦 Inventory Management</h3>
         <div style="display:grid;gap:10px">
           <div><label>Department</label>
-            <select id="inv-dept" onchange="renderInvItems()" style="font-size:13px;padding:9px;font-weight:600">
+            <select id="inv-dept" onchange="renderInvItems();renderInvLifecycle();renderInvForecast()" style="font-size:13px;padding:9px;font-weight:600">
               <option value="maintenance">🔧 Maintenance</option>
               <option value="housekeeping">🧹 Housekeeping</option>
               <option value="stationery">📎 Stationery</option>
@@ -2118,6 +2133,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             <input id="inv-warranty-start" type="date" placeholder="Warranty start" style="flex:1;min-width:100px;font-size:12px" title="Warranty Start">
             <input id="inv-warranty-end" type="date" placeholder="Warranty end" style="flex:1;min-width:100px;font-size:12px" title="Warranty End">
             <input id="inv-expiry" type="date" placeholder="Expiry date" style="flex:1;min-width:100px;font-size:12px" title="Expiry Date">
+            <input id="inv-price" type="number" placeholder="Price ₹" style="flex:1;min-width:80px;font-size:12px" title="Price per unit">
           </div>
           <button onclick="adminAddInvItem()" style="background:#E65100;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Item</button>
         </div>
@@ -2152,6 +2168,30 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </select>
         </div>
         <div id="inv-activity" style="padding:13px"></div>
+      </div>
+      <!-- INVENTORY REPORT & EXPORT -->
+      <div class="card" style="padding:0;overflow:hidden;margin-top:12px;border-left:4px solid #2E7D32">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <span style="font-weight:800;color:#2E7D32">📊 Inventory Report &amp; Export</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="downloadInvExcel()" style="background:#2E7D32;border:none;color:#fff;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📥 Excel</button>
+            <button onclick="downloadInvPDF()" style="background:#C62828;border:none;color:#fff;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📄 PDF</button>
+          </div>
+        </div>
+        <div id="inv-report-preview" style="padding:13px;font-size:12px;color:#90A4AE">Select a department above and export for full report.</div>
+      </div>
+      <!-- LIFECYCLE VIEW -->
+      <div class="card" style="padding:0;overflow:hidden;margin-top:12px;border-left:4px solid #1565C0">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <span style="font-weight:800;color:#1565C0">🔄 Item Lifecycle</span>
+          <select id="inv-life-item" onchange="renderInvLifecycle()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto;max-width:200px"></select>
+        </div>
+        <div id="inv-lifecycle" style="padding:13px;font-size:12px;color:#90A4AE">Select an item to view its lifecycle.</div>
+      </div>
+      <!-- FORECASTING -->
+      <div class="card" style="padding:0;overflow:hidden;margin-top:12px;border-left:4px solid #6A1B9A">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;color:#6A1B9A">📈 Inventory Forecasting</div>
+        <div id="inv-forecast" style="padding:13px"></div>
       </div>
     </div>
 
@@ -2862,6 +2902,7 @@ function showLoginPage(){
   document.getElementById('ul-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('ul-err').style.display='none';
   go('view-login');
+  if(typeof populateDeptSelects==='function')populateDeptSelects();
 }
 function showLanding(){
   const d=document.getElementById('land-date');
@@ -4408,7 +4449,7 @@ function endTask(id){
 // ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════
 function admTab(tab,el){
-  ['dash','tasks','proj','chk','staff','requests','problems','complaints','roomchk','admissions','discharge','transport','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  ['dash','tasks','proj','chk','staff','requests','problems','complaints','roomchk','admissions','discharge','transport','depts','inventory','report'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('tab-'+tab).style.display='block';
   el.classList.add('on');
@@ -4424,6 +4465,8 @@ function admTab(tab,el){
   if(tab==='admissions'){renderAdminAdmissions();}
   if(tab==='discharge'){renderAdminDischarge();}
   if(tab==='transport'){renderAdminTransport();}
+  if(tab==='depts'){renderDepts();}
+  if(tab==='inventory'){populateDeptSelects();renderInvItems();renderInvLifecycle();renderInvForecast();}
   if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
@@ -8502,6 +8545,49 @@ function adminRemoveDischargeItem(idx){
   saveDischargeItems(items);
   renderAdminDischarge();
 }
+// ══════════════════════════════════════════════════════
+// DEPARTMENT MANAGEMENT
+// ══════════════════════════════════════════════════════
+function populateDeptSelects(){
+  const depts=getDepts();
+  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const old=el.value;
+    const isAct=id==='inv-act-dept'||id==='sk-inv-act-dept';
+    let html=isAct?'<option value="all">All Depts</option>':'';
+    html+=depts.map(d=>`<option value="${d.id}">${d.icon} ${d.label}</option>`).join('');
+    el.innerHTML=html;
+    if(depts.find(d=>d.id===old)||(isAct&&old==='all'))el.value=old;
+  });
+}
+function renderDepts(){
+  const el=document.getElementById('dept-list');if(!el)return;
+  const depts=getDepts();
+  el.innerHTML=depts.map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #D1C4E9">
+    <div><span style="font-size:20px">${d.icon}</span> <span style="font-weight:800;font-size:14px;margin-left:8px">${d.label}</span><br><span style="font-size:11px;color:#90A4AE">ID: ${d.id}</span></div>
+    <button onclick="removeDepartment('${d.id}')" style="background:#FFEBEE;border:none;color:#C62828;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">🗑 Remove</button>
+  </div>`).join('');
+}
+function addDepartment(){
+  const name=document.getElementById('dept-name').value.trim();
+  const icon=document.getElementById('dept-icon').value.trim()||'📦';
+  if(!name){showToast2('⚠️ Enter department name');return;}
+  const id=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(!id){showToast2('⚠️ Name must contain letters');return;}
+  const depts=getDepts();
+  if(depts.find(d=>d.id===id)){showToast2('⚠️ Department "'+name+'" already exists');return;}
+  depts.push({id,label:name,icon});
+  saveDepts(depts);
+  document.getElementById('dept-name').value='';document.getElementById('dept-icon').value='';
+  populateDeptSelects();renderDepts();showToast2('✅ Department "'+name+'" added');
+}
+function removeDepartment(id){
+  if(!confirm('Remove "'+getInvLabel(id)+'" department? Items and data remain but dropdown will be removed.'))return;
+  const depts=getDepts().filter(d=>d.id!==id);
+  saveDepts(depts);
+  populateDeptSelects();renderDepts();showToast2('Removed department');
+}
 function renderAdminDischarge(){
   const items=getDischargeItems();
   const el=document.getElementById('adm-dchk-list');
@@ -8528,9 +8614,12 @@ function renderAdminDischarge(){
 // ══════════════════════════════════════════════════════
 // INVENTORY MANAGEMENT
 // ══════════════════════════════════════════════════════
-const INV_DEPTS=['maintenance','housekeeping','stationery','radiology','ot','medical','canteen','cssd','laundry','linen','furniture'];
-const INV_DEPT_ICONS={maintenance:'🔧',housekeeping:'🧹',stationery:'📎',radiology:'🔬',ot:'🏥',medical:'💊',canteen:'🍽️',cssd:'🧪',laundry:'👕',linen:'🛏️',furniture:'🪑'};
-function getInvLabel(d){const m={maintenance:'Maintenance',housekeeping:'Housekeeping',stationery:'Stationery',radiology:'Radiology',ot:'OT',medical:'Medical',canteen:'Canteen',cssd:'CSSD',laundry:'Laundry',linen:'Linen',furniture:'Furniture'};return m[d]||d;}
+function getInvDeptIcons(){const m={};getDepts().forEach(d=>{m[d.id]=d.icon;});return m;}
+function getInvDeptIcon(id){const d=getDepts().find(dp=>dp.id===id);return d?d.icon:'📦';}
+function getInvDeptIds(){return getDepts().map(d=>d.id);}
+function getInvLabel(d){const m={};const depts=getDepts();depts.forEach(dp=>{m[dp.id]=dp.label;});return m[d]||d;}
+function getDepts(){if(!cfg.departments||!cfg.departments.length)cfg.departments=[{id:'maintenance',label:'Maintenance',icon:'🔧'},{id:'housekeeping',label:'Housekeeping',icon:'🧹'},{id:'stationery',label:'Stationery',icon:'📎'},{id:'radiology',label:'Radiology',icon:'🔬'},{id:'ot',label:'OT',icon:'🏥'},{id:'medical',label:'Medical',icon:'💊'},{id:'canteen',label:'Canteen',icon:'🍽️'},{id:'cssd',label:'CSSD',icon:'🧪'},{id:'laundry',label:'Laundry',icon:'👕'},{id:'linen',label:'Linen',icon:'🛏️'},{id:'furniture',label:'Furniture',icon:'🪑'}];return cfg.departments;}
+function saveDepts(arr){cfg.departments=arr;saveCfg();}
 function getInventory(){return JSON.parse(localStorage.getItem('HFM4_INVENTORY')||'{}');}
 function saveInventory(data){localStorage.setItem('HFM4_INVENTORY',JSON.stringify(data));if(getDbUrl())fbPut('/inventory',data).catch(()=>{});}
 function getInvTransactions(){return JSON.parse(localStorage.getItem('HFM4_INV_TRANSACTIONS')||'[]');}
@@ -8561,14 +8650,15 @@ function adminAddInvItem(){
   const warrantyStart=document.getElementById('inv-warranty-start').value||'';
   const warrantyEnd=document.getElementById('inv-warranty-end').value||'';
   const expiry=document.getElementById('inv-expiry').value||'';
+  const price=parseFloat(document.getElementById('inv-price').value)||0;
   if(!name){showToast2('⚠️ Enter item name');return;}
   const inv=getInventory();
   if(!inv[dept])inv[dept]={items:[]};
   if(inv[dept].items.find(i=>i.name.toLowerCase()===name.toLowerCase())){showToast2('⚠️ Item already exists');return;}
-  inv[dept].items.push({name,unit,min,qty:0,warrantyStart,warrantyEnd,expiry});
+  inv[dept].items.push({name,unit,min,qty:0,warrantyStart,warrantyEnd,expiry,price});
   saveInventory(inv);
   document.getElementById('inv-name').value='';document.getElementById('inv-unit').value='';document.getElementById('inv-min').value='';
-  document.getElementById('inv-warranty-start').value='';document.getElementById('inv-warranty-end').value='';document.getElementById('inv-expiry').value='';
+  document.getElementById('inv-warranty-start').value='';document.getElementById('inv-warranty-end').value='';document.getElementById('inv-expiry').value='';document.getElementById('inv-price').value='';
   renderInvItems();showToast2('✅ '+name+' added to '+getInvLabel(dept));
 }
 function adminRemoveInvItem(dept,idx){
@@ -8580,7 +8670,7 @@ function renderInvItems(){
   const dept=document.getElementById('inv-dept').value;
   const el=document.getElementById('inv-list');if(!el)return;
   const data=getDeptInventory(dept);
-  document.getElementById('inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
+  document.getElementById('inv-dept-title').textContent=(getInvDeptIcon(dept)||'📦')+' '+getInvLabel(dept)+' — Items';
   const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
   const expItems=data.items.filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).length;
   const warnItems=data.items.filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).length;
@@ -8597,7 +8687,7 @@ function renderInvItems(){
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${bg}">
       <div style="flex:1;min-width:120px">
         <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
-        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}${item.price?' · ₹'+item.price:''}</div>
         <div style="margin-top:3px;font-size:10px;line-height:1.6">${badges.join('')}</div>
         ${item.warrantyEnd||item.expiry?`<div style="font-size:10px;color:#90A4AE;margin-top:2px">${item.warrantyStart?'🛡️ '+item.warrantyStart+' → '+item.warrantyEnd:''}${item.expiry?' · 📅 Exp: '+item.expiry:''}</div>`:''}
       </div>
@@ -8730,9 +8820,9 @@ function renderInventorySummary(){
     <div style="text-align:center;padding:10px;background:#FFF3E0;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#E65100">${lowItems.length}</div><div style="font-size:10px;color:#607D8B">Low Stock</div></div>
     <div style="text-align:center;padding:10px;background:#FFF8E1;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#FF8F00">${pendingReqs}</div><div style="font-size:10px;color:#607D8B">Pending Reqs</div></div>
   </div>`;
-  if(expiredItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:4px">❌ Expired Items (${expiredItems.length}):</div>`+expiredItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0;color:#C62828">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — Expired: ${i.expiry}</div>`).join('');}
-  if(warnItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#E65100;margin-top:4px;margin-bottom:4px">⏳ Ending Soon (${warnItems.length}):</div>`+warnItems.slice(0,5).map(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);const info=(w&&w.label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(e&&e.label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${info}</div>`;}).join('');}
-  if(lowItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-top:${expiredItems.length||warnItems.length?'6px':'0'};margin-bottom:6px">⚠️ Low Stock Items:</div>`+lowItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:3px 0;color:#37474F">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.qty||0} ${i.unit} (min: ${i.min})</div>`).join('');}
+  if(expiredItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:4px">❌ Expired Items (${expiredItems.length}):</div>`+expiredItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0;color:#C62828">${getInvDeptIcon(i.dept)||'📦'} ${i.name} — Expired: ${i.expiry}</div>`).join('');}
+  if(warnItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#E65100;margin-top:4px;margin-bottom:4px">⏳ Ending Soon (${warnItems.length}):</div>`+warnItems.slice(0,5).map(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);const info=(w&&w.label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(e&&e.label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${getInvDeptIcon(i.dept)||'📦'} ${i.name} — ${info}</div>`;}).join('');}
+  if(lowItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-top:${expiredItems.length||warnItems.length?'6px':'0'};margin-bottom:6px">⚠️ Low Stock Items:</div>`+lowItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:3px 0;color:#37474F">${getInvDeptIcon(i.dept)||'📦'} ${i.name} — ${i.qty||0} ${i.unit} (min: ${i.min})</div>`).join('');}
   el.innerHTML=html||'<div style="color:#90A4AE;font-size:12px">No inventory data.</div>';
 }
 function renderAdminInvRequests(){
@@ -8750,6 +8840,131 @@ function renderAdminInvRequests(){
   }).join('');
 }
 // ══════════════════════════════════════════════════════
+// INVENTORY LIFECYCLE, REPORT & FORECASTING
+// ══════════════════════════════════════════════════════
+function renderInvLifecycle(){
+  const dept=document.getElementById('inv-dept').value;
+  const sel=document.getElementById('inv-life-item');if(!sel)return;
+  const items=getDeptInventory(dept).items;
+  const selected=sel.value;
+  // Populate dropdown
+  sel.innerHTML=items.map((it,i)=>`<option value="${i}">${it.name}</option>`).join('');
+  if(selected)sel.value=selected;
+  const idx=parseInt(sel.value);if(isNaN(idx)||!items[idx]){document.getElementById('inv-lifecycle').innerHTML='<div style="color:#90A4AE;font-size:12px">Select an item to view lifecycle.</div>';return;}
+  const item=items[idx];
+  const txns=getInvTransactions().filter(t=>t.dept===dept&&t.item.toLowerCase()===item.name.toLowerCase());
+  const totalIn=txns.filter(t=>t.type==='IN').reduce((s,t)=>s+(t.qty||0),0);
+  const totalOut=txns.filter(t=>t.type==='OUT').reduce((s,t)=>s+(t.qty||0),0);
+  let html=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+    <div style="text-align:center;padding:8px;background:#E3F2FD;border-radius:8px"><div style="font-size:16px;font-weight:900;color:#1565C0">${item.qty||0}</div><div style="font-size:9px;color:#607D8B">Current Stock</div></div>
+    <div style="text-align:center;padding:8px;background:#E8F5E9;border-radius:8px"><div style="font-size:16px;font-weight:900;color:#2E7D32">${totalIn}</div><div style="font-size:9px;color:#607D8B">Total IN</div></div>
+    <div style="text-align:center;padding:8px;background:#FFEBEE;border-radius:8px"><div style="font-size:16px;font-weight:900;color:#C62828">${totalOut}</div><div style="font-size:9px;color:#607D8B">Total OUT</div></div>
+    <div style="text-align:center;padding:8px;background:#FFF3E0;border-radius:8px"><div style="font-size:16px;font-weight:900;color:#E65100">${item.price?'₹'+(item.price*(item.qty||0)).toLocaleString('en-IN'):'—'}</div><div style="font-size:9px;color:#607D8B">Stock Value</div></div>
+  </div>`;
+  html+=`<div style="font-size:11px;color:#37474F;margin-bottom:6px"><strong>${item.name}</strong> · ${item.unit} · Min: ${item.min}${item.price?' · Price: ₹'+item.price:''}${item.warrantyStart?' · Warranty: '+item.warrantyStart+' → '+(item.warrantyEnd||'—'):''}${item.expiry?' · Expiry: '+item.expiry:''}</div>`;
+  if(txns.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:#37474F;margin-bottom:4px">📋 Transaction History:</div>`+txns.slice(-20).reverse().map(t=>{
+      const c=t.type==='IN'?'#E8F5E9':'#FFEBEE';const s=t.type==='IN'?'+'+t.qty:'-'+t.qty;
+      return `<div style="display:flex;justify-content:space-between;padding:5px 8px;background:${c};border-radius:6px;margin-bottom:2px;font-size:11px">
+        <span>${t.type==='IN'?'📥 IN':'📤 OUT'} · ${t.by||'—'}</span>
+        <span style="font-weight:700;color:${t.type==='IN'?'#2E7D32':'#C62828'}">${s} ${t.unit||''}</span>
+        <span style="color:#90A4AE">${t.date?new Date(t.date).toLocaleDateString('en-IN'):''}</span>
+      </div>`;
+    }).join('');
+  } else html+=`<div style="font-size:11px;color:#90A4AE">No transactions yet.</div>`;
+  document.getElementById('inv-lifecycle').innerHTML=html;
+}
+function renderInvForecast(){
+  const el=document.getElementById('inv-forecast');if(!el)return;
+  const inv=getInventory();
+  const txns=getInvTransactions();
+  let html='<div style="font-size:11px;color:#607D8B;margin-bottom:8px">📈 Forecast based on average monthly consumption (last 90 days). Items below min stock are flagged.</div>';
+  const cutoff=Date.now()-90*86400000;
+  const recentTxns=txns.filter(t=>t.type==='OUT'&&t.date>cutoff);
+  const depts=getDepts();
+  depts.forEach(d=>{
+    const items=(inv[d.id]?.items)||[];
+    const deptOut=recentTxns.filter(t=>t.dept===d.id);
+    if(!items.length&&!deptOut.length)return;
+    html+=`<div style="font-weight:700;font-size:12px;color:#37474F;margin:8px 0 4px">${d.icon} ${d.label}</div>`;
+    items.forEach(item=>{
+      const itemTxns=deptOut.filter(t=>t.item.toLowerCase()===item.name.toLowerCase());
+      const totalUsed=itemTxns.reduce((s,t)=>s+(t.qty||0),0);
+      const monthlyRate=totalUsed/3; // avg per month over 90 days
+      const stock=(item.qty||0);
+      const monthsLeft=monthlyRate>0?(stock/monthlyRate):999;
+      const needsReorder=stock<=item.min;
+      html+=`<div style="display:flex;justify-content:space-between;padding:5px 8px;background:${needsReorder?'#FFF3E0':'#fff'};border-radius:6px;margin-bottom:2px;font-size:11px">
+        <span style="flex:1">${item.name}</span>
+        <span style="width:50px;text-align:center;font-weight:700">${stock} ${item.unit}</span>
+        <span style="width:60px;text-align:center;color:#607D8B">${monthlyRate>0?monthlyRate.toFixed(1)+'/mo':'—'}</span>
+        <span style="width:60px;text-align:center;color:${monthsLeft<1?'#C62828':monthsLeft<3?'#E65100':'#2E7D32'};font-weight:700">${monthsLeft<999?monthsLeft.toFixed(1)+'mo':'∞'}</span>
+        ${needsReorder?'<span style="color:#C62828;font-weight:700">⚠️ Reorder</span>':''}
+      </div>`;
+    });
+  });
+  el.innerHTML=html||'<div style="color:#90A4AE;font-size:12px">No inventory data for forecasting.</div>';
+}
+function downloadInvExcel(){
+  const dept=document.getElementById('inv-dept').value;
+  const data=getDeptInventory(dept);const items=data.items;
+  if(!items.length){showToast2('⚠️ No items to export');return;}
+  const wb=XLSX.utils.book_new();
+  const rows=[['Item Name','Unit','Min Stock','Current Qty','Price (₹)','Stock Value','Warranty Start','Warranty End','Expiry Date','Status','Last IN','Last OUT']];
+  const txns=getInvTransactions().filter(t=>t.dept===dept);
+  items.forEach(item=>{
+    const itemTxns=txns.filter(t=>t.item.toLowerCase()===item.name.toLowerCase());
+    const lastIn=itemTxns.filter(t=>t.type==='IN').slice(-1)[0];
+    const lastOut=itemTxns.filter(t=>t.type==='OUT').slice(-1)[0];
+    const ws=getWarrantyStatus(item);const es=getExpiryStatus(item);
+    const status=[ws?ws.label:'',es?es.label:''].filter(Boolean).join(' · ');
+    rows.push([item.name,item.unit,item.min,item.qty||0,item.price||0,(item.price||0)*(item.qty||0),item.warrantyStart||'',item.warrantyEnd||'',item.expiry||'',status,lastIn?new Date(lastIn.date).toLocaleDateString('en-IN'):'',lastOut?new Date(lastOut.date).toLocaleDateString('en-IN'):'']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,getInvLabel(dept)+' Inventory');
+  XLSX.writeFile(wb,getInvLabel(dept)+'_Inventory_'+todayStr()+'.xlsx');
+  showToast2('✅ Excel downloaded');
+}
+function downloadInvPDF(){
+  const dept=document.getElementById('inv-dept').value;
+  const items=getDeptInventory(dept).items;
+  if(!items.length){showToast2('⚠️ No items to export');return;}
+  const txns=getInvTransactions().filter(t=>t.dept===dept);
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${getInvLabel(dept)} Inventory Report</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;color:#333;padding:20px}h1{color:#E65100;font-size:18px}table{width:100%;border-collapse:collapse;margin:10px 0}th,td{padding:6px 8px;border:1px solid #ccc;text-align:left}th{background:#E65100;color:#fff}.expired{color:#C62828;font-weight:700}.soon{color:#E65100;font-weight:700}.ok{color:#2E7D32}.section{margin-top:16px}h2{font-size:14px;color:#1565C0}</style></head><body>
+  <h1>📦 ${getInvLabel(dept)} — Inventory Report</h1>
+  <p>Generated: ${new Date().toLocaleString('en-IN')} · ${items.length} items</p>
+  <table><tr><th>#</th><th>Item</th><th>Unit</th><th>Min</th><th>Qty</th><th>Price</th><th>Value</th><th>Warranty</th><th>Expiry</th><th>Status</th></tr>`;
+  items.forEach((item,i)=>{
+    const ws=getWarrantyStatus(item);const es=getExpiryStatus(item);
+    const cls=(es&&es.color==='#C62828')?'expired':(ws&&ws.color==='#E65100')||(es&&es.color==='#E65100')?'soon':'ok';
+    html+=`<tr class="${cls}"><td>${i+1}</td><td>${item.name}</td><td>${item.unit}</td><td>${item.min}</td><td>${item.qty||0}</td><td>${item.price?'₹'+item.price:'—'}</td><td>${item.price?'₹'+((item.price)*(item.qty||0)).toLocaleString('en-IN'):'—'}</td><td>${item.warrantyStart?item.warrantyStart+' → '+item.warrantyEnd:'—'}</td><td>${item.expiry||'—'}</td><td>${[(ws?ws.label:''),(es?es.label:'')].filter(Boolean).join(' ')}</td></tr>`;
+  });
+  html+=`</table>`;
+  if(txns.length){
+    html+=`<h2>📋 Recent Activity</h2><table><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>By</th></tr>`;
+    txns.slice(-50).reverse().forEach(t=>{
+      html+=`<tr><td>${new Date(t.date).toLocaleDateString('en-IN')}</td><td>${t.item}</td><td>${t.type}</td><td>${t.qty} ${t.unit||''}</td><td>${t.by||'—'}</td></tr>`;
+    });
+    html+=`</table>`;
+  }
+  html+=`<h2>📈 Forecast</h2><p>Monthly consumption (last 90 days):</p><table><tr><th>Item</th><th>Stock</th><th>Rate</th><th>Months Left</th></tr>`;
+  const cutoff=Date.now()-90*86400000;
+  items.forEach(item=>{
+    const itemTxns=txns.filter(t=>t.type==='OUT'&&t.date>cutoff&&t.item.toLowerCase()===item.name.toLowerCase());
+    const totalUsed=itemTxns.reduce((s,t)=>s+(t.qty||0),0);
+    const rate=totalUsed/3;const stock=item.qty||0;const ml=rate>0?(stock/rate):999;
+    html+=`<tr><td>${item.name}</td><td>${stock}</td><td>${rate>0?rate.toFixed(1)+'/mo':'—'}</td><td>${ml<999?ml.toFixed(1)+'mo':'∞'}</td></tr>`;
+  });
+  html+=`</table></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=getInvLabel(dept)+'_Inventory_'+todayStr()+'.html';
+  a.click();URL.revokeObjectURL(a.href);
+  // Try to open for printing/PDF save
+  const w=window.open('');w.document.write(html);w.document.title=getInvLabel(dept)+' Inventory Report';w.print();
+  showToast2('✅ PDF report generated');
+}
+// ══════════════════════════════════════════════════════
 // STOREKEEPER FUNCTIONS
 // ══════════════════════════════════════════════════════
 function skLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showLoginPage();}
@@ -8762,18 +8977,19 @@ function loadStorekeeperDash(){
   const alrt=document.getElementById('sk-alerts');
   if(alrt){
     if(expired.length||warns.length){
-      let ah='';if(expired.length)ah+=`<div style="color:#C62828;font-weight:700">❌ ${expired.length} item(s) expired</div>`+expired.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.expiry}</div>`).join('');
-      if(warns.length)ah+=`<div style="color:#E65100;font-weight:700;margin-top:${expired.length?'6px':'0'}">⏳ ${warns.length} item(s) ending soon</div>`+warns.slice(0,5).map(i=>{const info=(getWarrantyStatus(i)&&getWarrantyStatus(i).label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(getExpiryStatus(i)&&getExpiryStatus(i).label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${info}</div>`;}).join('');
+      let ah='';if(expired.length)ah+=`<div style="color:#C62828;font-weight:700">❌ ${expired.length} item(s) expired</div>`+expired.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0">${getInvDeptIcon(i.dept)||'📦'} ${i.name} — ${i.expiry}</div>`).join('');
+      if(warns.length)ah+=`<div style="color:#E65100;font-weight:700;margin-top:${expired.length?'6px':'0'}">⏳ ${warns.length} item(s) ending soon</div>`+warns.slice(0,5).map(i=>{const info=(getWarrantyStatus(i)&&getWarrantyStatus(i).label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(getExpiryStatus(i)&&getExpiryStatus(i).label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${getInvDeptIcon(i.dept)||'📦'} ${i.name} — ${info}</div>`;}).join('');
       alrt.innerHTML=ah;alrt.style.display='block';
     } else alrt.style.display='none';
   }
   skRenderItems();skRenderRequests();skRenderActivity();
+  if(typeof populateDeptSelects==='function')populateDeptSelects();
 }
 function skRenderItems(){
   const dept=document.getElementById('sk-inv-dept').value;
   const el=document.getElementById('sk-inv-list');if(!el)return;
   const data=getDeptInventory(dept);
-  document.getElementById('sk-inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
+  document.getElementById('sk-inv-dept-title').textContent=(getInvDeptIcon(dept)||'📦')+' '+getInvLabel(dept)+' — Items';
   const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
   const expItems=data.items.filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).length;
   const warnItems=data.items.filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).length;
@@ -8789,7 +9005,7 @@ function skRenderItems(){
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${bg}">
       <div style="flex:1;min-width:120px">
         <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
-        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}${item.price?' · ₹'+item.price:''}</div>
         <div style="margin-top:3px;font-size:10px;line-height:1.6">${badges.join('')}</div>
         ${item.warrantyEnd||item.expiry?`<div style="font-size:10px;color:#90A4AE;margin-top:2px">${item.warrantyStart?'🛡️ '+item.warrantyStart+' → '+item.warrantyEnd:''}${item.expiry?' · 📅 Exp: '+item.expiry:''}</div>`:''}
       </div>
