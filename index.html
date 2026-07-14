@@ -482,6 +482,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div style="font-size:16px;font-weight:900;margin-top:6px">Inventory Management</div>
       <div style="font-size:12px;opacity:.8">Manage stock across all departments</div>
     </div>
+    <div id="sk-alerts" style="display:none" class="card" style="padding:14px;border-left:4px solid #C62828;background:#FFF5F5"></div>
     <div class="card" style="border-left:4px solid #E65100">
       <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:10px">📦 Inventory</h3>
       <div style="display:grid;gap:10px">
@@ -2112,8 +2113,13 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             <input id="inv-name" type="text" placeholder="Item name" style="flex:2;min-width:120px">
             <input id="inv-unit" type="text" placeholder="Unit (pcs, kg, L)" style="flex:1;min-width:80px">
             <input id="inv-min" type="number" placeholder="Min stock" style="flex:1;min-width:70px">
-            <button onclick="adminAddInvItem()" style="background:#E65100;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Item</button>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="inv-warranty-start" type="date" placeholder="Warranty start" style="flex:1;min-width:100px;font-size:12px" title="Warranty Start">
+            <input id="inv-warranty-end" type="date" placeholder="Warranty end" style="flex:1;min-width:100px;font-size:12px" title="Warranty End">
+            <input id="inv-expiry" type="date" placeholder="Expiry date" style="flex:1;min-width:100px;font-size:12px" title="Expiry Date">
+          </div>
+          <button onclick="adminAddInvItem()" style="background:#E65100;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Item</button>
         </div>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
@@ -8533,18 +8539,36 @@ function getMaterialRequests(){return JSON.parse(localStorage.getItem('HFM4_MATE
 function saveMaterialRequests(data){localStorage.setItem('HFM4_MATERIAL_REQUESTS',JSON.stringify(data));if(getDbUrl())fbPut('/inventory/materialRequests',data).catch(()=>{});}
 function getDeptInventory(dept){const inv=getInventory();if(!inv[dept])inv[dept]={items:[]};return inv[dept];}
 function addInvTransaction(type,dept,itemName,qty,unit,ref,by){const txns=getInvTransactions();txns.push({type,dept,item:itemName,qty,unit,ref:ref||'manual',by:by||'',date:Date.now()});saveInvTransactions(txns);}
+function getWarrantyStatus(item){
+  const now=new Date();const today=now.toISOString().slice(0,10);
+  if(item.warrantyEnd&&item.warrantyEnd<today) return {label:'⚠️ Warranty Expired',color:'#C62828',bg:'#FFEBEE'};
+  if(item.warrantyEnd){const d=new Date(item.warrantyEnd)-now;if(d>0&&d<30*86400000) return {label:'⏳ Warranty ending soon',color:'#E65100',bg:'#FFF3E0'};}
+  if(item.warrantyStart) return {label:'✅ Warranty Active',color:'#2E7D32',bg:'#E8F5E9'};
+  return null;
+}
+function getExpiryStatus(item){
+  const now=new Date();const today=now.toISOString().slice(0,10);
+  if(item.expiry&&item.expiry<today) return {label:'❌ Expired',color:'#C62828',bg:'#FFEBEE'};
+  if(item.expiry){const d=new Date(item.expiry)-now;if(d>0&&d<30*86400000) return {label:'⚠️ Expiring soon',color:'#E65100',bg:'#FFF3E0'};}
+  if(item.expiry) return {label:'✅ Valid',color:'#2E7D32',bg:'#E8F5E9'};
+  return null;
+}
 function adminAddInvItem(){
   const dept=document.getElementById('inv-dept').value;
   const name=document.getElementById('inv-name').value.trim();
   const unit=document.getElementById('inv-unit').value.trim()||'pcs';
   const min=parseInt(document.getElementById('inv-min').value)||0;
+  const warrantyStart=document.getElementById('inv-warranty-start').value||'';
+  const warrantyEnd=document.getElementById('inv-warranty-end').value||'';
+  const expiry=document.getElementById('inv-expiry').value||'';
   if(!name){showToast2('⚠️ Enter item name');return;}
   const inv=getInventory();
   if(!inv[dept])inv[dept]={items:[]};
   if(inv[dept].items.find(i=>i.name.toLowerCase()===name.toLowerCase())){showToast2('⚠️ Item already exists');return;}
-  inv[dept].items.push({name,unit,min,qty:0});
+  inv[dept].items.push({name,unit,min,qty:0,warrantyStart,warrantyEnd,expiry});
   saveInventory(inv);
   document.getElementById('inv-name').value='';document.getElementById('inv-unit').value='';document.getElementById('inv-min').value='';
+  document.getElementById('inv-warranty-start').value='';document.getElementById('inv-warranty-end').value='';document.getElementById('inv-expiry').value='';
   renderInvItems();showToast2('✅ '+name+' added to '+getInvLabel(dept));
 }
 function adminRemoveInvItem(dept,idx){
@@ -8558,14 +8582,24 @@ function renderInvItems(){
   const data=getDeptInventory(dept);
   document.getElementById('inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
   const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
-  document.getElementById('inv-stats').textContent=total+' items · '+totalQty+' total stock · '+low+' low';
+  const expItems=data.items.filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).length;
+  const warnItems=data.items.filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).length;
+  document.getElementById('inv-stats').textContent=total+' items · '+totalQty+' stock · '+low+' low'+(expItems?' · '+expItems+' expired':'')+(warnItems?' · '+warnItems+' ending soon':'');
   if(!data.items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items. Add one above.</div>';return;}
   el.innerHTML=data.items.map((item,i)=>{
     const lowStock=(item.qty||0)<=item.min;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${lowStock?'#FFF3E0':'#fff'}">
+    const ws=getWarrantyStatus(item);const es=getExpiryStatus(item);
+    const badges=[];
+    if(ws) badges.push(`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${ws.bg};color:${ws.color};font-weight:700;display:inline-block;margin-right:4px">${ws.label}</span>`);
+    if(es) badges.push(`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${es.bg};color:${es.color};font-weight:700;display:inline-block;margin-right:4px">${es.label}</span>`);
+    const needBg=lowStock||(ws&&ws.color==='#C62828')||(es&&es.color==='#C62828');
+    const bg=lowStock?'#FFF3E0':(ws&&ws.color==='#C62828')||(es&&es.color==='#C62828')?'#FFEBEE':'#fff';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${bg}">
       <div style="flex:1;min-width:120px">
         <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
         <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+        <div style="margin-top:3px;font-size:10px;line-height:1.6">${badges.join('')}</div>
+        ${item.warrantyEnd||item.expiry?`<div style="font-size:10px;color:#90A4AE;margin-top:2px">${item.warrantyStart?'🛡️ '+item.warrantyStart+' → '+item.warrantyEnd:''}${item.expiry?' · 📅 Exp: '+item.expiry:''}</div>`:''}
       </div>
       <div style="font-size:18px;font-weight:900;color:${lowStock?'#E65100':'#2E7D32'};min-width:50px;text-align:center">${item.qty||0}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">
@@ -8688,13 +8722,18 @@ function renderInventorySummary(){
   const totalQty=Object.values(inv).reduce((s,d)=>s+(d.items||[]).reduce((s2,i)=>s2+(i.qty||0),0),0);
   const lowItems=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>(i.qty||0)<=i.min).map(i=>({...i,dept:d})));
   const pendingReqs=getMaterialRequests().filter(r=>r.status==='pending').length;
+  const expiredItems=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).map(i=>({...i,dept:d})));
+  const warnItems=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).map(i=>({...i,dept:d})));
   let html=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
     <div style="text-align:center;padding:10px;background:#E3F2FD;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#1565C0">${totalItems}</div><div style="font-size:10px;color:#607D8B">Items</div></div>
     <div style="text-align:center;padding:10px;background:#E8F5E9;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#2E7D32">${totalQty}</div><div style="font-size:10px;color:#607D8B">Total Stock</div></div>
     <div style="text-align:center;padding:10px;background:#FFF3E0;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#E65100">${lowItems.length}</div><div style="font-size:10px;color:#607D8B">Low Stock</div></div>
     <div style="text-align:center;padding:10px;background:#FFF8E1;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#FF8F00">${pendingReqs}</div><div style="font-size:10px;color:#607D8B">Pending Reqs</div></div>
   </div>`;
-  if(lowItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:6px">⚠️ Low Stock Items:</div>`+lowItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:3px 0;color:#37474F">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.qty||0} ${i.unit} (min: ${i.min})</div>`).join('');}  el.innerHTML=html||'<div style="color:#90A4AE;font-size:12px">No inventory data.</div>';
+  if(expiredItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:4px">❌ Expired Items (${expiredItems.length}):</div>`+expiredItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0;color:#C62828">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — Expired: ${i.expiry}</div>`).join('');}
+  if(warnItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#E65100;margin-top:4px;margin-bottom:4px">⏳ Ending Soon (${warnItems.length}):</div>`+warnItems.slice(0,5).map(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);const info=(w&&w.label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(e&&e.label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${info}</div>`;}).join('');}
+  if(lowItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-top:${expiredItems.length||warnItems.length?'6px':'0'};margin-bottom:6px">⚠️ Low Stock Items:</div>`+lowItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:3px 0;color:#37474F">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.qty||0} ${i.unit} (min: ${i.min})</div>`).join('');}
+  el.innerHTML=html||'<div style="color:#90A4AE;font-size:12px">No inventory data.</div>';
 }
 function renderAdminInvRequests(){
   const el=document.getElementById('admin-inv-requests');if(!el)return;
@@ -8717,6 +8756,17 @@ function skLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESS
 function loadStorekeeperDash(){
   document.getElementById('sk-date').textContent='Today: '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('sk-name').textContent=currentAdmin?.name||'Storekeeper';
+  // Show expiry/warranty alerts
+  const inv=getInventory();const expired=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).map(i=>({...i,dept:d})));
+  const warns=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).map(i=>({...i,dept:d})));
+  const alrt=document.getElementById('sk-alerts');
+  if(alrt){
+    if(expired.length||warns.length){
+      let ah='';if(expired.length)ah+=`<div style="color:#C62828;font-weight:700">❌ ${expired.length} item(s) expired</div>`+expired.slice(0,5).map(i=>`<div style="font-size:11px;padding:2px 0">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.expiry}</div>`).join('');
+      if(warns.length)ah+=`<div style="color:#E65100;font-weight:700;margin-top:${expired.length?'6px':'0'}">⏳ ${warns.length} item(s) ending soon</div>`+warns.slice(0,5).map(i=>{const info=(getWarrantyStatus(i)&&getWarrantyStatus(i).label.includes('ending')?'Warranty: '+i.warrantyEnd:'')+(getExpiryStatus(i)&&getExpiryStatus(i).label.includes('soon')?' Expiry: '+i.expiry:'');return `<div style="font-size:11px;padding:2px 0;color:#E65100">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${info}</div>`;}).join('');
+      alrt.innerHTML=ah;alrt.style.display='block';
+    } else alrt.style.display='none';
+  }
   skRenderItems();skRenderRequests();skRenderActivity();
 }
 function skRenderItems(){
@@ -8725,14 +8775,23 @@ function skRenderItems(){
   const data=getDeptInventory(dept);
   document.getElementById('sk-inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
   const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
-  document.getElementById('sk-inv-stats').textContent=total+' items · '+totalQty+' total stock · '+low+' low';
+  const expItems=data.items.filter(i=>{const s=getExpiryStatus(i);return s&&s.label.includes('Expired');}).length;
+  const warnItems=data.items.filter(i=>{const w=getWarrantyStatus(i);const e=getExpiryStatus(i);return (w&&w.label.includes('ending'))||(e&&e.label.includes('soon'));}).length;
+  document.getElementById('sk-inv-stats').textContent=total+' items · '+totalQty+' stock · '+low+' low'+(expItems?' · '+expItems+' expired':'')+(warnItems?' · '+warnItems+' ending soon':'');
   if(!data.items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items in this department.</div>';return;}
   el.innerHTML=data.items.map((item,i)=>{
     const lowStock=(item.qty||0)<=item.min;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${lowStock?'#FFF3E0':'#fff'}">
+    const ws=getWarrantyStatus(item);const es=getExpiryStatus(item);
+    const badges=[];
+    if(ws) badges.push(`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${ws.bg};color:${ws.color};font-weight:700;display:inline-block;margin-right:4px">${ws.label}</span>`);
+    if(es) badges.push(`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${es.bg};color:${es.color};font-weight:700;display:inline-block;margin-right:4px">${es.label}</span>`);
+    const bg=lowStock?'#FFF3E0':(ws&&ws.color==='#C62828')||(es&&es.color==='#C62828')?'#FFEBEE':'#fff';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${bg}">
       <div style="flex:1;min-width:120px">
         <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
         <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+        <div style="margin-top:3px;font-size:10px;line-height:1.6">${badges.join('')}</div>
+        ${item.warrantyEnd||item.expiry?`<div style="font-size:10px;color:#90A4AE;margin-top:2px">${item.warrantyStart?'🛡️ '+item.warrantyStart+' → '+item.warrantyEnd:''}${item.expiry?' · 📅 Exp: '+item.expiry:''}</div>`:''}
       </div>
       <div style="font-size:18px;font-weight:900;color:${lowStock?'#E65100':'#2E7D32'};min-width:50px;text-align:center">${item.qty||0}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">
