@@ -1037,6 +1037,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <option value="">— Select Admitted Patient —</option>
       </select>
     </div>
+    <div id="dchk-patient-info" style="display:none"></div>
     <div class="card" style="border-left:4px solid #37474F">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <h3 style="color:#37474F;font-size:14px">📋 Discharge Tasks</h3>
@@ -7497,11 +7498,25 @@ function onDischargePatientSelect(){
   const el=document.getElementById('dchk-items');
   const progEl=document.getElementById('dchk-progress');
   const completeBtn=document.getElementById('btn-complete-discharge');
+  const infoEl=document.getElementById('dchk-patient-info');
   if(!patientId){
     el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px;font-size:13px">Select a patient above.</div>';
     progEl.textContent='0/0';
     completeBtn.style.display='none';
+    if(infoEl) infoEl.style.display='none';
     return;
+  }
+  // Show patient room info
+  const admissions=getAdmissions();
+  const patient=admissions.find(a=>a.id===patientId);
+  if(infoEl&&patient){
+    infoEl.style.display='block';
+    infoEl.innerHTML=`<div class="card" style="border-left:4px solid #37474F;background:#F5F5F5;margin-top:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div><strong style="font-size:16px">👤 ${patient.name}</strong> · 🛏️ ${patient.room} · 🛌 Bed ${patient.bed.toUpperCase()}</div>
+        <span style="font-size:12px;color:#607D8B">${patient.doctor?'👨‍⚕️ '+patient.doctor:''} ${patient.admissionDate?'· 📅 '+patient.admissionDate:''}</span>
+      </div>
+    </div>`;
   }
   const items=getDischargeItems();
   const saved=getDischargeProgress(patientId);
