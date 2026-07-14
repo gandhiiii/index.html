@@ -4031,7 +4031,31 @@ function buildReport(){
     }
   }));
   if(readings.length)msg+=`\n📊 *KEY READINGS (${readings.length}):*\n${readings.join('\n')}\n`;
-  if(!faultItems.length&&!problems.length&&!readings.length)msg+=`\n✅ No faults or problems found.\n`;
+  // Room checklist summary
+  const allRooms=getRoomChkAll();
+  const rKeys=Object.keys(allRooms).filter(k=>k!=='__common__').sort();
+  if(rKeys.length){
+    const checkedRooms=rKeys.filter(r=>{
+      const prog=getRoomChkProgress(r);
+      return Object.values(prog).some(v=>v==='OK'||v==='Fault'||v==='N/A');
+    });
+    if(checkedRooms.length) msg+=`\n🛏️ *ROOM CHECKS (${checkedRooms.length}/${rKeys.length} rooms checked):*\n`+
+      checkedRooms.map(r=>{
+        const prog=getRoomChkProgress(r);
+        const o=Object.values(prog).filter(v=>v==='OK').length;
+        const f=Object.values(prog).filter(v=>v==='Fault').length;
+        return `  • ${r} — ✅ ${o} ❌ ${f}`;
+      }).join('\n')+'\n';
+  }
+  // Room problems
+  let roomProbsAll=[];
+  rKeys.forEach(r=>{
+    const probs=JSON.parse(localStorage.getItem('HFM4_ROOM_PROBLEMS_'+r.replace(/\s+/g,'_'))||'[]');
+    probs.forEach(p=>roomProbsAll.push({room:r,...p}));
+  });
+  if(roomProbsAll.length) msg+=`\n🚨 *ROOM PROBLEMS (${roomProbsAll.length}):*\n`+
+    roomProbsAll.map(p=>`  • ${p.room} — ${p.item}: ${p.desc}`).join('\n')+'\n';
+  if(!faultItems.length&&!problems.length&&!readings.length&&!rKeys.some(r=>{const p=getRoomChkProgress(r);return Object.values(p).some(v=>v==='OK'||v==='Fault'||v==='N/A');})&&!roomProbsAll.length)msg+=`\n✅ No faults or problems found.\n`;
   msg+=`\n_Hospital FM — Shift Complete_`;
   return msg;
 }
