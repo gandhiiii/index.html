@@ -264,6 +264,7 @@ details code{background:rgba(0,0,0,.3);color:var(--cyan);display:block;padding:1
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}</style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="theme-toggle-l">🌙</span><span class="theme-toggle-d">☀️</span></button>
 
 <!-- ══ SETUP ════════════════════════════════════════ -->
 <div id="view-setup" class="view active">
@@ -6904,10 +6905,9 @@ function downloadProjectWord(id){
     .cost-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee}
     .cost-total{display:flex;justify-content:space-between;padding:10px 0;font-weight:900;font-size:16px;color:var(--green);border-top:2px solid #1B5E20;margin-top:4px}
     .status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:800;font-size:12px}
-    @media print{body{margin:20px}.no-print{display:none}}
-  </style></head>
+     @media print{body{margin:20px}.no-print{display:none}}
+   </style></head>
 <body>
-<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="theme-toggle-l">🌙</span><span class="theme-toggle-d">☀️</span></button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0D1B4B;padding-bottom:12px;margin-bottom:16px">
     <div>
       <h1>🏗️ ${p.name}</h1>
