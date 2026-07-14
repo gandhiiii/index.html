@@ -417,8 +417,122 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
     <button class="btn" style="background:#00838F;color:#fff;font-size:15px" onclick="openRoomChecklist()">📋 Room Checklist</button>
     <button class="btn" style="background:#4A148C;color:#fff;font-size:15px" onclick="openPatientAdmission()">🏥 New Admission</button>
     <button class="btn" style="background:#37474F;color:#fff;font-size:15px" onclick="openDischargeChecklist()">🚪 Discharge Checklist</button>
+    <button class="btn" style="background:#E65100;color:#fff;font-size:15px" onclick="openMaterialRequest()">📦 Request Material</button>
     <button class="btn outline" onclick="sendReportManual()">📲 Send Report to Admin</button>
     <button class="btn outline" style="background:#25D366;color:#fff;border:2px solid #20BD5A" onclick="editMyPhone()">📱 My Phone Number</button>
+  </div>
+</div>
+
+<!-- ══ MATERIAL REQUEST ════════════════════════════════ -->
+<div id="view-material-request" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📦 Material Request</h1><p>Request items from store</p></div>
+      <button class="hbtn" onclick="go('view-home')">← Home</button>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="border-left:4px solid #E65100">
+      <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:10px">➕ New Request</h3>
+      <div style="display:grid;gap:10px">
+        <div><label>Department</label>
+          <select id="mat-req-dept" style="font-size:13px;padding:9px;font-weight:600">
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="housekeeping">🧹 Housekeeping</option>
+            <option value="stationery">📎 Stationery</option>
+            <option value="radiology">🔬 Radiology</option>
+            <option value="ot">🏥 OT</option>
+            <option value="medical">💊 Medical</option>
+            <option value="canteen">🍽️ Canteen</option>
+            <option value="cssd">🧪 CSSD</option>
+            <option value="laundry">👕 Laundry</option>
+            <option value="linen">🛏️ Linen</option>
+            <option value="furniture">🪑 Furniture</option>
+          </select>
+        </div>
+        <input id="mat-req-item" type="text" placeholder="Item name">
+        <div style="display:flex;gap:8px">
+          <input id="mat-req-qty" type="number" placeholder="Quantity" style="flex:2;min-width:80px">
+          <input id="mat-req-unit" type="text" placeholder="Unit (pcs, kg)" style="flex:1;min-width:60px">
+        </div>
+        <button onclick="submitMaterialRequest()" style="background:#E65100;border:none;color:#fff;padding:12px;border-radius:9px;font-weight:800;cursor:pointer;font-size:14px">📤 Submit Request</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:13px">📋 My Requests</div>
+      <div id="emp-mat-reqs" style="padding:13px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STOREKEEPER DASHBOARD ═══════════════════════════ -->
+<div id="view-storekeeper" class="view">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📦 Storekeeper Dashboard</h1><p id="sk-date"></p></div>
+      <div style="display:flex;gap:6px;align-items-center">
+        <span id="sk-name" style="font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:6px"></span>
+        <button class="hbtn" onclick="skLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="card" style="background:linear-gradient(135deg,#E65100,#BF360C);color:#fff;text-align:center;padding:20px;margin-bottom:10px">
+      <div style="font-size:40px">📦</div>
+      <div style="font-size:16px;font-weight:900;margin-top:6px">Inventory Management</div>
+      <div style="font-size:12px;opacity:.8">Manage stock across all departments</div>
+    </div>
+    <div class="card" style="border-left:4px solid #E65100">
+      <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:10px">📦 Inventory</h3>
+      <div style="display:grid;gap:10px">
+        <div><label>Department</label>
+          <select id="sk-inv-dept" onchange="skRenderItems()" style="font-size:13px;padding:9px;font-weight:600">
+            <option value="maintenance">🔧 Maintenance</option>
+            <option value="housekeeping">🧹 Housekeeping</option>
+            <option value="stationery">📎 Stationery</option>
+            <option value="radiology">🔬 Radiology</option>
+            <option value="ot">🏥 OT</option>
+            <option value="medical">💊 Medical</option>
+            <option value="canteen">🍽️ Canteen</option>
+            <option value="cssd">🧪 CSSD</option>
+            <option value="laundry">👕 Laundry</option>
+            <option value="linen">🛏️ Linen</option>
+            <option value="furniture">🪑 Furniture</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <span style="font-weight:800" id="sk-inv-dept-title">📦 Items</span>
+        <span style="font-size:12px;color:#90A4AE" id="sk-inv-stats"></span>
+      </div>
+      <div id="sk-inv-list" style="padding:13px"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;margin-top:12px">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800">📋 Pending Material Requests</div>
+      <div id="sk-inv-requests" style="padding:13px"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;margin-top:12px">
+      <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:800">📊 IN/OUT Activity</span>
+        <select id="sk-inv-act-dept" onchange="skRenderActivity()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
+          <option value="all">All Depts</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="housekeeping">Housekeeping</option>
+          <option value="stationery">Stationery</option>
+          <option value="radiology">Radiology</option>
+          <option value="ot">OT</option>
+          <option value="medical">Medical</option>
+          <option value="canteen">Canteen</option>
+          <option value="cssd">CSSD</option>
+          <option value="laundry">Laundry</option>
+          <option value="linen">Linen</option>
+          <option value="furniture">Furniture</option>
+        </select>
+      </div>
+      <div id="sk-inv-activity" style="padding:13px"></div>
+    </div>
   </div>
 </div>
 
@@ -1137,6 +1251,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
       <div class="tab" onclick="admTab('admissions',this)">🏥 Admissions</div>
       <div class="tab" onclick="admTab('discharge',this)">🚪 Discharge</div>
       <div class="tab" onclick="admTab('transport',this)">🚑 Transport</div>
+      <div class="tab" onclick="admTab('inventory',this)">📦 Inventory</div>
       <div class="tab" onclick="admTab('report',this)">📥 Reports</div>
     </div>
 
@@ -1269,6 +1384,18 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="dash-req-list" style="padding:0 13px 13px"></div>
       </div>
+      <!-- INVENTORY SUMMARY -->
+      <div class="card" style="border-left:4px solid #E65100">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;font-size:14px;color:#E65100">📦 Inventory</span>
+          <button onclick="admTab('inventory',document.querySelectorAll('.tab')[12])" style="background:#FFF3E0;border:none;color:#E65100;padding:5px 11px;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px">Manage →</button>
+        </div>
+        <div id="inv-summary" style="padding:13px"></div>
+        <div style="padding:0 13px 13px;border-top:1px solid #F0F4F8;padding-top:10px;margin-top:0">
+          <div style="font-weight:700;font-size:12px;color:#37474F;margin-bottom:6px">📋 Pending Material Requests</div>
+          <div id="admin-inv-requests"></div>
+        </div>
+      </div>
       <!-- RESET + REMINDERS -->
       <div class="card" style="border-left:4px solid #E65100;background:#FFF3E0">
         <div style="font-weight:800;font-size:14px;color:#BF360C;margin-bottom:4px">🔁 Shift Reset &amp; Reminders</div>
@@ -1322,6 +1449,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             <input id="na-pwd" type="password" placeholder="Password *">
             <input id="na-email" type="email" placeholder="Email (optional)">
             <input id="na-phone" type="tel" placeholder="Phone (optional)">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#555;cursor:pointer"><input id="na-storekeeper" type="checkbox" style="width:16px;height:16px;cursor:pointer"> 📦 Storekeeper (inventory only access)</label>
             <button onclick="createAdminUser()" style="background:#7C4DFF;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Create Admin</button>
           </div>
         </div>
@@ -1462,6 +1590,17 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div><label>Department</label>
             <select id="ne-dept" style="font-size:13px;padding:9px;font-weight:600;width:100%">
               <option value="fm">👷 Facility Management (FM)</option>
+              <option value="maintenance">🔧 Maintenance</option>
+              <option value="housekeeping">🧹 Housekeeping</option>
+              <option value="stationery">📎 Stationery</option>
+              <option value="radiology">🔬 Radiology</option>
+              <option value="ot">🏥 OT</option>
+              <option value="medical">💊 Medical</option>
+              <option value="canteen">🍽️ Canteen</option>
+              <option value="cssd">🧪 CSSD</option>
+              <option value="laundry">👕 Laundry</option>
+              <option value="linen">🛏️ Linen</option>
+              <option value="furniture">🪑 Furniture</option>
               <option value="transport">🚑 Transportation</option>
             </select>
           </div>
@@ -1946,6 +2085,67 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800;font-size:14px">📊 Transport Activity Today</div>
           <div id="adm-transport-data" style="padding:13px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="tab-inventory" style="display:none">
+      <div class="card" style="border-left:4px solid #E65100">
+        <h3 style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:10px">📦 Inventory Management</h3>
+        <div style="display:grid;gap:10px">
+          <div><label>Department</label>
+            <select id="inv-dept" onchange="renderInvItems()" style="font-size:13px;padding:9px;font-weight:600">
+              <option value="maintenance">🔧 Maintenance</option>
+              <option value="housekeeping">🧹 Housekeeping</option>
+              <option value="stationery">📎 Stationery</option>
+              <option value="radiology">🔬 Radiology</option>
+              <option value="ot">🏥 OT</option>
+              <option value="medical">💊 Medical</option>
+              <option value="canteen">🍽️ Canteen</option>
+              <option value="cssd">🧪 CSSD</option>
+              <option value="laundry">👕 Laundry</option>
+              <option value="linen">🛏️ Linen</option>
+              <option value="furniture">🪑 Furniture</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="inv-name" type="text" placeholder="Item name" style="flex:2;min-width:120px">
+            <input id="inv-unit" type="text" placeholder="Unit (pcs, kg, L)" style="flex:1;min-width:80px">
+            <input id="inv-min" type="number" placeholder="Min stock" style="flex:1;min-width:70px">
+            <button onclick="adminAddInvItem()" style="background:#E65100;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px">➕ Add Item</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <span style="font-weight:800" id="inv-dept-title">📦 Items</span>
+          <span style="font-size:12px;color:#90A4AE" id="inv-stats"></span>
+        </div>
+        <div id="inv-list" style="padding:13px"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;margin-top:12px">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;font-weight:800">📋 Material Requests</div>
+        <div id="inv-requests" style="padding:13px"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;margin-top:12px">
+        <div style="padding:13px 16px;border-bottom:1px solid #F0F4F8;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800">📊 IN/OUT Activity</span>
+          <select id="inv-act-dept" onchange="renderInvActivity()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
+            <option value="all">All Depts</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="housekeeping">Housekeeping</option>
+            <option value="stationery">Stationery</option>
+            <option value="radiology">Radiology</option>
+            <option value="ot">OT</option>
+            <option value="medical">Medical</option>
+            <option value="canteen">Canteen</option>
+            <option value="cssd">CSSD</option>
+            <option value="laundry">Laundry</option>
+            <option value="linen">Linen</option>
+            <option value="furniture">Furniture</option>
+          </select>
+        </div>
+        <div id="inv-activity" style="padding:13px"></div>
       </div>
     </div>
 
@@ -2684,14 +2884,19 @@ function universalLogin(){
     const url=getDbUrl();
     if(url) sessionStorage.setItem('HFM4_DB_URL',url);
     sessionStorage.setItem('HFM4_ADMIN_SESSION',JSON.stringify({id:foundAdmin.id,name:foundAdmin.name,loginId:foundAdmin.loginId,password:foundAdmin.password}));
-    go('view-admin');
-    updateLiveBadge(!!url);
-    startLiveTracking();
-    if(url){
-    const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
-    fbPut('/config',pubCfg).catch(()=>{});
+    if(foundAdmin.storekeeper){
+      go('view-storekeeper');
+      loadStorekeeperDash();
+    } else {
+      go('view-admin');
+      updateLiveBadge(!!url);
+      startLiveTracking();
+      if(url){
+      const pubCfg={hosp:cfg.hosp,waNum:cfg.waNum,email:cfg.email,mdEmail:cfg.mdEmail||'',employees:cfg.employees,admins:cfg.admins,adminPwd:cfg.adminPwd,dbUrl:url,convexUrl:url,adminRecoveryCode:cfg.adminRecoveryCode||'',transportEmployees:cfg.transportEmployees,transportVehicles:cfg.transportVehicles};
+      fbPut('/config',pubCfg).catch(()=>{});
+      }
+      updateReqBadges();
     }
-    updateReqBadges();
     return;
   }
   // 2. Check transport employee
@@ -3426,7 +3631,7 @@ function renderAdminList(){
     const canDelete=admins.length>1&&!isMe;
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid #D1C4E9;gap:8px;flex-wrap:wrap">
       <div style="flex:1;min-width:120px">
-        <div style="font-weight:800;font-size:13px;color:#263238">${a.name} ${isMe?'<span style="background:#7C4DFF;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700">YOU</span>':''}</div>
+        <div style="font-weight:800;font-size:13px;color:#263238">${a.name} ${isMe?'<span style="background:#7C4DFF;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700">YOU</span>':''}${a.storekeeper?'<span style="background:#E65100;color:#fff;font-size:10px;padding:2px 6px;border-radius:5px;font-weight:700;margin-left:4px">📦 SK</span>':''}</div>
         <div style="font-size:11px;color:#90A4AE">@${a.loginId}${a.email?' · '+a.email:''} · Added ${new Date(a.createdAt).toLocaleDateString('en-IN')}</div>
         ${a.phone?'<div style="font-size:11px;color:#90A4AE">📞 '+a.phone+'</div>':''}
       </div>
@@ -3444,13 +3649,15 @@ function createAdminUser(){
   const pwd=(document.getElementById('na-pwd').value||'').trim();
   const email=(document.getElementById('na-email').value||'').trim();
   const phone=(document.getElementById('na-phone').value||'').trim();
+  const isStorekeeper=document.getElementById('na-storekeeper').checked;
   if(!name||!loginId||!pwd){alert('Name, username, and password are required.');return;}
   if(pwd.length<4){alert('Password must be at least 4 characters.');return;}
   const admins=getAdmins();
   if(admins.find(a=>a.loginId===loginId)){alert('Username "'+loginId+'" already exists. Choose a different one.');return;}
-  admins.push({id:'admin_'+Date.now(),name,loginId,password:pwd,email:email||'',phone:phone||'',createdAt:Date.now(),createdBy:currentAdmin?currentAdmin.id:''});
+  admins.push({id:'admin_'+Date.now(),name,loginId,password:pwd,email:email||'',phone:phone||'',storekeeper:isStorekeeper,createdAt:Date.now(),createdBy:currentAdmin?currentAdmin.id:''});
   cfg.admins=admins;saveCfg();
   ['na-name','na-loginid','na-pwd','na-email','na-phone'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('na-storekeeper').checked=false;
   renderAdminList();
   showToast2('Admin "'+name+'" created ✓');
 }
@@ -3494,6 +3701,7 @@ function showEditAdminModal(id){
         <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">Phone <span style="color:#90A4AE;font-weight:400">(optional)</span></label>
         <input id="ea-phone" type="tel" value="${a.phone||''}" placeholder="+91 98765 43210" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#555;cursor:pointer;padding:4px 0"><input id="ea-storekeeper" type="checkbox" style="width:16px;height:16px;cursor:pointer" ${a.storekeeper?'checked':''}> 📦 Storekeeper (inventory only access)</label>
       <div style="border-top:1px solid #EDE7F6;padding-top:12px">
         <label style="font-size:12px;font-weight:700;color:#4527A0;display:block;margin-bottom:4px">New Password <span style="color:#90A4AE;font-weight:400">(leave blank to keep current)</span></label>
         <input id="ea-pwd" type="password" placeholder="Enter new password or leave blank" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #D1C4E9;border-radius:10px;font-size:14px">
@@ -3512,6 +3720,7 @@ function saveAdminEdit(id){
   const loginId=(document.getElementById('ea-loginid').value||'').trim().toLowerCase();
   const email=(document.getElementById('ea-email').value||'').trim();
   const phone=(document.getElementById('ea-phone').value||'').trim();
+  const isStorekeeper=document.getElementById('ea-storekeeper').checked;
   const newPwd=(document.getElementById('ea-pwd').value||'').trim();
   const errEl=document.getElementById('ea-err');
   const showErr=msg=>{errEl.textContent=msg;errEl.style.display='block';};
@@ -3528,6 +3737,7 @@ function saveAdminEdit(id){
   admins[idx].loginId=loginId;
   admins[idx].email=email||'';
   admins[idx].phone=phone||'';
+  admins[idx].storekeeper=isStorekeeper;
   if(newPwd){
     admins[idx].password=newPwd;
     if(isFirst) cfg.adminPwd=newPwd;
@@ -4329,6 +4539,8 @@ function renderAdmin(){
   renderEmpProjectKPIs();
   renderDashRequests();
   renderReminderList();
+  renderInventorySummary();
+  renderAdminInvRequests();
 }
 
 // ── ADMIN PROBLEMS TAB ─────────────────────────────
@@ -4732,10 +4944,10 @@ function addEmployee(){
   if(dept==='transport'){
     if((cfg.transportEmployees||[]).find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists in Transport. Change it.');return;}
     if(!cfg.transportEmployees) cfg.transportEmployees=[];
-    cfg.transportEmployees.push({name,loginId,password,phone});
+    cfg.transportEmployees.push({name,loginId,password,phone,dept});
   } else {
     if(cfg.employees.find(e=>e.loginId.toUpperCase()===loginId)){alert('Login ID "'+loginId+'" already exists. Change it.');return;}
-    cfg.employees.push({name,loginId,password,phone});
+    cfg.employees.push({name,loginId,password,phone,dept});
   }
   saveCfg();
   document.getElementById('ne-name').value='';
@@ -6264,8 +6476,11 @@ function renderRequestsAdmin(){
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button onclick="approveRequest('${r.id}')" style="flex:1;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">✅ Approve</button>
         <button onclick="promptRejectRequest('${r.id}')" style="flex:1;padding:9px;background:#C62828;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">❌ Reject</button>
+      </div>`:r.status==='approved'&&!r.inventoryAdded?`
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="addRequestToInventory('${r.id}')" style="flex:1;padding:9px;background:#E65100;color:#fff;border:none;border-radius:8px;font-weight:800;cursor:pointer;font-size:13px">📦 Add to Inventory</button>
       </div>`:'';
-    const reviewLine=r.status!=='pending'?`<div style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:700">${r.status==='approved'?'✅':'❌'} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)} by ${r.reviewedBy||'Admin'}${r.reviewNote?' — "'+r.reviewNote+'"':''}</div>`:'';
+    const reviewLine=r.status!=='pending'?`<div style="font-size:12px;color:${statusColor};margin-top:6px;font-weight:700">${r.status==='approved'?'✅':'❌'} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)} by ${r.reviewedBy||'Admin'}${r.reviewNote?' — "'+r.reviewNote+'"':''}${r.inventoryAdded?' · 📦 Added to inventory':''}</div>`:'';
     return `<div style="border:1px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
@@ -6345,6 +6560,35 @@ function rejectRequest(id,note){
   sendNotif('❌ Request Rejected','Your request for "'+reqs[i].itemName+'" was rejected.'+( note?' Reason: '+note:''),'req-rej-'+id);
   renderRequestsAdmin();
   showToast('Request rejected');
+}
+
+function addRequestToInventory(id){
+  const reqs=getRequests();
+  const i=reqs.findIndex(r=>r.id===id);
+  if(i<0)return;
+  const r=reqs[i];
+  if(r.status!=='approved'||r.inventoryAdded){showToast('⚠️ Already added to inventory');return;}
+  // Find employee's department
+  const emp=cfg.employees.find(e=>e.loginId===r.empLoginId);
+  const dept=emp&&emp.dept?emp.dept:'maintenance';
+  if(!confirm('Add "'+r.itemName+'" (×'+r.qty+' '+r.unit+') to '+getInvLabel(dept)+' inventory?'))return;
+  const inv=getInventory();
+  if(!inv[dept])inv[dept]={items:[]};
+  const existing=inv[dept].items.find(i=>i.name.toLowerCase()===r.itemName.toLowerCase());
+  const itemQty=parseFloat(r.qty)||1;
+  const itemUnit=r.unit||'pcs';
+  if(existing){
+    existing.qty=(existing.qty||0)+itemQty;
+  } else {
+    inv[dept].items.push({name:r.itemName,unit:itemUnit,min:0,qty:itemQty});
+  }
+  saveInventory(inv);
+  addInvTransaction('IN',dept,r.itemName,itemQty,itemUnit,'purchase_req_'+id,currentAdmin?.name||'Admin');
+  r.inventoryAdded=true;
+  r.updatedAt=Date.now();
+  saveRequests(reqs);
+  renderRequestsAdmin();
+  showToast2('📦 "'+r.itemName+'" added to '+getInvLabel(dept)+' inventory ✓');
 }
 
 // ── PROJECT DOWNLOADS ─────────────────────────────────
@@ -7637,10 +7881,15 @@ window.onload=function(){
     if(adminUser){
       currentAdmin=adminUser;
       if(savedSession.password && !currentAdmin.password) currentAdmin.password=savedSession.password;
-      go('view-admin');
-      updateLiveBadge(!!getDbUrl());
-      startLiveTracking();
-      updateReqBadges();
+      if(adminUser.storekeeper){
+        go('view-storekeeper');
+        setTimeout(loadStorekeeperDash,100);
+      } else {
+        go('view-admin');
+        updateLiveBadge(!!getDbUrl());
+        startLiveTracking();
+        updateReqBadges();
+      }
       return; // skip landing/employee login — checkAutoReset already called above
     } else {
       // Session no longer valid — clear it
@@ -8270,6 +8519,292 @@ function renderAdminDischarge(){
     </div>`;
   }).join('');
 }
-</script>
+// ══════════════════════════════════════════════════════
+// INVENTORY MANAGEMENT
+// ══════════════════════════════════════════════════════
+const INV_DEPTS=['maintenance','housekeeping','stationery','radiology','ot','medical','canteen','cssd','laundry','linen','furniture'];
+const INV_DEPT_ICONS={maintenance:'🔧',housekeeping:'🧹',stationery:'📎',radiology:'🔬',ot:'🏥',medical:'💊',canteen:'🍽️',cssd:'🧪',laundry:'👕',linen:'🛏️',furniture:'🪑'};
+function getInvLabel(d){const m={maintenance:'Maintenance',housekeeping:'Housekeeping',stationery:'Stationery',radiology:'Radiology',ot:'OT',medical:'Medical',canteen:'Canteen',cssd:'CSSD',laundry:'Laundry',linen:'Linen',furniture:'Furniture'};return m[d]||d;}
+function getInventory(){return JSON.parse(localStorage.getItem('HFM4_INVENTORY')||'{}');}
+function saveInventory(data){localStorage.setItem('HFM4_INVENTORY',JSON.stringify(data));if(getDbUrl())fbPut('/inventory',data).catch(()=>{});}
+function getInvTransactions(){return JSON.parse(localStorage.getItem('HFM4_INV_TRANSACTIONS')||'[]');}
+function saveInvTransactions(data){localStorage.setItem('HFM4_INV_TRANSACTIONS',JSON.stringify(data));if(getDbUrl())fbPut('/inventory/transactions',data).catch(()=>{});}
+function getMaterialRequests(){return JSON.parse(localStorage.getItem('HFM4_MATERIAL_REQUESTS')||'[]');}
+function saveMaterialRequests(data){localStorage.setItem('HFM4_MATERIAL_REQUESTS',JSON.stringify(data));if(getDbUrl())fbPut('/inventory/materialRequests',data).catch(()=>{});}
+function getDeptInventory(dept){const inv=getInventory();if(!inv[dept])inv[dept]={items:[]};return inv[dept];}
+function addInvTransaction(type,dept,itemName,qty,unit,ref,by){const txns=getInvTransactions();txns.push({type,dept,item:itemName,qty,unit,ref:ref||'manual',by:by||'',date:Date.now()});saveInvTransactions(txns);}
+function adminAddInvItem(){
+  const dept=document.getElementById('inv-dept').value;
+  const name=document.getElementById('inv-name').value.trim();
+  const unit=document.getElementById('inv-unit').value.trim()||'pcs';
+  const min=parseInt(document.getElementById('inv-min').value)||0;
+  if(!name){showToast2('⚠️ Enter item name');return;}
+  const inv=getInventory();
+  if(!inv[dept])inv[dept]={items:[]};
+  if(inv[dept].items.find(i=>i.name.toLowerCase()===name.toLowerCase())){showToast2('⚠️ Item already exists');return;}
+  inv[dept].items.push({name,unit,min,qty:0});
+  saveInventory(inv);
+  document.getElementById('inv-name').value='';document.getElementById('inv-unit').value='';document.getElementById('inv-min').value='';
+  renderInvItems();showToast2('✅ '+name+' added to '+getInvLabel(dept));
+}
+function adminRemoveInvItem(dept,idx){
+  if(!confirm('Remove this item?'))return;
+  const inv=getInventory();
+  if(inv[dept]&&inv[dept].items[idx]){const item=inv[dept].items[idx].name;inv[dept].items.splice(idx,1);saveInventory(inv);renderInvItems();showToast2('Removed '+item);}
+}
+function renderInvItems(){
+  const dept=document.getElementById('inv-dept').value;
+  const el=document.getElementById('inv-list');if(!el)return;
+  const data=getDeptInventory(dept);
+  document.getElementById('inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
+  const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
+  document.getElementById('inv-stats').textContent=total+' items · '+totalQty+' total stock · '+low+' low';
+  if(!data.items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items. Add one above.</div>';return;}
+  el.innerHTML=data.items.map((item,i)=>{
+    const lowStock=(item.qty||0)<=item.min;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${lowStock?'#FFF3E0':'#fff'}">
+      <div style="flex:1;min-width:120px">
+        <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
+        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+      </div>
+      <div style="font-size:18px;font-weight:900;color:${lowStock?'#E65100':'#2E7D32'};min-width:50px;text-align:center">${item.qty||0}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button onclick="storekeeperAddStock('${dept}',${i})" style="background:#E8F5E9;border:none;color:#2E7D32;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ IN</button>
+        <button onclick="storekeeperRemoveStock('${dept}',${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">− OUT</button>
+        <button onclick="adminRemoveInvItem('${dept}',${i})" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;padding:0 4px">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function storekeeperAddStock(dept,idx){
+  const qty=prompt('Enter quantity to add (IN):');
+  if(!qty)return;const n=parseFloat(qty);if(!n||n<=0)return;
+  const inv=getInventory();const item=inv[dept].items[idx];
+  item.qty=(item.qty||0)+n;saveInventory(inv);
+  addInvTransaction('IN',dept,item.name,n,item.unit,'storekeeper','Storekeeper');
+  renderInvItems();showToast2('✅ +'+n+' '+item.unit+' of '+item.name+' added');
+}
+function storekeeperRemoveStock(dept,idx){
+  const qty=prompt('Enter quantity to remove (OUT):');
+  if(!qty)return;const n=parseFloat(qty);if(!n||n<=0)return;
+  const inv=getInventory();const item=inv[dept].items[idx];
+  const cur=item.qty||0;
+  if(n>cur){if(!confirm('Only '+cur+' in stock. Record OUT of '+cur+'?'))return;item.qty=0;}else item.qty=cur-n;
+  saveInventory(inv);
+  addInvTransaction('OUT',dept,item.name,n,item.unit,'storekeeper','Storekeeper');
+  renderInvItems();showToast2('➖ -'+n+' '+item.unit+' of '+item.name+' removed');
+}
+function renderInvRequests(){
+  const el=document.getElementById('inv-requests');if(!el)return;
+  const reqs=getMaterialRequests();
+  if(!reqs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:16px;font-size:13px">No material requests yet.</div>';return;}
+  el.innerHTML=reqs.slice().reverse().map(r=>{
+    const ds={pending:'⏳ Pending',approved:'✅ Approved',fulfilled:'📦 Fulfilled',rejected:'❌ Rejected'};
+    const cs={pending:'#FFF8E1',approved:'#E8F5E9',fulfilled:'#E3F2FD',rejected:'#FFEBEE'};
+    const st=r.status||'pending';
+    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:6px;flex-wrap:wrap;background:${cs[st]};border-left:3px solid ${st==='pending'?'#FFC107':st==='approved'?'#4CAF50':st==='fulfilled'?'#2196F3':'#F44336'}">
+      <div style="flex:1;min-width:140px">
+        <div style="font-weight:700;font-size:13px">${r.item} <span style="font-size:11px;color:#90A4AE">× ${r.qty} ${r.unit||''}</span></div>
+        <div style="font-size:11px;color:#607D8B;margin-top:2px">${getInvLabel(r.dept)} · Requested by ${r.requestedBy||'—'}</div>
+        <div style="font-size:10px;color:#90A4AE;margin-top:1px">${r.createdAt?new Date(r.createdAt).toLocaleString('en-IN'):''}</div>
+        ${r.approvedBy?'<div style="font-size:10px;color:#2E7D32">Approved by '+r.approvedBy+'</div>':''}
+        ${r.fulfilledBy?'<div style="font-size:10px;color:#1565C0">Fulfilled by '+r.fulfilledBy+'</div>':''}
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:${cs[st]}">${ds[st]}</span>
+        ${st==='pending'?`<button onclick="approveMaterialRequest('${r.id}')" style="background:#2E7D32;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">✓ Approve</button>
+        <button onclick="rejectMaterialRequest('${r.id}')" style="background:#C62828;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">✕ Reject</button>`:''}
+        ${st==='approved'?`<button onclick="fulfillMaterialRequest('${r.id}')" style="background:#1565C0;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">📦 Fulfill</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function approveMaterialRequest(id){
+  const reqs=getMaterialRequests();const r=reqs.find(x=>x.id===id);if(!r)return;
+  r.status='approved';r.approvedBy=currentAdmin?.name||'Admin';r.updatedAt=Date.now();
+  saveMaterialRequests(reqs);renderInvRequests();renderAdminInvRequests();showToast2('✅ Request approved');
+}
+function rejectMaterialRequest(id){
+  const reqs=getMaterialRequests();const r=reqs.find(x=>x.id===id);if(!r)return;
+  r.status='rejected';r.updatedAt=Date.now();saveMaterialRequests(reqs);renderInvRequests();renderAdminInvRequests();showToast2('❌ Request rejected');
+}
+function fulfillMaterialRequest(id){
+  const reqs=getMaterialRequests();const r=reqs.find(x=>x.id===id);if(!r)return;
+  const inv=getInventory();const deptItems=inv[r.dept];
+  if(!deptItems){showToast2('⚠️ Department inventory not found');return;}
+  const item=deptItems.items.find(i=>i.name.toLowerCase()===r.item.toLowerCase());
+  if(item){item.qty=(item.qty||0)+(r.qty||0);}else{deptItems.items.push({name:r.item,unit:r.unit||'pcs',min:0,qty:r.qty||0});}
+  saveInventory(inv);
+  addInvTransaction('IN',r.dept,r.item,r.qty,r.unit||'pcs','material_request_'+id,'Storekeeper');
+  r.status='fulfilled';r.fulfilledBy=currentAdmin?.name||'Storekeeper';r.updatedAt=Date.now();
+  saveMaterialRequests(reqs);renderInvRequests();renderAdminInvRequests();showToast2('📦 Request fulfilled — stock updated');
+}
+function openMaterialRequest(){
+  const el=document.getElementById('mat-req-dept');if(el&&currentEmp)el.value=currentEmp.dept||'fm';
+  go('view-material-request');
+}
+function submitMaterialRequest(){
+  const dept=document.getElementById('mat-req-dept').value;
+  const item=document.getElementById('mat-req-item').value.trim();
+  const qty=parseFloat(document.getElementById('mat-req-qty').value);
+  const unit=document.getElementById('mat-req-unit').value.trim()||'pcs';
+  if(!dept||!item||!qty||qty<=0){showToast('⚠️ Fill all fields','#C62828');return;}
+  const reqs=getMaterialRequests();
+  reqs.push({id:'MR'+Date.now()+String(Math.random()).slice(2,6),dept,item,qty,unit,requestedBy:currentEmp?.name||'Employee',requestedByLoginId:currentEmp?.loginId||'',status:'pending',createdAt:Date.now(),updatedAt:Date.now()});
+  saveMaterialRequests(reqs);
+  document.getElementById('mat-req-item').value='';document.getElementById('mat-req-qty').value='';document.getElementById('mat-req-unit').value='';
+  showToast('✅ Material request submitted — awaiting admin approval','#2E7D32');
+  setTimeout(()=>go('view-home'),1500);
+}
+function renderEmployeeMatRequests(){
+  const el=document.getElementById('emp-mat-reqs');if(!el)return;
+  const reqs=getMaterialRequests().filter(r=>r.requestedByLoginId===currentEmp?.loginId);
+  if(!reqs.length){el.innerHTML='<div style="color:#90A4AE;font-size:12px;padding:8px 0">No requests yet.</div>';return;}
+  el.innerHTML=reqs.slice().reverse().map(r=>{
+    const ds={pending:'⏳ Pending',approved:'✅ Approved',fulfilled:'📦 Fulfilled',rejected:'❌ Rejected'};
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0F4F8">
+      <div style="font-size:12px"><strong>${r.item}</strong> × ${r.qty} ${r.unit||''}<br><span style="color:#90A4AE">${getInvLabel(r.dept)}</span></div>
+      <span style="font-size:11px;font-weight:700;color:${r.status==='fulfilled'?'#1565C0':r.status==='approved'?'#2E7D32':r.status==='rejected'?'#C62828':'#FF8F00'}">${ds[r.status]||r.status}</span>
+    </div>`;
+  }).join('');
+}
+function renderInvActivity(){
+  const el=document.getElementById('inv-activity');const filter=document.getElementById('inv-act-dept')?.value||'all';
+  if(!el)return;const txns=getInvTransactions().reverse();
+  const filtered=filter==='all'?txns:txns.filter(t=>t.dept===filter);
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:16px;font-size:13px">No activity yet.</div>';return;}
+  el.innerHTML=filtered.slice(0,100).map(t=>{
+    const c=t.type==='IN'?'#E8F5E9':'#FFEBEE';const ic=t.type==='IN'?'📥':'📤';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:${c};border-radius:6px;margin-bottom:3px;font-size:12px">
+      <div><span style="font-weight:700">${ic} ${t.item}</span> <span style="color:#607D8B">× ${t.qty} ${t.unit||''}</span><br><span style="color:#90A4AE;font-size:10px">${getInvLabel(t.dept)} · ${t.by||'—'} · ${t.date?new Date(t.date).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):''}</span></div>
+      <span style="font-weight:800;color:${t.type==='IN'?'#2E7D32':'#C62828'}">${t.type==='IN'?'+'+t.qty:'-'+t.qty}</span>
+    </div>`;
+  }).join('');
+}
+function renderInventorySummary(){
+  const el=document.getElementById('inv-summary');if(!el)return;
+  const inv=getInventory();const txns=getInvTransactions();
+  const totalItems=Object.values(inv).reduce((s,d)=>s+(d.items?.length||0),0);
+  const totalQty=Object.values(inv).reduce((s,d)=>s+(d.items||[]).reduce((s2,i)=>s2+(i.qty||0),0),0);
+  const lowItems=Object.entries(inv).flatMap(([d,data])=>(data.items||[]).filter(i=>(i.qty||0)<=i.min).map(i=>({...i,dept:d})));
+  const pendingReqs=getMaterialRequests().filter(r=>r.status==='pending').length;
+  let html=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+    <div style="text-align:center;padding:10px;background:#E3F2FD;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#1565C0">${totalItems}</div><div style="font-size:10px;color:#607D8B">Items</div></div>
+    <div style="text-align:center;padding:10px;background:#E8F5E9;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#2E7D32">${totalQty}</div><div style="font-size:10px;color:#607D8B">Total Stock</div></div>
+    <div style="text-align:center;padding:10px;background:#FFF3E0;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#E65100">${lowItems.length}</div><div style="font-size:10px;color:#607D8B">Low Stock</div></div>
+    <div style="text-align:center;padding:10px;background:#FFF8E1;border-radius:8px"><div style="font-size:20px;font-weight:900;color:#FF8F00">${pendingReqs}</div><div style="font-size:10px;color:#607D8B">Pending Reqs</div></div>
+  </div>`;
+  if(lowItems.length){html+=`<div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:6px">⚠️ Low Stock Items:</div>`+lowItems.slice(0,5).map(i=>`<div style="font-size:11px;padding:3px 0;color:#37474F">${INV_DEPT_ICONS[i.dept]||'📦'} ${i.name} — ${i.qty||0} ${i.unit} (min: ${i.min})</div>`).join('');}  el.innerHTML=html||'<div style="color:#90A4AE;font-size:12px">No inventory data.</div>';
+}
+function renderAdminInvRequests(){
+  const el=document.getElementById('admin-inv-requests');if(!el)return;
+  const reqs=getMaterialRequests().filter(r=>r.status==='pending'||r.status==='approved');
+  if(!reqs.length){el.innerHTML='<div style="color:#90A4AE;font-size:12px;padding:8px 0">No pending requests.</div>';return;}
+  el.innerHTML=reqs.slice().reverse().map(r=>{
+    const ds={pending:'⏳',approved:'✅',fulfilled:'📦',rejected:'❌'};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F0F4F8;font-size:12px">
+      <div><strong>${r.item}</strong> × ${r.qty} · ${getInvLabel(r.dept)}<br><span style="color:#90A4AE">${r.requestedBy} — ${new Date(r.createdAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>
+      <div style="display:flex;gap:4px">${ds[r.status]||''}
+        ${r.status==='pending'?`<button onclick="approveMaterialRequest('${r.id}')" style="background:#2E7D32;border:none;color:#fff;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">✓</button><button onclick="rejectMaterialRequest('${r.id}')" style="background:#C62828;border:none;color:#fff;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+// ══════════════════════════════════════════════════════
+// STOREKEEPER FUNCTIONS
+// ══════════════════════════════════════════════════════
+function skLogout(){currentAdmin=null;sessionStorage.removeItem('HFM4_ADMIN_SESSION');showLoginPage();}
+function loadStorekeeperDash(){
+  document.getElementById('sk-date').textContent='Today: '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('sk-name').textContent=currentAdmin?.name||'Storekeeper';
+  skRenderItems();skRenderRequests();skRenderActivity();
+}
+function skRenderItems(){
+  const dept=document.getElementById('sk-inv-dept').value;
+  const el=document.getElementById('sk-inv-list');if(!el)return;
+  const data=getDeptInventory(dept);
+  document.getElementById('sk-inv-dept-title').textContent=(INV_DEPT_ICONS[dept]||'📦')+' '+getInvLabel(dept)+' — Items';
+  const total=data.items.length;const totalQty=data.items.reduce((s,i)=>s+(i.qty||0),0);const low=data.items.filter(i=>(i.qty||0)<=i.min).length;
+  document.getElementById('sk-inv-stats').textContent=total+' items · '+totalQty+' total stock · '+low+' low';
+  if(!data.items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No items in this department.</div>';return;}
+  el.innerHTML=data.items.map((item,i)=>{
+    const lowStock=(item.qty||0)<=item.min;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:8px;flex-wrap:wrap;background:${lowStock?'#FFF3E0':'#fff'}">
+      <div style="flex:1;min-width:120px">
+        <div style="font-weight:700;font-size:13px">${item.name} ${lowStock?'<span style="color:#C62828;font-size:11px">⬇ Low</span>':''}</div>
+        <div style="font-size:11px;color:#90A4AE">Unit: ${item.unit} · Min: ${item.min}</div>
+      </div>
+      <div style="font-size:18px;font-weight:900;color:${lowStock?'#E65100':'#2E7D32'};min-width:50px;text-align:center">${item.qty||0}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button onclick="skAddStock('${dept}',${i})" style="background:#E8F5E9;border:none;color:#2E7D32;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ IN</button>
+        <button onclick="skRemoveStock('${dept}',${i})" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">− OUT</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function skAddStock(dept,idx){
+  const qty=prompt('Enter quantity to add (IN):');
+  if(!qty)return;const n=parseFloat(qty);if(!n||n<=0)return;
+  const inv=getInventory();const item=inv[dept].items[idx];
+  item.qty=(item.qty||0)+n;saveInventory(inv);
+  addInvTransaction('IN',dept,item.name,n,item.unit,'storekeeper',currentAdmin?.name||'Storekeeper');
+  skRenderItems();skRenderActivity();showToast2('✅ +'+n+' '+item.unit+' of '+item.name+' added');
+}
+function skRemoveStock(dept,idx){
+  const qty=prompt('Enter quantity to remove (OUT):');
+  if(!qty)return;const n=parseFloat(qty);if(!n||n<=0)return;
+  const inv=getInventory();const item=inv[dept].items[idx];
+  const cur=item.qty||0;
+  if(n>cur){if(!confirm('Only '+cur+' in stock. Record OUT of '+cur+'?'))return;item.qty=0;}else item.qty=cur-n;
+  saveInventory(inv);
+  addInvTransaction('OUT',dept,item.name,n,item.unit,'storekeeper',currentAdmin?.name||'Storekeeper');
+  skRenderItems();skRenderActivity();showToast2('➖ -'+n+' '+item.unit+' of '+item.name+' removed');
+}
+function skRenderRequests(){
+  const el=document.getElementById('sk-inv-requests');if(!el)return;
+  const reqs=getMaterialRequests();
+  if(!reqs.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:16px;font-size:13px">No material requests.</div>';return;}
+  el.innerHTML=reqs.slice().reverse().map(r=>{
+    const ds={pending:'⏳ Pending',approved:'✅ Approved',fulfilled:'📦 Fulfilled',rejected:'❌ Rejected'};
+    const cs={pending:'#FFF8E1',approved:'#E8F5E9',fulfilled:'#E3F2FD',rejected:'#FFEBEE'};
+    const st=r.status||'pending';
+    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;border-bottom:1px solid #F0F4F8;gap:6px;flex-wrap:wrap;background:${cs[st]};border-left:3px solid ${st==='pending'?'#FFC107':st==='approved'?'#4CAF50':st==='fulfilled'?'#2196F3':'#F44336'}">
+      <div style="flex:1;min-width:140px">
+        <div style="font-weight:700;font-size:13px">${r.item} <span style="font-size:11px;color:#90A4AE">× ${r.qty} ${r.unit||''}</span></div>
+        <div style="font-size:11px;color:#607D8B;margin-top:2px">${getInvLabel(r.dept)} · Requested by ${r.requestedBy||'—'}</div>
+        <div style="font-size:10px;color:#90A4AE;margin-top:1px">${r.createdAt?new Date(r.createdAt).toLocaleString('en-IN'):''}</div>
+        ${r.approvedBy?'<div style="font-size:10px;color:#2E7D32">Approved by '+r.approvedBy+'</div>':''}
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:${cs[st]}">${ds[st]}</span>
+        ${st==='approved'?`<button onclick="skFulfill('${r.id}')" style="background:#1565C0;border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">📦 Fulfill</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function skFulfill(id){
+  const reqs=getMaterialRequests();const r=reqs.find(x=>x.id===id);if(!r)return;
+  const inv=getInventory();const deptItems=inv[r.dept];
+  if(!deptItems){showToast2('⚠️ Department inventory not found');return;}
+  const item=deptItems.items.find(i=>i.name.toLowerCase()===r.item.toLowerCase());
+  if(item){item.qty=(item.qty||0)+(r.qty||0);}else{deptItems.items.push({name:r.item,unit:r.unit||'pcs',min:0,qty:r.qty||0});}
+  saveInventory(inv);
+  addInvTransaction('IN',r.dept,r.item,r.qty,r.unit||'pcs','material_request_'+id,currentAdmin?.name||'Storekeeper');
+  r.status='fulfilled';r.fulfilledBy=currentAdmin?.name||'Storekeeper';r.updatedAt=Date.now();
+  saveMaterialRequests(reqs);skRenderRequests();skRenderItems();showToast2('📦 Request fulfilled — stock updated');
+}
+function skRenderActivity(){
+  const el=document.getElementById('sk-inv-activity');const filter=document.getElementById('sk-inv-act-dept')?.value||'all';
+  if(!el)return;const txns=getInvTransactions().reverse();
+  const filtered=filter==='all'?txns:txns.filter(t=>t.dept===filter);
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:16px;font-size:13px">No activity yet.</div>';return;}
+  el.innerHTML=filtered.slice(0,100).map(t=>{
+    const c=t.type==='IN'?'#E8F5E9':'#FFEBEE';const ic=t.type==='IN'?'📥':'📤';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:${c};border-radius:6px;margin-bottom:3px;font-size:12px">
+      <div><span style="font-weight:700">${ic} ${t.item}</span> <span style="color:#607D8B">× ${t.qty} ${t.unit||''}</span><br><span style="color:#90A4AE;font-size:10px">${getInvLabel(t.dept)} · ${t.by||'—'} · ${t.date?new Date(t.date).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):''}</span></div>
+      <span style="font-weight:800;color:${t.type==='IN'?'#2E7D32':'#C62828'}">${t.type==='IN'?'+'+t.qty:'-'+t.qty}</span>
+    </div>`;
+  }).join('');
+}
 </body>
 </html>
