@@ -7609,18 +7609,23 @@ function onRoomChecklistRoomChange(){
   if(!items.length){el.innerHTML='<div style="text-align:center;color:#90A4AE;padding:20px">No checklist items for this room. Ask admin to add items.</div>';progEl.textContent='0/0';return;}
   const saved=getRoomChkProgress(room);
   const commonCount=common.length;
-  const done=items.filter((_,i)=>saved[i]).length;
-  progEl.textContent=done+'/'+items.length;
+  let ok=0,fault=0,na=0,total=0;
+  items.forEach((_,i)=>{const v=saved[i];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;});
+  const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
+  progEl.innerHTML=`<span style="color:#2E7D32;font-weight:800">OK ${ok}</span> <span style="color:#C62828;font-weight:800">Fault ${fault}</span> <span style="color:#78909C">N/A ${na}</span> <span style="color:#90A4AE;margin-left:4px">|</span> <span style="color:#37474F;font-weight:700">${ok+na+fault}/${total}</span> <span style="color:#1565C0;font-weight:800">${pct}%</span>`;
   let html='';
   // Common items section
   if(common.length){
     html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:800;color:#1B5E20;padding:6px 0 4px;border-bottom:2px solid #A5D6A7;margin-bottom:6px">📋 Common Items</div>`;
     html+=common.map((item,i)=>{
-      const checked=saved[i]||false;
-      const bg=checked?'#E8F5E9':'#fff';
-      return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer;margin-bottom:5px" onclick="toggleRoomChkItem(${i})">
-        <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
-        <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+      const v=saved[i];
+      return `<div class="item-row" style="margin-bottom:5px;border-radius:9px;border:1px solid #E0E0E0">
+        <span class="item-txt" style="font-size:14px;font-weight:600;color:#37474F;padding:4px 0">${item}</span>
+        <div class="s-btns">
+          <button class="sb ${v==='OK'?'ok':''}" onclick="setRoomChkStatus(${i},'OK',this)">✓ OK</button>
+          <button class="sb ${v==='Fault'?'fault':''}" onclick="setRoomChkStatus(${i},'Fault',this)">✗ Fault</button>
+          <button class="sb ${v==='N/A'?'na':''}" onclick="setRoomChkStatus(${i},'N/A',this)">— N/A</button>
+        </div>
       </div>`;
     }).join('');
     html+=`</div>`;
@@ -7630,22 +7635,27 @@ function onRoomChecklistRoomChange(){
     html+=`<div style="margin-top:${common.length?'8px':'0'}"><div style="font-size:11px;font-weight:800;color:#00838F;padding:6px 0 4px;border-bottom:2px solid #80DEEA;margin-bottom:6px">🛏️ ${room} — Specific Items</div>`;
     html+=roomItems.map((item,i)=>{
       const idx=commonCount+i;
-      const checked=saved[idx]||false;
-      const bg=checked?'#E8F5E9':'#fff';
-      return `<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:${bg};border-radius:9px;border:1px solid ${checked?'#A5D6A7':'#E0E0E0'};cursor:pointer;margin-bottom:5px" onclick="toggleRoomChkItem(${idx})">
-        <input type="checkbox" ${checked?'checked':''} style="width:19px;height:19px;cursor:pointer;flex-shrink:0">
-        <span style="font-size:14px;font-weight:${checked?'400':'600'};color:${checked?'#2E7D32':'#37474F'};${checked?'text-decoration:line-through':''}">${item}</span>
+      const v=saved[idx];
+      return `<div class="item-row" style="margin-bottom:5px;border-radius:9px;border:1px solid #E0E0E0">
+        <span class="item-txt" style="font-size:14px;font-weight:600;color:#37474F;padding:4px 0">${item}</span>
+        <div class="s-btns">
+          <button class="sb ${v==='OK'?'ok':''}" onclick="setRoomChkStatus(${idx},'OK',this)">✓ OK</button>
+          <button class="sb ${v==='Fault'?'fault':''}" onclick="setRoomChkStatus(${idx},'Fault',this)">✗ Fault</button>
+          <button class="sb ${v==='N/A'?'na':''}" onclick="setRoomChkStatus(${idx},'N/A',this)">— N/A</button>
+        </div>
       </div>`;
     }).join('');
     html+=`</div>`;
   }
   el.innerHTML=html;
 }
-function toggleRoomChkItem(idx){
+function setRoomChkStatus(idx,val,btn){
   const sel=document.getElementById('rchk-room');
   const room=sel.value; if(!room)return;
   const saved=getRoomChkProgress(room);
-  saved[idx]=!saved[idx];
+  // Convert old boolean format to status string
+  if(saved[idx]===true||saved[idx]===false) delete saved[idx];
+  saved[idx]=saved[idx]===val?undefined:val;
   saved.empName=currentEmp?.name||'Employee';
   saved.empLoginId=currentEmp?.loginId||'';
   saveRoomChkProgress(room,saved);
