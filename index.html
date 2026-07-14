@@ -2148,6 +2148,94 @@ const SECTIONS=[
     {t:'Main incoming power frequency',u:'Hz',ph:'e.g. 50.0',mn:49,mx:51},
     {t:'Building total electrical load',u:'%',ph:'e.g. 65',mn:0,mx:100},
   ]},
+  {name:'GROUND FLOOR — General',color:'#00695C',items:[
+    'Ground floor corridor: Clean, no obstacles',
+    'Ground floor lights: All working',
+    'Ground floor fans: All working',
+    'Ground floor bathroom(s): Clean, no leaks',
+    'Ground floor fire extinguisher: Present, tagged, charged',
+    'Ground floor fire alarm: Panel no faults',
+    'Ground floor fire sprinklers: No blockage',
+    'Ground floor windows and doors: Secure, no damage',
+    'Ground floor furniture: No damage',
+  ]},
+  {name:'1ST FLOOR — General',color:'#00796B',items:[
+    '1st floor corridor: Clean, no obstacles',
+    '1st floor lights: All working',
+    '1st floor fans: All working',
+    '1st floor bathroom(s): Clean, no leaks',
+    '1st floor fire extinguisher: Present, tagged, charged',
+    '1st floor fire alarm: Panel no faults',
+    '1st floor fire sprinklers: No blockage',
+    '1st floor windows and doors: Secure, no damage',
+    '1st floor furniture: No damage',
+  ]},
+  {name:'2ND FLOOR — General',color:'#00897B',items:[
+    '2nd floor corridor: Clean, no obstacles',
+    '2nd floor lights: All working',
+    '2nd floor fans: All working',
+    '2nd floor bathroom(s): Clean, no leaks',
+    '2nd floor fire extinguisher: Present, tagged, charged',
+    '2nd floor fire alarm: Panel no faults',
+    '2nd floor fire sprinklers: No blockage',
+    '2nd floor windows and doors: Secure, no damage',
+    '2nd floor furniture: No damage',
+  ]},
+  {name:'3RD FLOOR — General',color:'#009688',items:[
+    '3rd floor corridor: Clean, no obstacles',
+    '3rd floor lights: All working',
+    '3rd floor fans: All working',
+    '3rd floor bathroom(s): Clean, no leaks',
+    '3rd floor fire extinguisher: Present, tagged, charged',
+    '3rd floor fire alarm: Panel no faults',
+    '3rd floor fire sprinklers: No blockage',
+    '3rd floor windows and doors: Secure, no damage',
+    '3rd floor furniture: No damage',
+  ]},
+  {name:'4TH FLOOR — General',color:'#26A69A',items:[
+    '4th floor corridor: Clean, no obstacles',
+    '4th floor lights: All working',
+    '4th floor fans: All working',
+    '4th floor bathroom(s): Clean, no leaks',
+    '4th floor fire extinguisher: Present, tagged, charged',
+    '4th floor fire alarm: Panel no faults',
+    '4th floor fire sprinklers: No blockage',
+    '4th floor windows and doors: Secure, no damage',
+    '4th floor furniture: No damage',
+  ]},
+  {name:'5TH FLOOR — General',color:'#4DB6AC',items:[
+    '5th floor corridor: Clean, no obstacles',
+    '5th floor lights: All working',
+    '5th floor fans: All working',
+    '5th floor bathroom(s): Clean, no leaks',
+    '5th floor fire extinguisher: Present, tagged, charged',
+    '5th floor fire alarm: Panel no faults',
+    '5th floor fire sprinklers: No blockage',
+    '5th floor windows and doors: Secure, no damage',
+    '5th floor furniture: No damage',
+  ]},
+  {name:'6TH FLOOR — General',color:'#80CBC4',items:[
+    '6th floor corridor: Clean, no obstacles',
+    '6th floor lights: All working',
+    '6th floor fans: All working',
+    '6th floor bathroom(s): Clean, no leaks',
+    '6th floor fire extinguisher: Present, tagged, charged',
+    '6th floor fire alarm: Panel no faults',
+    '6th floor fire sprinklers: No blockage',
+    '6th floor windows and doors: Secure, no damage',
+    '6th floor furniture: No damage',
+  ]},
+  {name:'7TH FLOOR — General',color:'#B2DFDB',items:[
+    '7th floor corridor: Clean, no obstacles',
+    '7th floor lights: All working',
+    '7th floor fans: All working',
+    '7th floor bathroom(s): Clean, no leaks',
+    '7th floor fire extinguisher: Present, tagged, charged',
+    '7th floor fire alarm: Panel no faults',
+    '7th floor fire sprinklers: No blockage',
+    '7th floor windows and doors: Secure, no damage',
+    '7th floor furniture: No damage',
+  ]},
 ];
 const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 
@@ -3703,27 +3791,10 @@ function buildChkItem(si,ii,item){
   </div>`;
 }
 
-function getFloorRoomSections(){
-  const all=getRoomChkAll();
-  const common=all.__common__||[];
-  const roomKeys=Object.keys(all).filter(k=>k!=='__common__').sort();
-  // Extract floor prefix (everything before " — ")
-  const floorMap={};
-  roomKeys.forEach(r=>{
-    const parts=r.split('—');
-    const floor=parts[0].trim();
-    if(!floorMap[floor]) floorMap[floor]={label:floor,rooms:[]};
-    (all[r]||[]).forEach(t=>floorMap[floor].rooms.push({room:r,text:t}));
-  });
-  const floors=Object.keys(floorMap).sort();
-  return {common,floors:floors.map(f=>floorMap[f])};
-}
-
 function buildChk(){
   // Build merged sections: standard items + custom items per section
   const customItems=cfg.customItems||[];
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
-  const rs=getFloorRoomSections();
   document.getElementById('chk-body').innerHTML=SECTIONS.map((sec,si)=>{
     const secCustom=customItems.filter(c=>c.sectionIdx===si);
     const allItems=[...sec.items,...secCustom];
@@ -3732,20 +3803,6 @@ function buildChk(){
     </div>
     <div class="sec-body" id="sb-${si}">
       ${allItems.map((item,ii)=>buildChkItem(si,ii,item)).join('')}
-    </div>`;
-  }).join('')+(rs.common.length?`
-    <div class="sec-hdr" style="background:#00695C" onclick="toggleSec(100)">
-      <span>📋 Common Room Items</span><span id="arr-100">▾</span>
-    </div>
-    <div class="sec-body" id="sb-100">
-      ${rs.common.map((item,ii)=>buildChkItem(100,ii,item)).join('')}
-    </div>`:'')+rs.floors.map((floor,fi)=>{
-    const sectionIdx=101+fi;
-    return `<div class="sec-hdr" style="background:#00838F" onclick="toggleSec(${sectionIdx})">
-      <span>🛏️ ${floor.label}</span><span id="arr-${sectionIdx}">▾</span>
-    </div>
-    <div class="sec-body" id="sb-${sectionIdx}">
-      ${floor.rooms.map((item,ii)=>buildChkItem(sectionIdx,ii,{text:item.room+': '+item.text})).join('')}
     </div>`;
   }).join('')+(empItems.length?`
     <div class="sec-hdr" style="background:#6A1B9A" onclick="toggleSec(99)">
@@ -3789,12 +3846,6 @@ function updateCounts(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const rs=getFloorRoomSections();
-  for(let ii=0;ii<rs.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  rs.floors.forEach((floor,fi)=>{
-    const sectionIdx=101+fi;
-    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[sectionIdx+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   document.getElementById('ok-n').textContent=ok;
   document.getElementById('fault-n').textContent=fault+' fault'+(fault!==1?'s':'');
@@ -3822,21 +3873,6 @@ function saveProgress(extra={}){
     if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
     total++;
   }
-  // Also count room checklist items (section 100 for common, 101+ for floors)
-  const rs=getFloorRoomSections();
-  for(let ii=0;ii<rs.common.length;ii++){
-    const v=statuses['100,'+ii];
-    if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
-    total++;
-  }
-  rs.floors.forEach((floor,fi)=>{
-    const sectionIdx=101+fi;
-    for(let ii=0;ii<floor.rooms.length;ii++){
-      const v=statuses[sectionIdx+','+ii];
-      if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
-      total++;
-    }
-  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const data={...saved,statuses,values,problems,ok,fault,na,pct,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
   localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
@@ -3902,12 +3938,6 @@ function buildReport(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const rs1=getFloorRoomSections();
-  for(let ii=0;ii<rs1.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  rs1.floors.forEach((floor,fi)=>{
-    const si=101+fi;
-    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  });
   const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const grade=pct>=95?'A ⭐':pct>=85?'B ✅':pct>=70?'C ⚠️':'D 🔴';
   const faultItems=[];
@@ -3946,12 +3976,6 @@ function completeShift(){
   });
   const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
   for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  const rs2=getFloorRoomSections();
-  for(let ii=0;ii<rs2.common.length;ii++){const v=statuses['100,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  rs2.floors.forEach((floor,fi)=>{
-    const si=101+fi;
-    for(let ii=0;ii<floor.rooms.length;ii++){const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
-  });
   const pct=total>0?Math.min(100,Math.floor(ok/(total-na)*100)):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
