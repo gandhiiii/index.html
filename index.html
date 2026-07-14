@@ -1036,7 +1036,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          <div><label>Doctor Name</label><input id="padm-doctor" type="text" placeholder="e.g. Dr. Sharma"></div>
+          <div><label>Patient ID</label><input id="padm-doctor" type="text" placeholder="e.g. P12345"></div>
           <div><label>Admission Date</label><input id="padm-date-input" type="date"></div>
           <div><label>Contact</label><input id="padm-contact" type="tel" placeholder="Phone number"></div>
         </div>
@@ -1840,7 +1840,7 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-            <div><label>Doctor</label><input id="adm-padm-doctor" type="text" placeholder="Dr. Name"></div>
+            <div><label>Patient ID</label><input id="adm-padm-doctor" type="text" placeholder="e.g. P12345"></div>
             <div><label>Date</label><input id="adm-padm-date" type="date"></div>
             <div><label>Contact</label><input id="adm-padm-contact" type="tel" placeholder="Phone"></div>
           </div>
@@ -7997,7 +7997,7 @@ function renderAdmissions(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px">
         <div>
           <strong>👤 ${a.name}</strong> · 🛏️ ${a.room} · 🛌 Bed ${a.bed}
-          ${a.doctor?'<br>👨‍⚕️ '+a.doctor:''}${a.contact?'<br>📞 '+a.contact:''}
+          ${a.doctor?'<br>🆔 '+a.doctor:''}${a.contact?'<br>📞 '+a.contact:''}
           ${a.notes?'<br>📝 '+a.notes:''}
           <div style="font-size:11px;color:#90A4AE;margin-top:4px">Admitted by ${a.admittedBy} at ${ts}</div>
         </div>
@@ -8050,7 +8050,7 @@ function renderAdminAdmissions(){
     return `<div class="fi" style="border-color:${isDischarged?'#37474F':'#4A148C'};background:${isDischarged?'#F5F5F5':'#F3E5F5'};${isDischarged?'opacity:.6':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div style="flex:1">
-          <div><strong>${a.name}</strong> · 🛏️ ${a.room} · 🛌 Bed ${a.bed}${a.doctor?' · 👨‍⚕️ '+a.doctor:''}</div>
+          <div><strong>${a.name}</strong> · 🛏️ ${a.room} · 🛌 Bed ${a.bed}${a.doctor?' · 🆔 '+a.doctor:''}</div>
           <div style="font-size:12px;color:#607D8B;margin-top:3px">📞 ${a.contact||'—'} · 📅 ${a.admissionDate||'—'} ${a.notes?'· 📝 '+a.notes:''}</div>
           <div style="font-size:11px;color:#90A4AE;margin-top:2px">👤 ${a.admittedBy} · ${ts}${isDischarged?' · ✅ Discharged at '+new Date(a.dischargedAt).toLocaleString('en-IN'):''}</div>
         </div>
@@ -8156,7 +8156,7 @@ function onDischargePatientSelect(){
     infoEl.innerHTML=`<div class="card" style="border-left:4px solid #37474F;background:#F5F5F5;margin-top:0">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
         <div><strong style="font-size:16px">👤 ${patient.name}</strong> · 🛏️ ${patient.room} · 🛌 Bed ${patient.bed.toUpperCase()}</div>
-        <span style="font-size:12px;color:#607D8B">${patient.doctor?'👨‍⚕️ '+patient.doctor:''} ${patient.admissionDate?'· 📅 '+patient.admissionDate:''}</span>
+        <span style="font-size:12px;color:#607D8B">${patient.doctor?'🆔 '+patient.doctor:''} ${patient.admissionDate?'· 📅 '+patient.admissionDate:''}</span>
       </div>
     </div>`;
   }
