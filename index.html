@@ -3625,22 +3625,43 @@ function setStatus(si,ii,btn,v){
 }
 
 function updateCounts(){
-  const vals=Object.values(statuses);
-  const ok=vals.filter(v=>v==='OK').length;
-  const fault=vals.filter(v=>v==='Fault').length;
-  const na=vals.filter(v=>v==='N/A').length;
-  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
+  let ok=0,fault=0,na=0,total=0;
+  SECTIONS.forEach((sec,si)=>{
+    const custCount=(cfg.customItems||[]).filter(c=>c.sectionIdx===si).length;
+    for(let ii=0;ii<sec.items.length+custCount;ii++){
+      const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;
+    }
+  });
+  const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
+  for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   document.getElementById('ok-n').textContent=ok;
   document.getElementById('fault-n').textContent=fault+' fault'+(fault!==1?'s':'');
   document.getElementById('pfill').style.width=pct+'%';
-  document.getElementById('prog-txt').textContent=ok+' / '+TOTAL+' ('+pct+'%)';
+  document.getElementById('prog-txt').textContent=ok+' / '+total+' ('+pct+'%)';
 }
 
 function saveProgress(extra={}){
   const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
-  const vals=Object.values(statuses||{});
-  const ok=vals.filter(v=>v==='OK').length,fault=vals.filter(v=>v==='Fault').length,na=vals.filter(v=>v==='N/A').length;
-  const eff=(TOTAL||0)-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
+  // Count only standard items (si < SECTIONS.length, ii < sec.items.length)
+  let ok=0,fault=0,na=0,total=0;
+  SECTIONS.forEach((sec,si)=>{
+    const custCount=(cfg.customItems||[]).filter(c=>c.sectionIdx===si).length;
+    const secTotal=sec.items.length+custCount;
+    for(let ii=0;ii<secTotal;ii++){
+      const v=statuses[si+','+ii];
+      if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
+      total++;
+    }
+  });
+  // Also count employee custom items (section 99)
+  const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
+  for(let ii=0;ii<empItems.length;ii++){
+    const v=statuses['99,'+ii];
+    if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;
+    total++;
+  }
+  const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const data={...saved,statuses,values,problems,ok,fault,na,pct,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
   localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
   // Push to Firebase for live admin tracking — use PUT (more reliable than PATCH on mobile)
@@ -3692,11 +3713,16 @@ function removeProb(i){problems.splice(i,1);renderProbs();saveProgress();}
 
 // Build report text
 function buildReport(){
-  const vals=Object.values(statuses);
-  const ok=vals.filter(v=>v==='OK').length;
-  const fault=vals.filter(v=>v==='Fault').length;
-  const na=vals.filter(v=>v==='N/A').length;
-  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
+  let ok=0,fault=0,na=0,total=0;
+  SECTIONS.forEach((sec,si)=>{
+    const custCount=(cfg.customItems||[]).filter(c=>c.sectionIdx===si).length;
+    for(let ii=0;ii<sec.items.length+custCount;ii++){
+      const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;
+    }
+  });
+  const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
+  for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const grade=pct>=95?'A ⭐':pct>=85?'B ✅':pct>=70?'C ⚠️':'D 🔴';
   const faultItems=[];
   SECTIONS.forEach((sec,si)=>sec.items.forEach((item,ii)=>{if(statuses[si+','+ii]==='Fault')faultItems.push('  • '+sec.name.split('—')[0].trim()+': '+item);}));
@@ -3725,8 +3751,16 @@ function buildReport(){
 }
 
 function completeShift(){
-  const vals=Object.values(statuses);
-  const pct=vals.length>0?Math.min(100,Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100)):0;
+  let ok=0,fault=0,na=0,total=0;
+  SECTIONS.forEach((sec,si)=>{
+    const custCount=(cfg.customItems||[]).filter(c=>c.sectionIdx===si).length;
+    for(let ii=0;ii<sec.items.length+custCount;ii++){
+      const v=statuses[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;
+    }
+  });
+  const empItems=(cfg.empChecklists&&currentEmp&&cfg.empChecklists[currentEmp.loginId])||[];
+  for(let ii=0;ii<empItems.length;ii++){const v=statuses['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+  const pct=total>0?Math.min(100,Math.floor(ok/(total-na)*100)):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
   sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-'+Date.now());
@@ -3844,9 +3878,18 @@ function renderAdmin(){
   cfg.employees.forEach(emp=>{
     const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+emp.loginId)||'null');
     if(!saved){empBars.push(`<div class="chart-bar-row"><div class="chart-bar-name" title="${emp.name}">${emp.name}</div><div style="flex:1;font-size:11px;color:#90A4AE">Not started</div><div class="chart-bar-pct">—</div></div>`);return;}
-    const vals=Object.values(saved.statuses||{});
-    const ok=vals.filter(v=>v==='OK').length,fault=vals.filter(v=>v==='Fault').length,na=vals.filter(v=>v==='N/A').length;
-    const eff=TOTAL-na;const rawPct=eff>0?Math.round(ok/eff*100):0;const pct=Math.min(100,rawPct);
+    const s=saved.statuses||{};
+    let ok=0,fault=0,na=0,total=0;
+    SECTIONS.forEach((sec,si)=>{
+      const custCount=(cfg.customItems||[]).filter(c=>c.sectionIdx===si).length;
+      for(let ii=0;ii<sec.items.length+custCount;ii++){
+        const v=s[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;
+      }
+    });
+    const empItems=(cfg.empChecklists&&emp&&cfg.empChecklists[emp.loginId])||[];
+    for(let ii=0;ii<empItems.length;ii++){const v=s['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
+    const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
+    console.log(emp.loginId+': ok='+ok+' fault='+fault+' na='+na+' total='+total+' eff='+eff+' pct='+pct+' statusKeys='+Object.keys(s).length);
     const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
     const fill=pct>=80?'linear-gradient(90deg,#2E7D32,#66BB6A)':pct>=50?'linear-gradient(90deg,#1976D2,#42A5F5)':'linear-gradient(90deg,#C62828,#EF5350)';
     totalOk+=ok;totalFault+=fault;totalNa+=na;totalPct+=pct;count++;
@@ -4358,14 +4401,20 @@ function removeEmployee(i, src){
 function getEmpData(emp,repDate){
   const saved=JSON.parse(localStorage.getItem('HFM4_'+repDate+'_'+emp.loginId)||'null');
   if(!saved)return null;
-  const vals=Object.values(saved.statuses||{});
-  const ok=vals.filter(v=>v==='OK').length;
-  const fault=vals.filter(v=>v==='Fault').length;
-  const na=vals.filter(v=>v==='N/A').length;
+  const s=saved.statuses||{};
+  let ok=0,fault=0,na=0,total=0;
+  SECTIONS.forEach((sec,si)=>{
+    const custCount=((cfg||{}).customItems||[]).filter(c=>c.sectionIdx===si).length;
+    for(let ii=0;ii<sec.items.length+custCount;ii++){
+      const v=s[si+','+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;
+    }
+  });
+  const empItems=((cfg||{}).empChecklists&&emp&&cfg.empChecklists[emp.loginId])||[];
+  for(let ii=0;ii<empItems.length;ii++){const v=s['99,'+ii];if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;total++;}
   const checked=ok+fault+na;
-  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
+  const eff=total-na;const pct=eff>0?Math.min(100,Math.floor(ok/eff*100)):0;
   const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
-  return {saved,ok,fault,na,checked,pct,grade,done:!!saved.shiftCompleted};
+  return {saved,ok,fault,na,checked,pct,grade,done:!!saved.shiftCompleted,total};
 }
 
 function downloadExcel(){
@@ -4441,7 +4490,7 @@ function downloadExcel(){
   ];
   allEmpData.forEach(({emp,data})=>{
     if(!data){kpiRows.push([emp.name,emp.loginId,0,0,0,TOTAL,'0%','—','No','—']);return;}
-    kpiRows.push([emp.name,emp.loginId,data.ok,data.fault,data.na,TOTAL-data.checked,data.pct+'%',data.grade,data.done?'Yes':'No',data.saved.updated?fmtTS(data.saved.updated):'—']);
+    kpiRows.push([emp.name,emp.loginId,data.ok,data.fault,data.na,Math.max(0,data.total-data.checked),data.pct+'%',data.grade,data.done?'Yes':'No',data.saved.updated?fmtTS(data.saved.updated):'—']);
   });
   kpiRows.push([''],['TOTALS','',active.reduce((s,e)=>s+e.data.ok,0),totalFault,active.reduce((s,e)=>s+e.data.na,0),'',avgPct+'% avg','','','']);
   const ws1=XLSX.utils.aoa_to_sheet(kpiRows);
