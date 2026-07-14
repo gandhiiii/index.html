@@ -7625,6 +7625,7 @@ function onRoomChecklistRoomChange(){
           <button class="sb ${v==='OK'?'ok':''}" onclick="setRoomChkStatus(${i},'OK',this)">✓ OK</button>
           <button class="sb ${v==='Fault'?'fault':''}" onclick="setRoomChkStatus(${i},'Fault',this)">✗ Fault</button>
           <button class="sb ${v==='N/A'?'na':''}" onclick="setRoomChkStatus(${i},'N/A',this)">— N/A</button>
+          <button class="sb" style="color:#E65100;border-color:#FFCC02" onclick="reportRoomProblem(${i})">⚠️ Problem</button>
         </div>
       </div>`;
     }).join('');
@@ -7642,9 +7643,20 @@ function onRoomChecklistRoomChange(){
           <button class="sb ${v==='OK'?'ok':''}" onclick="setRoomChkStatus(${idx},'OK',this)">✓ OK</button>
           <button class="sb ${v==='Fault'?'fault':''}" onclick="setRoomChkStatus(${idx},'Fault',this)">✗ Fault</button>
           <button class="sb ${v==='N/A'?'na':''}" onclick="setRoomChkStatus(${idx},'N/A',this)">— N/A</button>
+          <button class="sb" style="color:#E65100;border-color:#FFCC02" onclick="reportRoomProblem(${idx})">⚠️ Problem</button>
         </div>
       </div>`;
     }).join('');
+    html+=`</div>`;
+  }
+  // Reported problems for this room
+  const roomProbs=JSON.parse(localStorage.getItem('HFM4_ROOM_PROBLEMS_'+room.replace(/\s+/g,'_'))||'[]');
+  if(roomProbs.length){
+    html+=`<div style="margin-top:14px"><div style="font-size:11px;font-weight:800;color:#E65100;padding:6px 0 4px;border-bottom:2px solid #FFCC02;margin-bottom:6px">⚠️ Reported Problems (${roomProbs.length})</div>`;
+    html+=roomProbs.map(p=>`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 10px;background:#FFF8E1;border-radius:7px;margin-bottom:4px;border-left:3px solid #FFB300">
+        <div style="font-size:12px"><strong>${p.item}</strong><br><span style="color:#555">${p.desc}</span><br><span style="color:#90A4AE;font-size:10px">${p.empName} · ${p.date} ${p.time}</span></div>
+      </div>`).join('');
     html+=`</div>`;
   }
   el.innerHTML=html;
@@ -7660,6 +7672,25 @@ function setRoomChkStatus(idx,val,btn){
   saved.empLoginId=currentEmp?.loginId||'';
   saveRoomChkProgress(room,saved);
   onRoomChecklistRoomChange();
+}
+function reportRoomProblem(idx){
+  const sel=document.getElementById('rchk-room');
+  const room=sel.value; if(!room)return;
+  const all=getRoomChkAll();
+  const common=all.__common__||[];
+  const roomItems=all[room]||[];
+  const items=[...common,...roomItems];
+  const itemText=items[idx]||'Unknown item';
+  const desc=prompt('Describe the problem with "'+itemText+'" in '+room+':');
+  if(!desc||!desc.trim())return;
+  const roomProbs=JSON.parse(localStorage.getItem('HFM4_ROOM_PROBLEMS_'+room.replace(/\s+/g,'_'))||'[]');
+  roomProbs.push({item:itemText,desc:desc.trim(),time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),date:new Date().toLocaleDateString('en-IN'),empName:currentEmp?.name||'Employee'});
+  localStorage.setItem('HFM4_ROOM_PROBLEMS_'+room.replace(/\s+/g,'_'),JSON.stringify(roomProbs));
+  showToast('⚠️ Problem reported for "'+itemText+'"');
+  // OpenWA — notify admin
+  if(cfg.waNum) sendOpenWA(cfg.waNum,
+    '🚨 *Room Problem Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+
+    '\n🛏️ '+room+'\n📋 '+itemText+'\n📝 '+desc);
 }
 
 // ── ADMIN ROOM CHECKLIST ────────────────────────────
