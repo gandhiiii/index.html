@@ -1395,6 +1395,24 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <div id="settings-openwa-result" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
         </div>
       </div>
+      <!-- Novu Push Notifications -->
+      <div class="card" style="border-left:4px solid #E91E63;background:#FCE4EC">
+        <h3 style="font-size:14px;font-weight:800;color:#880E4F;margin-bottom:4px">🔔 Novu — Push Notifications</h3>
+        <p style="font-size:12px;color:#AD1457;margin-bottom:10px;line-height:1.5">
+          Send push notifications via <a href="https://novu.co" target="_blank" style="color:#C62828">novu.co</a> for faults, problems, task assignments, and shift completions.
+        </p>
+        <div id="novu-current-info" style="font-size:12px;margin-bottom:10px;padding:7px 10px;border-radius:7px;word-break:break-all;font-weight:700"></div>
+        <div style="display:grid;gap:8px">
+          <div><label>Secret Key</label><input id="settings-novu-secret" type="password" placeholder="sk_... or 0123456789abcdef" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+          <div><label>Workflow ID</label><input id="settings-novu-workflow" type="text" placeholder="workflow_identifier" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+          <div><label>Subscriber ID</label><input id="settings-novu-subscriber" type="text" placeholder="SUBSCRIBER_ID (admin)" style="font-size:13px" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveNovu()" style="background:#C62828;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px;flex:1">💾 Save Novu Settings</button>
+            <button onclick="clearNovu()" style="background:#EF5350;border:none;color:#fff;padding:10px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">✕ Clear</button>
+          </div>
+          <div id="settings-novu-result" style="display:none;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700"></div>
+        </div>
+      </div>
       <!-- Share App Config -->
       <div class="card" style="border-left:4px solid #00897B;background:#E0F2F1;padding:15px">
         <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:5px">📤 Share App with Employees</h3>
@@ -2242,7 +2260,7 @@ const TOTAL=SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
 // ══════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════
-let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}],openwaUrl:'',openwaKey:'',openwaSession:''};
+let cfg={hosp:'Hospital FM',adminPwd:'admin',admins:[],adminRecoveryCode:'RESET123',waNum:'',email:'',employees:[],dbUrl:'',convexUrl:'',customItems:[],empChecklists:{},transportEmployees:[],transportVehicles:[{id:'v1',name:'Ambulance 1',model:'',regNo:''},{id:'v2',name:'Ambulance 2',model:'',regNo:''},{id:'v3',name:'Ambulance 3',model:'',regNo:''}],openwaUrl:'',openwaKey:'',openwaSession:'',novuSecretKey:'',novuWorkflowId:'',novuSubscriberId:''};
 let currentEmp=null; // {name,loginId,password}
 let currentAdmin=null; // {id,name,loginId} — active admin session
 let _notifHistory=[]; // in-app notification history
@@ -2351,6 +2369,56 @@ function updateOpenWAInfo(){
     el.style.background='#FFF3E0';el.style.color='#E65100';
     el.textContent='⏸ OpenWA not configured — WhatsApp notifications will use wa.me links instead.';
   }
+}
+// ── Novu Push Notifications ────────────────────────
+function saveNovu(){
+  const secret=document.getElementById('settings-novu-secret').value.trim();
+  const wf=document.getElementById('settings-novu-workflow').value.trim();
+  const sub=document.getElementById('settings-novu-subscriber').value.trim();
+  if(!secret||!wf||!sub){showSettingsResult('settings-novu-result','All fields required','#C62828');return;}
+  cfg.novuSecretKey=secret;cfg.novuWorkflowId=wf;cfg.novuSubscriberId=sub;
+  saveCfg();
+  updateNovuInfo();
+  showSettingsResult('settings-novu-result','✅ Saved','#2E7D32');
+}
+function clearNovu(){
+  cfg.novuSecretKey='';cfg.novuWorkflowId='';cfg.novuSubscriberId='';
+  saveCfg();
+  document.getElementById('settings-novu-secret').value='';
+  document.getElementById('settings-novu-workflow').value='';
+  document.getElementById('settings-novu-subscriber').value='';
+  updateNovuInfo();
+  showSettingsResult('settings-novu-result','Cleared','#90A4AE');
+}
+function updateNovuInfo(){
+  const el=document.getElementById('novu-current-info');
+  if(!el)return;
+  if(cfg.novuSecretKey&&cfg.novuWorkflowId&&cfg.novuSubscriberId){
+    el.style.background='#FCE4EC';el.style.color='#880E4F';
+    el.innerHTML='🔔 Novu: Workflow <strong>'+cfg.novuWorkflowId+'</strong> · Subscriber <strong>'+cfg.novuSubscriberId+'</strong>';
+  } else {
+    el.style.background='#FFF3E0';el.style.color='#E65100';
+    el.textContent='⏸ Novu not configured.';
+  }
+}
+function isNovuConfigured(){return cfg.novuSecretKey&&cfg.novuWorkflowId&&cfg.novuSubscriberId;}
+async function sendNovu(payload){
+  if(!isNovuConfigured())return false;
+  try{
+    const r=await fetch('https://api.novu.co/v1/trigger',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'ApiKey '+cfg.novuSecretKey},
+      body:JSON.stringify({
+        workflowId:cfg.novuWorkflowId,
+        payload,
+        to:cfg.novuSubscriberId,
+      })
+    });
+    if(r.ok)return true;
+    const err=await r.text();
+    console.warn('Novu trigger failed:',r.status,err);
+    return false;
+  }catch(e){console.warn('Novu send error:',e.message);return false;}
 }
 function showSettingsResult(id,msg,color){
   const el=document.getElementById(id);
@@ -3834,6 +3902,7 @@ function setStatus(si,ii,btn,v){
     const itemLabel=btn.closest('.item-row')?.querySelector('.item-txt')?.textContent||'Item';
     sendOpenWA(cfg.waNum,'❌ *Fault Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+'\n📍 '+itemLabel);
   }
+  if(v==='Fault') sendNovu({event:'fault_reported',hospital:cfg.hosp,employee:currentEmp?currentEmp.name:'Employee',item:btn.closest('.item-row')?.querySelector('.item-txt')?.textContent||'Item'});
 }
 
 function updateCounts(){
@@ -3913,6 +3982,7 @@ function addProblem(){
   if(cfg.waNum) sendOpenWA(cfg.waNum,
     '🚨 *Problem Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+
     '\n📍 '+loc+'\n📝 '+desc+'\n'+pri+'\n🕐 '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  sendNovu({event:'problem_reported',hospital:cfg.hosp,employee:currentEmp?currentEmp.name:'Employee',location:loc,description:desc,priority:pri});
 }
 function toggleOtherLoc(sel){
   const otherId=sel.id==='emp-prob-loc'?'emp-prob-loc-other':'p-loc-other';
@@ -3985,6 +4055,7 @@ function completeShift(){
     '✅ *Shift Completed*\n🏥 '+cfg.hosp+'\n\n👷 *'+currentEmp.name+'* completed their shift at '+
     new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'\n📊 *'+pct+'%* completion  Grade: *'+
     (pct>=95?'A':pct>=85?'B':pct>=70?'C':'D')+'*\n✅ OK: '+ok+'  ❌ Fault: '+fault+'  — N/A: '+na);
+  sendNovu({event:'shift_completed',hospital:cfg.hosp,employee:currentEmp.name,pct,ok,fault,na});
   // Auto-send WhatsApp (fallback)
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
@@ -4070,6 +4141,7 @@ function endTask(id){
     '✅ *Task Completed*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+' completed:\n📌 *'+(_doneTask.desc||'')+'*'+
     '\n⏱ Duration: '+duration(_doneTask.startedAt,_doneTask.endedAt)+
     '\n\n_— Hospital FM_');
+  sendNovu({event:'task_completed',hospital:cfg.hosp,employee:currentEmp?currentEmp.name:'Employee',task:(_doneTask.desc||''),duration:duration(_doneTask.startedAt,_doneTask.endedAt)});
   renderMyTasks();
   showToast('Task done ✓ — admin notified');
 }
@@ -4450,6 +4522,7 @@ function assignTask(){
   // OpenWA — notify employee
   if(emp&&emp.phone) sendOpenWA(emp.phone,
     '📋 *New Task Assigned*\n🏥 '+cfg.hosp+'\n\nHi '+emp.name+',\n\nYou have a new task:\n📌 *'+desc+'*\n📅 Due: '+(date||'—')+(time?' at '+time:'')+'\n'+pri+'\n\nPlease acknowledge and complete on time.\n_— Admin_');
+  sendNovu({event:'task_assigned',hospital:cfg.hosp,employee:emp?emp.name:empId,task:desc,due:date,priority:pri});
 }
 
 function renderAdminTasks(){
@@ -4506,6 +4579,14 @@ function renderStaff(){
   const owSess=document.getElementById('settings-openwa-session');
   if(owSess&&cfg.openwaSession&&!owSess.value) owSess.value=cfg.openwaSession;
   updateOpenWAInfo();
+  // Populate Novu settings
+  const novuSecret=document.getElementById('settings-novu-secret');
+  if(novuSecret&&cfg.novuSecretKey&&!novuSecret.value) novuSecret.value=cfg.novuSecretKey;
+  const novuWf=document.getElementById('settings-novu-workflow');
+  if(novuWf&&cfg.novuWorkflowId&&!novuWf.value) novuWf.value=cfg.novuWorkflowId;
+  const novuSub=document.getElementById('settings-novu-subscriber');
+  if(novuSub&&cfg.novuSubscriberId&&!novuSub.value) novuSub.value=cfg.novuSubscriberId;
+  updateNovuInfo();
   const el=document.getElementById('staff-list');
   const allStaff=[
     ...cfg.employees.map((e,i)=>({...e,_idx:i,_src:'emp'})),
@@ -5016,6 +5097,7 @@ function startLiveTracking(){
     const overdue=allTasks.filter(t=>taskStatus(t)==='Overdue');
     if(overdue.length>0) sendOpenWA(cfg.waNum,
       '⚠️ *Overdue Tasks Summary*\n🏥 '+cfg.hosp+'\n\nYou have *'+overdue.length+' overdue task(s)*.\nCheck the Tasks tab for details.\n\n_— Hospital FM_');
+    if(overdue.length>0) sendNovu({event:'overdue_summary',hospital:cfg.hosp,count:overdue.length});
   }
   const base=getDbUrl();
   // Show Firebase URL in dashboard for verification
@@ -5049,6 +5131,7 @@ function startLiveTracking(){
                 sendOpenWA(cfg.waNum,
                   '✅ *Shift Completed*\n🏥 '+cfg.hosp+'\n\n👷 *'+(emp.name||emp.loginId)+'* completed their shift'+
                   '\n📊 '+(emp.pct||0)+'% completion\n✅ OK: '+(emp.ok||0)+'  ❌ Fault: '+(emp.fault||0));
+                sendNovu({event:'shift_completed',hospital:cfg.hosp,employee:(emp.name||emp.loginId),pct:(emp.pct||0),ok:(emp.ok||0),fault:(emp.fault||0)});
   }
   renderAdminRoomChkSummary();
 }
@@ -5114,6 +5197,7 @@ function startLiveTracking(){
             newOverdue.map((t,i)=>`${i+1}. *${t.desc}* — 👷 ${t.assignedName||'—'}\n   📅 Due: ${t.dueDate||'—'}${t.dueTime?' at '+t.dueTime:''}`).join('\n\n')+
             '\n\nPlease send reminders to the concerned employees.';
           sendOpenWA(cfg.waNum,msg);
+          sendNovu({event:'overdue_tasks',hospital:cfg.hosp,count:newOverdue.length,tasks:newOverdue.map(t=>({desc:t.desc,assigned:t.assignedName,due:t.dueDate}))});
           localStorage.setItem('HFM4_LAST_OVERDUE_NOTIF',String(Date.now()));
         }
       }
@@ -7691,6 +7775,7 @@ function reportRoomProblem(idx){
   if(cfg.waNum) sendOpenWA(cfg.waNum,
     '🚨 *Room Problem Reported*\n🏥 '+cfg.hosp+'\n\n👷 '+(currentEmp?currentEmp.name:'Employee')+
     '\n🛏️ '+room+'\n📋 '+itemText+'\n📝 '+desc);
+  sendNovu({event:'room_problem_reported',hospital:cfg.hosp,employee:currentEmp?currentEmp.name:'Employee',room,item:itemText,description:desc});
 }
 
 // ── ADMIN ROOM CHECKLIST ────────────────────────────
