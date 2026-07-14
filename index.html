@@ -3629,7 +3629,7 @@ function updateCounts(){
   const ok=vals.filter(v=>v==='OK').length;
   const fault=vals.filter(v=>v==='Fault').length;
   const na=vals.filter(v=>v==='N/A').length;
-  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
   document.getElementById('ok-n').textContent=ok;
   document.getElementById('fault-n').textContent=fault+' fault'+(fault!==1?'s':'');
   document.getElementById('pfill').style.width=pct+'%';
@@ -3638,7 +3638,10 @@ function updateCounts(){
 
 function saveProgress(extra={}){
   const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
-  const data={...saved,statuses,values,problems,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
+  const vals=Object.values(statuses||{});
+  const ok=vals.filter(v=>v==='OK').length,fault=vals.filter(v=>v==='Fault').length,na=vals.filter(v=>v==='N/A').length;
+  const eff=(TOTAL||0)-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
+  const data={...saved,statuses,values,problems,ok,fault,na,pct,name:currentEmp.name,loginId:currentEmp.loginId,updated:Date.now(),...extra};
   localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(data));
   // Push to Firebase for live admin tracking — use PUT (more reliable than PATCH on mobile)
   if(getDbUrl()){
@@ -3693,7 +3696,7 @@ function buildReport(){
   const ok=vals.filter(v=>v==='OK').length;
   const fault=vals.filter(v=>v==='Fault').length;
   const na=vals.filter(v=>v==='N/A').length;
-  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
   const grade=pct>=95?'A ⭐':pct>=85?'B ✅':pct>=70?'C ⚠️':'D 🔴';
   const faultItems=[];
   SECTIONS.forEach((sec,si)=>sec.items.forEach((item,ii)=>{if(statuses[si+','+ii]==='Fault')faultItems.push('  • '+sec.name.split('—')[0].trim()+': '+item);}));
@@ -3723,7 +3726,7 @@ function buildReport(){
 
 function completeShift(){
   const vals=Object.values(statuses);
-  const pct=vals.length>0?Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100):0;
+  const pct=vals.length>0?Math.min(100,Math.round(vals.filter(v=>v==='OK').length/(TOTAL-vals.filter(v=>v==='N/A').length)*100)):0;
   if(!confirm(`Complete shift?\nCompletion: ${pct}%\n\nReport will be sent automatically to admin via WhatsApp.`))return;
   saveProgress({shiftCompleted:true,shiftCompletedAt:Date.now()});
   sendNotif('✅ Shift Completed',currentEmp.name+' completed shift at '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),'shift-'+Date.now());
@@ -3843,7 +3846,7 @@ function renderAdmin(){
     if(!saved){empBars.push(`<div class="chart-bar-row"><div class="chart-bar-name" title="${emp.name}">${emp.name}</div><div style="flex:1;font-size:11px;color:#90A4AE">Not started</div><div class="chart-bar-pct">—</div></div>`);return;}
     const vals=Object.values(saved.statuses||{});
     const ok=vals.filter(v=>v==='OK').length,fault=vals.filter(v=>v==='Fault').length,na=vals.filter(v=>v==='N/A').length;
-    const eff=TOTAL-na,pct=eff>0?Math.round(ok/eff*100):0;
+    const eff=TOTAL-na;const rawPct=eff>0?Math.round(ok/eff*100):0;const pct=Math.min(100,rawPct);
     const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
     const fill=pct>=80?'linear-gradient(90deg,#2E7D32,#66BB6A)':pct>=50?'linear-gradient(90deg,#1976D2,#42A5F5)':'linear-gradient(90deg,#C62828,#EF5350)';
     totalOk+=ok;totalFault+=fault;totalNa+=na;totalPct+=pct;count++;
@@ -4360,7 +4363,7 @@ function getEmpData(emp,repDate){
   const fault=vals.filter(v=>v==='Fault').length;
   const na=vals.filter(v=>v==='N/A').length;
   const checked=ok+fault+na;
-  const eff=TOTAL-na;const pct=eff>0?Math.round(ok/eff*100):0;
+  const eff=TOTAL-na;const pct=eff>0?Math.min(100,Math.round(ok/eff*100)):0;
   const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
   return {saved,ok,fault,na,checked,pct,grade,done:!!saved.shiftCompleted};
 }
@@ -6267,7 +6270,7 @@ function renderRangeReport(from,to,label,rangeData){
   // Employee table
   const empRows=Object.values(empStats).filter(e=>e.days>0).sort((a,b)=>(b.totalPct/b.days)-(a.totalPct/a.days));
   document.getElementById('rep-emp-table').innerHTML=empRows.length?empRows.map(e=>{
-    const avg=Math.round(e.totalPct/e.days);
+    const avg=Math.min(100,Math.round(e.totalPct/e.days));
     const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
     const grade=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
     return `<div class="ep-row">
@@ -6283,7 +6286,7 @@ function renderRangeReport(from,to,label,rangeData){
   document.getElementById('rep-trend').innerHTML=dates.length?dates.map(date=>{
     const dayData=rangeData[date]||{};
     const vals=Object.values(dayData).filter(Boolean).filter(d=>d.pct!==undefined);
-    const avg=vals.length?Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length):0;
+    const avg=vals.length?Math.min(100,Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length)):0;
     const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
     const d=new Date(date+'T00:00:00');
     const dlbl=d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
@@ -6454,10 +6457,10 @@ function downloadCurrentReport(){
     <div class="kpi"><div class="n" style="color:#6A1B9A">${empRows.length}</div><div class="l">Active Staff</div></div>
   </div>
   <h2>👷 Employee Performance</h2>
-  ${empRows.map(e=>{const avg=Math.round(e.totalPct/e.days);const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';const gr=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
+  ${empRows.map(e=>{const avg=Math.min(100,Math.round(e.totalPct/e.days));const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';const gr=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
     return `<div class="emp-row"><div style="min-width:140px;font-weight:700;font-size:13px">${e.name}</div><div class="bar-bg"><div class="bar-fill" style="width:${avg}%;background:${col}"></div></div><div style="min-width:40px;font-weight:800;color:${col};text-align:right">${avg}%</div><div style="min-width:22px;background:${col}20;color:${col};border-radius:5px;padding:2px 6px;font-weight:800;font-size:12px">${gr}</div><div style="font-size:11px;color:#90A4AE;min-width:70px">${e.days}d · ${e.totalFaults}⚡</div></div>`;}).join('')}
   <h2>📈 Daily Trend</h2>
-  ${dates.map(date=>{const vals=Object.values(rangeData[date]||{}).filter(Boolean).filter(d=>d.pct!==undefined);const avg=vals.length?Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length):0;const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
+  ${dates.map(date=>{const vals=Object.values(rangeData[date]||{}).filter(Boolean).filter(d=>d.pct!==undefined);const avg=vals.length?Math.min(100,Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length)):0;const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
     return `<div class="trend-row"><div style="min-width:80px">${date}</div><div class="trend-bg"><div class="bar-fill" style="width:${avg}%;background:${col};height:100%"></div></div><div style="min-width:40px;font-weight:700;color:${col};text-align:right">${avg}%</div></div>`;}).join('')}
   <h2>⚠️ Problems Reported (${allProblems.length})</h2>
   ${allProblems.length?allProblems.map(p=>`<div class="prob"><strong>${p.pri||''} ${p.loc}</strong> — ${p.desc} <span style="color:#90A4AE;font-size:11px">${p.date} · ${p.emp}</span></div>`).join(''):'<p style="color:#90A4AE">No problems in this period.</p>'}
