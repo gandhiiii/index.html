@@ -1483,6 +1483,16 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           </div>
           <div id="md-email-display" style="margin-top:8px;font-size:12px;color:#4527A0;font-weight:700"></div>
         </div>
+        <!-- ADMIN WHATSAPP NUMBER SETTING -->
+        <div style="margin-top:12px;background:#fff;border-radius:10px;padding:12px;border:1px solid #D1C4E9">
+          <div style="font-weight:800;font-size:13px;color:#4527A0;margin-bottom:8px">📲 Admin WhatsApp Number (for employee reports)</div>
+          <div style="font-size:12px;color:#607D8B;margin-bottom:6px">This number receives shift completion reports, fault alerts, and notifications from employees.</div>
+          <div style="display:flex;gap:8px">
+            <input id="settings-wa-num" type="tel" placeholder="e.g. 919876543210 (country code + number, no +)" style="flex:1" value="">
+            <button onclick="saveAdminWaNum()" style="background:#25D366;border:none;color:#fff;padding:10px 14px;border-radius:9px;font-weight:800;cursor:pointer;font-size:12px">Save</button>
+          </div>
+          <div id="settings-wa-display" style="margin-top:8px;font-size:12px;color:#1B5E20;font-weight:700"></div>
+        </div>
       </div>
       <!-- FIREBASE SETTINGS -->
       <div class="card" style="border-left:4px solid #F57C00;background:#FFF3E0">
@@ -3837,6 +3847,14 @@ function saveMDEmail(){
   cfg.mdEmail=email;saveCfg();
   renderAdminList();showToast2('MD email saved ✓');
 }
+function saveAdminWaNum(){
+  const wa=document.getElementById('settings-wa-num').value.trim().replace(/\D/g,'');
+  if(!wa||wa.length<8){alert('Enter a valid phone number with country code (min 8 digits, no +).');return;}
+  cfg.waNum=wa;saveCfg();
+  const d=document.getElementById('settings-wa-display');
+  if(d) d.textContent='📱 Current: '+cfg.waNum;
+  showToast2('✅ Admin WhatsApp number saved');
+}
 
 function showForgotPassword(){
   const code=prompt('Enter the master recovery code set by your admin:');
@@ -4882,6 +4900,11 @@ function renderStaff(){
   const owSess=document.getElementById('settings-openwa-session');
   if(owSess&&cfg.openwaSession&&!owSess.value) owSess.value=cfg.openwaSession;
   updateOpenWAInfo();
+  // Populate admin WhatsApp number setting
+  const waNumInp=document.getElementById('settings-wa-num');
+  if(waNumInp&&cfg.waNum&&!waNumInp.value) waNumInp.value=cfg.waNum;
+  const waDisplay=document.getElementById('settings-wa-display');
+  if(waDisplay) waDisplay.textContent=cfg.waNum?'📱 Current: '+cfg.waNum:'Not set — employees cannot send reports';
   // Populate Novu settings
   const novuSecret=document.getElementById('settings-novu-secret');
   if(novuSecret&&cfg.novuSecretKey&&!novuSecret.value) novuSecret.value=cfg.novuSecretKey;
