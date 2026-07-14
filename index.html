@@ -5715,13 +5715,14 @@ async function pushConfigToFirebase(){
 function sendConfigWA(){
   const dbUrl=getDbUrl();
   const pageUrl=window.location.href.split('#')[0].split('?')[0];
+  const waNum=cfg.waNum||'';
   if(dbUrl){
     const autoUrl=pageUrl+'#url='+encodeURIComponent(dbUrl);
     const msg=`🏥 *${cfg.hosp} — One-Tap Setup* 📱\n\nTap this link to auto-configure Hospital FM on your phone:\n${autoUrl}\n\nAfter opening, you'll see the login screen directly — just enter your Employee ID & Password.\n\n_No manual URL entry needed. Works on Android, iPhone & Desktop._`;
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg),'_blank');
   } else {
     const msg=`🏥 *${cfg.hosp} — App Setup Code*\n\n📱 *How to set up Hospital FM on your phone (do once):*\n1. Open the Hospital FM HTML file\n2. Tap *"First time on this device?"* (blue link at bottom of login)\n3. Paste this setup code:\n\n${exportConfig()}\n\n4. Tap *Apply & Enable Login*\n5. Then login with your Employee ID & Password\n\n_After setup, you won't need this code again on the same phone._`;
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg),'_blank');
   }
 }
 
