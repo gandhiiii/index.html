@@ -324,19 +324,7 @@
       <h3 style="font-size:14px;font-weight:800;color:var(--orange);margin-bottom:10px">➕ New Request</h3>
       <div style="display:grid;gap:10px">
         <div><label>Department</label>
-          <select id="mat-req-dept" style="font-size:13px;padding:9px;font-weight:600">
-            <option value="maintenance">🔧 Maintenance</option>
-            <option value="housekeeping">🧹 Housekeeping</option>
-            <option value="stationery">📎 Stationery</option>
-            <option value="radiology">🔬 Radiology</option>
-            <option value="ot">🏥 OT</option>
-            <option value="medical">💊 Medical</option>
-            <option value="canteen">🍽️ Canteen</option>
-            <option value="cssd">🧪 CSSD</option>
-            <option value="laundry">👕 Laundry</option>
-            <option value="linen">🛏️ Linen</option>
-            <option value="furniture">🪑 Furniture</option>
-          </select>
+          <select id="mat-req-dept" style="font-size:13px;padding:9px;font-weight:600"></select>
         </div>
         <input id="mat-req-item" type="text" placeholder="Item name">
         <div style="display:flex;gap:8px">
@@ -375,19 +363,7 @@
       <h3 style="font-size:14px;font-weight:800;color:var(--orange);margin-bottom:10px">📦 Inventory</h3>
       <div style="display:grid;gap:10px">
         <div><label>Department</label>
-          <select id="sk-inv-dept" onchange="skRenderItems()" style="font-size:13px;padding:9px;font-weight:600">
-            <option value="maintenance">🔧 Maintenance</option>
-            <option value="housekeeping">🧹 Housekeeping</option>
-            <option value="stationery">📎 Stationery</option>
-            <option value="radiology">🔬 Radiology</option>
-            <option value="ot">🏥 OT</option>
-            <option value="medical">💊 Medical</option>
-            <option value="canteen">🍽️ Canteen</option>
-            <option value="cssd">🧪 CSSD</option>
-            <option value="laundry">👕 Laundry</option>
-            <option value="linen">🛏️ Linen</option>
-            <option value="furniture">🪑 Furniture</option>
-          </select>
+          <select id="sk-inv-dept" onchange="skRenderItems()" style="font-size:13px;padding:9px;font-weight:600"></select>
         </div>
       </div>
     </div>
@@ -405,20 +381,7 @@
     <div class="card" style="padding:0;overflow:hidden;margin-top:12px">
       <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
         <span style="font-weight:800">📊 IN/OUT Activity</span>
-        <select id="sk-inv-act-dept" onchange="skRenderActivity()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto">
-          <option value="all">All Depts</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="housekeeping">Housekeeping</option>
-          <option value="stationery">Stationery</option>
-          <option value="radiology">Radiology</option>
-          <option value="ot">OT</option>
-          <option value="medical">Medical</option>
-          <option value="canteen">Canteen</option>
-          <option value="cssd">CSSD</option>
-          <option value="laundry">Laundry</option>
-          <option value="linen">Linen</option>
-          <option value="furniture">Furniture</option>
-        </select>
+        <select id="sk-inv-act-dept" onchange="skRenderActivity()" style="margin:0;padding:6px 10px;font-size:12px;border-radius:8px;width:auto"></select>
       </div>
       <div id="sk-inv-activity" style="padding:13px"></div>
     </div>
@@ -1539,21 +1502,7 @@
           </div>
           <div><label>WhatsApp / Phone Number (for reminders)</label><input type="tel" id="ne-phone" placeholder="e.g. 919876543210 (country code + number, no +)"></div>
           <div><label>Department</label>
-            <select id="ne-dept" style="font-size:13px;padding:9px;font-weight:600;width:100%">
-              <option value="fm">👷 Facility Management (FM)</option>
-              <option value="maintenance">🔧 Maintenance</option>
-              <option value="housekeeping">🧹 Housekeeping</option>
-              <option value="stationery">📎 Stationery</option>
-              <option value="radiology">🔬 Radiology</option>
-              <option value="ot">🏥 OT</option>
-              <option value="medical">💊 Medical</option>
-              <option value="canteen">🍽️ Canteen</option>
-              <option value="cssd">🧪 CSSD</option>
-              <option value="laundry">👕 Laundry</option>
-              <option value="linen">🛏️ Linen</option>
-              <option value="furniture">🪑 Furniture</option>
-              <option value="transport">🚑 Transportation</option>
-            </select>
+            <select id="ne-dept" style="font-size:13px;padding:9px;font-weight:600;width:100%"></select>
           </div>
           <div style="background:rgba(0,230,118,.08);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--green)">
             💡 Just type the name and tap Add — ID and Password are created automatically. Phone number is needed to send WhatsApp/SMS reminders for pending tasks.
@@ -2068,19 +2017,7 @@
         <h3 style="font-size:14px;font-weight:800;color:var(--orange);margin-bottom:10px">📦 Inventory Management</h3>
         <div style="display:grid;gap:10px">
           <div><label>Department</label>
-            <select id="inv-dept" onchange="renderInvItems();renderInvLifecycle();renderInvForecast()" style="font-size:13px;padding:9px;font-weight:600">
-              <option value="maintenance">🔧 Maintenance</option>
-              <option value="housekeeping">🧹 Housekeeping</option>
-              <option value="stationery">📎 Stationery</option>
-              <option value="radiology">🔬 Radiology</option>
-              <option value="ot">🏥 OT</option>
-              <option value="medical">💊 Medical</option>
-              <option value="canteen">🍽️ Canteen</option>
-              <option value="cssd">🧪 CSSD</option>
-              <option value="laundry">👕 Laundry</option>
-              <option value="linen">🛏️ Linen</option>
-              <option value="furniture">🪑 Furniture</option>
-            </select>
+            <select id="inv-dept" onchange="renderInvItems();renderInvLifecycle();renderInvForecast()" style="font-size:13px;padding:9px;font-weight:600"></select>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <input id="inv-name" type="text" placeholder="Item name" style="flex:2;min-width:120px">
@@ -3926,8 +3863,13 @@ function renderStockInItems(){
   const sel=document.getElementById('si-item');
   if(!sel) return;
   sel.innerHTML='<option value="">— Select —</option>'+items.map(i=>`<option>${i.name}</option>`).join('');
-  sel.style.display='block';
-  document.getElementById('si-item-new').style.display='none';
+  if(items.length===0){
+    sel.style.display='none';
+    document.getElementById('si-item-new').style.display='block';
+  } else {
+    sel.style.display='block';
+    document.getElementById('si-item-new').style.display='none';
+  }
 }
 function renderStockOutItems(){
   const dept=document.getElementById('so-dept').value;
