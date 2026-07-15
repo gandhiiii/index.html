@@ -8612,7 +8612,7 @@ function adminRemoveDischargeItem(idx){
 // ══════════════════════════════════════════════════════
 function populateDeptSelects(){
   const depts=getDepts();
-  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept','rep-dept','adm-excel-dept'];
+  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept','rep-dept','adm-excel-dept','si-dept','so-dept'];
   ids.forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const old=el.value;
