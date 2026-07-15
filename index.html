@@ -3813,7 +3813,12 @@ async function loadEmployeeHome(){
   let saved=null;
   try{
     const fb=await fbGet('/daily/'+todayStr()+'/'+currentEmp.loginId);
-    if(fb&&(fb.statuses||fb.shiftCompleted)){saved=fb;localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(fb));}
+    if(fb&&fb.statuses){saved=fb;localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(fb));}
+    else if(fb&&fb.shiftCompleted){
+      const local=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
+      saved={...local,shiftCompleted:true,shiftCompletedAt:fb.shiftCompletedAt};
+      localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(saved));
+    }
   }catch(e){}
   if(!saved) saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'null');
   const done=saved&&saved.shiftCompleted;
