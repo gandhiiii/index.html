@@ -1171,11 +1171,7 @@
       <div class="hdr-actions">
         <button class="hbtn" onclick="showNotifPanel()">🔔<span id="adm-notif-badge" class="notif-badge" style="display:none"></span></button>
         <button class="hbtn" onclick="showChangePwdModal()" title="Change my password">🔑</button>
-        <select id="adm-excel-dept" onchange="downloadExcel()" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);font-weight:600;cursor:pointer">
-          <option value="all">📥 Excel (All)</option>
-          <option value="fm">📥 Excel (FM)</option>
-          <option value="transport">📥 Excel (Transport)</option>
-        </select>
+        <select id="adm-excel-dept" onchange="downloadExcel()" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);font-weight:600;cursor:pointer"></select>
         <button class="hbtn" onclick="adminLogout()">Logout</button>
       </div>
     </div>
@@ -2177,11 +2173,7 @@
             </select>
           </div>
           <div><label>Department</label>
-            <select id="rep-dept" style="margin-top:5px">
-              <option value="all">All Departments</option>
-              <option value="fm">👷 FM (Checklists)</option>
-              <option value="transport">🚑 Transportation</option>
-            </select>
+            <select id="rep-dept" style="margin-top:5px"></select>
           </div>
           <div id="rep-custom-range" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div><label>From Date</label><input type="date" id="rep-from"></div>
@@ -4536,10 +4528,11 @@ function admTab(tab,el){
   if(tab==='depts'){renderDepts();}
   if(tab==='sections'){renderDeptSectionMgr();}
   if(tab==='inventory'){populateDeptSelects();renderInvItems();renderInvLifecycle();renderInvForecast();}
-  if(tab==='report'){const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
+  if(tab==='report'){populateDeptSelects();const d=document.getElementById('rep-date');if(!d.value)d.value=todayStr();renderArchive();onPeriodChange();}
 }
 
 function renderAdmin(){
+  populateDeptSelects();
   document.getElementById('adm-date').textContent='Today: '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   let totalOk=0,totalFault=0,totalNa=0,totalPct=0,count=0,allProbs=[];
   const empBars=[];
@@ -5121,7 +5114,8 @@ function downloadExcel(){
   const dept=deptEl?deptEl.value:'all';
   if(dept==='transport'){downloadTransportExcel(repDate);return;}
   const wb=XLSX.utils.book_new();
-  const allEmpData=cfg.employees.map(emp=>({emp,data:getEmpData(emp,repDate)}));
+  const filteredEmps=dept&&dept!=='all'?cfg.employees.filter(e=>e.dept===dept):cfg.employees;
+  const allEmpData=filteredEmps.map(emp=>({emp,data:getEmpData(emp,repDate)}));
   const active=allEmpData.filter(e=>e.data);
   const avgPct=active.length>0?Math.round(active.reduce((s,e)=>s+e.data.pct,0)/active.length):0;
   const totalFault=active.reduce((s,e)=>s+e.data.fault,0);
@@ -5134,7 +5128,7 @@ function downloadExcel(){
   const dash=[
     [LINE],
     [`  ${cfg.hosp.toUpperCase()} — FACILITY MANAGEMENT DASHBOARD`],
-    [`  Report Date: ${fmtDate(repDate)}   Generated: ${new Date().toLocaleString('en-IN')}`],
+    [`  Report Date: ${fmtDate(repDate)}   Generated: ${new Date().toLocaleString('en-IN')}   Dept: ${dept==='all'?'All':getDepts().find(d=>d.id===dept)?.label||dept}`],
     [LINE],[''],
     ['  ┌─────────────────── KPI OVERVIEW ───────────────────┐'],
     [`  │  Employees Active Today:   ${active.length} / ${cfg.employees.length}`],
@@ -7023,13 +7017,14 @@ function quickReport(period){
   onPeriodChange();
   generateRangeReport();
   // scroll to report tab if needed
-  admTab('report',document.querySelectorAll('.tab')[4]);
+  populateDeptSelects();admTab('report',document.querySelectorAll('.tab')[4]);
 }
 
 async function generateRangeReport(){
   const period=document.getElementById('rep-period').value;
   const {from,to,label}=getDateRange(period);
   if(!from||!to){alert('Please select a valid date range.');return;}
+  const dept=document.getElementById('rep-dept').value;
   document.getElementById('rep-loading').style.display='block';
   document.getElementById('rep-preview').style.display='none';
   // Fetch all daily data from Firebase
@@ -7057,7 +7052,7 @@ async function generateRangeReport(){
   _currentReportData={from,to,label,rangeData};
   _currentReportLabel=label;
   document.getElementById('rep-loading').style.display='none';
-  renderRangeReport(from,to,label,rangeData);
+  renderRangeReport(from,to,label,rangeData,dept);
 }
 
 function getComplaintsForRange(from,to){
@@ -7066,13 +7061,14 @@ function getComplaintsForRange(from,to){
   const toMs=new Date(to+'T23:59:59').getTime();
   return all.filter(c=>c.createdAt>=fromMs&&c.createdAt<=toMs);
 }
-function renderRangeReport(from,to,label,rangeData){
+function renderRangeReport(from,to,label,rangeData,dept){
   const dates=Object.keys(rangeData).sort();
   const allProblems=[],allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
   const rangeComplaints=getComplaintsForRange(from,to);
+  const filteredEmps=dept&&dept!=='all'?cfg.employees.filter(e=>e.dept===dept):cfg.employees;
   // Aggregate per-employee stats
   const empStats={};
-  cfg.employees.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0,totalOK:0,totalNA:0};});
+  filteredEmps.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0,totalOK:0,totalNA:0};});
   dates.forEach(date=>{
     const dayData=rangeData[date]||{};
     Object.entries(dayData).forEach(([loginId,d])=>{
@@ -7094,7 +7090,8 @@ function renderRangeReport(from,to,label,rangeData){
   const totalProblems=allProblems.length;
   const totalTasksDone=allTasks.length;
   // Render KPIs
-  document.getElementById('rep-title-lbl').textContent='📊 '+label;
+  const deptLabel=dept&&dept!=='all'?getDepts().find(d=>d.id===dept)?.label||dept:'All Departments';
+  document.getElementById('rep-title-lbl').textContent='📊 '+label+' · '+deptLabel;
   document.getElementById('rep-kpis').innerHTML=`
     <div class="kpi"><div class="num" style="color:var(--cyan)">${totalDays}</div><div class="lbl">Days Tracked</div></div>
     <div class="kpi"><div class="num" style="color:var(--green)">${avgPct}%</div><div class="lbl">Avg Completion</div></div>
@@ -7117,11 +7114,12 @@ function renderRangeReport(from,to,label,rangeData){
       <div style="font-size:11px;color:var(--text3);min-width:60px;text-align:right">${e.days}d · ${e.totalFaults} faults</div>
     </div>`;
   }).join(''):'<p style="color:var(--text3);font-size:13px">No employee data found for this period.</p>';
+  const deptEmpIds=dept&&dept!=='all'?new Set(filteredEmps.map(e=>e.loginId)):null;
   // Daily trend bars
   const maxPct=100;
   document.getElementById('rep-trend').innerHTML=dates.length?dates.map(date=>{
     const dayData=rangeData[date]||{};
-    const vals=Object.values(dayData).filter(Boolean).filter(d=>d.pct!==undefined);
+    const vals=Object.entries(dayData).filter(([lid,d])=>d&&d.pct!==undefined&&(!deptEmpIds||deptEmpIds.has(lid))).map(([_,d])=>d);
     const avg=vals.length?Math.min(100,Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length)):0;
     const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
     const d=new Date(date+'T00:00:00');
@@ -7173,12 +7171,14 @@ function renderRangeReport(from,to,label,rangeData){
 
 function downloadCurrentReport(){
   if(!_currentReportData){alert('Generate a report first.');return;}
+  const dept=document.getElementById('rep-dept').value;
   const {from,to,label,rangeData}=_currentReportData;
   const dates=Object.keys(rangeData).sort();
   const allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
   const allProblems=[];
+  const filteredEmps=dept&&dept!=='all'?cfg.employees.filter(e=>e.dept===dept):cfg.employees;
   const empStats={};
-  cfg.employees.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0};});
+  filteredEmps.forEach(emp=>{empStats[emp.loginId]={name:emp.name,days:0,totalPct:0,totalFaults:0};});
   dates.forEach(date=>{
     Object.entries(rangeData[date]||{}).forEach(([lid,d])=>{
       if(!d)return;
@@ -7266,11 +7266,12 @@ function downloadCurrentReport(){
     const isResolved=c.status==='resolved';
     return `<div class="prob" style="border-color:${isResolved?'#2E7D32':'#00695C'};background:${isResolved?'#F1F8E9':'#FFF5F5'}"><strong>${c.pri} ${c.room}</strong>${c.patientName?' · 👤 '+c.patientName:''} — ${c.desc} <span style="color:var(--text3);font-size:11px">${ts} · 👷 ${c.empName}${isResolved?' · ✅ Resolved':''}${c.adminNote?' · 📝 '+c.adminNote:''}</span></div>`;
   }).join(''):'<p style="color:var(--text3)">No patient complaints in this period.</p>';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${label}</title>
+  const deptLabel=dept&&dept!=='all'?getDepts().find(d=>d.id===dept)?.label||dept:'All Departments';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${label} · ${deptLabel}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}:root{--radius:16px;--radius-sm:12px;--radius-xs:8px;--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--transition:.3s cubic-bezier(.4,0,.2,1)}:root,[data-theme='dark']{--bg-primary:#0a0e1a;--bg-secondary:#111827;--bg-card:rgba(255,255,255,.05);--bg-card-hover:rgba(255,255,255,.08);--border-glow:rgba(0,229,255,.15);--border-subtle:rgba(255,255,255,.06);--cyan:#00E5FF;--blue:#2979FF;--cyan-dim:rgba(0,229,255,.15);--purple:#B388FF;--purple-dim:rgba(179,136,255,.15);--pink:#FF4081;--pink-dim:rgba(255,64,129,.12);--green:#00E676;--green-dim:rgba(0,230,118,.12);--red:#FF1744;--red-dim:rgba(255,23,68,.12);--orange:#FF9100;--orange-dim:rgba(255,145,0,.12);--wa:#25D366;--teal:#1DE9B6;--text:#E8EAED;--text2:rgba(255,255,255,.55);--text3:rgba(255,255,255,.3);--hdr-bg:rgba(10,14,26,.85);--hdr-border:rgba(255,255,255,.06);--input-bg:rgba(255,255,255,.04);--input-border:rgba(255,255,255,.08);--card-bg:rgba(17,24,39,.7);--card-border:rgba(255,255,255,.06);--card-hover-bg:rgba(17,24,39,.85);--card-hover-border:rgba(0,229,255,.12);--shadow-card:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);--scrollbar-thumb:rgba(255,255,255,.1);--sec-body-bg:rgba(17,24,39,.4);--tabs-bg:rgba(255,255,255,.04);--tab-hover-bg:rgba(255,255,255,.05);--hbtn-bg:rgba(255,255,255,.06);--hbtn-hover-bg:rgba(255,255,255,.12);--sticky-bg:rgba(10,14,26,.85);--toast-bg:rgba(17,24,39,.95);--login-box-bg:rgba(17,24,39,.7);--login-box-border:rgba(255,255,255,.08)}[data-theme='light']{--bg-primary:#eef2f7;--bg-secondary:#fff;--bg-card:rgba(255,255,255,.7);--bg-card-hover:rgba(255,255,255,.85);--border-glow:rgba(0,145,255,.15);--border-subtle:rgba(0,0,0,.06);--cyan:#0D47A1;--blue:#1565C0;--cyan-dim:rgba(13,71,161,.08);--purple:#7B1FA2;--purple-dim:rgba(123,31,162,.08);--pink:#C62828;--pink-dim:rgba(198,40,40,.06);--green:#2E7D32;--green-dim:rgba(46,125,50,.08);--red:#C62828;--red-dim:rgba(198,40,40,.08);--orange:#E65100;--orange-dim:rgba(230,81,0,.08);--wa:#075E54;--teal:#00695C;--text:#1a1a2e;--text2:rgba(0,0,0,.45);--text3:rgba(0,0,0,.22);--hdr-bg:rgba(238,242,247,.9);--hdr-border:rgba(0,0,0,.06);--input-bg:rgba(0,0,0,.02);--input-border:rgba(0,0,0,.1);--card-bg:rgba(255,255,255,.8);--card-border:rgba(0,0,0,.08);--card-hover-bg:rgba(255,255,255,.9);--card-hover-border:rgba(13,71,161,.2);--shadow-card:0 4px 16px rgba(0,0,0,.08);--scrollbar-thumb:rgba(0,0,0,.15);--sec-body-bg:rgba(255,255,255,.5);--tabs-bg:rgba(0,0,0,.04);--tab-hover-bg:rgba(0,0,0,.06);--hbtn-bg:rgba(0,0,0,.04);--hbtn-hover-bg:rgba(0,0,0,.08);--sticky-bg:rgba(238,242,247,.9);--toast-bg:rgba(255,255,255,.95);--login-box-bg:rgba(255,255,255,.9);--login-box-border:rgba(0,0,0,.08)}body{font-family:var(--font);background:var(--bg-primary);color:var(--text);font-size:15px;min-height:100vh;padding-bottom:65px;-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-bottom:65px}::selection{background:var(--cyan);color:var(--bg-primary)}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--purple)}.view{display:none;min-height:100vh}.view.active{display:block;position:relative;z-index:1}.hdr{background:var(--hdr-bg);border-bottom:1px solid var(--hdr-border);padding:16px 20px;position:sticky;top:0;z-index:100}.hdr h1{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--text)}.hdr p{font-size:12px;opacity:.65;margin-top:2px}.hdr-row{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:800px;margin:0 auto;width:100%}.hdr-actions{display:flex;gap:8px;align-items:center}.hdr-row:has(>.hdr-actions){justify-content:space-between}.hdr-row:not(:has(>.hdr-actions)){justify-content:center}.hbtn{background:var(--hbtn-bg);border:1px solid var(--input-border);color:var(--text);padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:var(--transition)}.hbtn:hover{color:var(--cyan);border-color:var(--cyan)}.hbtn:active{transform:scale(.95)}.notif-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;line-height:18px;text-align:center;border:2px solid var(--hdr-bg)}.wrap{max-width:800px;margin:0 auto;padding:16px 14px 90px;position:relative;z-index:1}.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow-card);transition:var(--transition);position:relative}.card:hover{background:var(--card-hover-bg);border-color:var(--card-hover-border)}.card:active{transform:scale(.98)}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;border:none;width:100%;margin-bottom:10px;transition:var(--transition);letter-spacing:.2px}.btn:hover{opacity:.9}.btn:last-child{margin-bottom:0}.btn:active{transform:scale(.95)}.blue{background:#2979FF;color:#fff}.blue:hover{background:#1565C0}.green{background:#00E676;color:#111}.green:hover{background:#00C853}.red{background:#FF1744;color:#fff}.red:hover{background:#D50000}.wa{background:#25D366;color:#fff}.wa:hover{background:#1DA851}.orange{background:#FF9100;color:#fff}.orange:hover{background:#E65100}.purple{background:#B388FF;color:#fff}.purple:hover{background:#7C4DFF}.outline{background:transparent;color:var(--cyan);border:2px solid rgba(0,229,255,.3);box-shadow:none}.outline:hover{background:rgba(0,229,255,.08);border-color:var(--cyan)}.tabs{display:flex;gap:4px;background:var(--tabs-bg);border-radius:12px;padding:4px;margin-bottom:16px;overflow-x:auto;border:1px solid var(--card-border);position:relative}.tab{flex:1;padding:10px 8px;text-align:center;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text);transition:color .3s;white-space:nowrap;min-width:fit-content;position:relative;z-index:1;user-select:none}.tab:hover{color:var(--text)}.tab.on{color:var(--cyan);font-weight:800}.tabs::after{content:'';position:absolute;bottom:4px;left:4px;height:calc(100% - 8px);border-radius:9px;background:rgba(0,229,255,.12);transition:all .4s cubic-bezier(.22,1,.36,1);z-index:0;pointer-events:none;width:calc((100% - 12px)/var(--tab-count,3))}.tab:nth-child(1).on~.tabs::after{left:4px}.tab:nth-child(2).on~.tabs::after{left:calc(4px + (100% - 12px)/var(--tab-count,3) + 4px)}.tab:nth-child(3).on~.tabs::after{left:calc(4px + 2*((100% - 12px)/var(--tab-count,3) + 4px))}.tab:nth-child(4).on~.tabs::after{left:calc(4px + 3*((100% - 12px)/var(--tab-count,3) + 4px))}.tab:nth-child(5).on~.tabs::after{left:calc(4px + 4*((100% - 12px)/var(--tab-count,3) + 4px))}.sec-hdr{padding:13px 16px;color:#fff;font-weight:800;font-size:12px;border-radius:10px 10px 0 0;margin:14px 0 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;letter-spacing:.3px;background:linear-gradient(135deg,var(--cyan),#0091EA,var(--purple))}.sec-hdr:hover{opacity:.92}.sec-body{border:1px solid var(--card-border);border-top:none;border-radius:0 0 10px 10px;margin-bottom:4px;overflow:hidden;background:var(--sec-body-bg)}.item-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border-subtle);gap:10px;flex-wrap:wrap;background:transparent;transition:background .2s;position:relative}.item-row:hover{background:rgba(255,255,255,.03)}.item-row:last-child{border:none}.item-txt{flex:1;min-width:110px;font-size:13px;line-height:1.5;color:var(--text)}.s-btns{display:flex;gap:5px;flex-shrink:0}.sb{padding:8px 13px;border:1px solid rgba(255,255,255,.08);border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.04);color:var(--text3);transition:var(--transition);white-space:nowrap;position:relative}.sb:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:var(--text)}.sb:active{transform:scale(.94)}.sb.ok{background:var(--green-dim);border-color:var(--green);color:var(--green)}.sb.fault{background:var(--red-dim);border-color:var(--red);color:var(--red)}.sb.na{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--text2)}.sticky{position:fixed;bottom:0;left:0;right:0;background:var(--sticky-bg);border-top:1px solid var(--hdr-border);padding:12px 16px;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -8px 40px rgba(0,0,0,.4)}.pbar-wrap{flex:1;margin:0 12px}.pbar{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;position:relative}.pfill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:3px;transition:width .6s cubic-bezier(.22,1,.36,1);position:relative}.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}.kpi{background:rgba(17,24,39,.6);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px 12px;text-align:center;box-shadow:var(--shadow-card);transition:var(--transition);position:relative}.kpi:hover{transform:translateY(-3px);border-color:rgba(0,229,255,.15)}.kpi .num{font-size:30px;font-weight:900;line-height:1;color:var(--cyan);display:inline-block}.kpi .lbl{font-size:10px;color:var(--text2);margin-top:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.chart-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}.chart-bar-name{font-size:12px;font-weight:700;min-width:95px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chart-bar-bg{flex:1;height:14px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;position:relative}.chart-bar-fill{height:100%;border-radius:7px;transition:width .8s cubic-bezier(.22,1,.36,1);background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}.chart-bar-pct{font-size:12px;font-weight:800;min-width:38px;text-align:right;color:var(--cyan)}.chart-bar-row:hover .chart-bar-pct{color:var(--purple)}.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.donut{width:100px;height:100px;border-radius:50%;flex-shrink:0}.donut-legend{display:flex;flex-direction:column;gap:8px}.dl{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}.dl-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}.ep-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap;transition:background .2s}.ep-row:hover{background:rgba(255,255,255,.03)}.ep-row:last-child{border:none}.ep-name{font-weight:700;font-size:13px;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}.ep-bar{flex:1;min-width:55px;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}.ep-fill{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.22,1,.36,1);background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}.ep-pct{font-weight:800;font-size:13px;min-width:38px;text-align:right;color:var(--cyan)}.badge{display:inline-block;padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700;position:relative}.b-fault{background:var(--red-dim);color:var(--red)}.grade{padding:4px 10px;border-radius:8px;font-weight:800;font-size:12px}.grade-A{background:var(--green-dim);color:var(--green)}.grade-B{background:var(--cyan-dim);color:var(--cyan)}.grade-C{background:var(--orange-dim);color:var(--orange)}.grade-D{background:var(--red-dim);color:var(--red)}.task-card{background:rgba(17,24,39,.5);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;box-shadow:var(--shadow-card);border-left:5px solid rgba(255,255,255,.1);transition:var(--transition);position:relative}.task-card:hover{background:rgba(17,24,39,.7);border-color:rgba(255,255,255,.1)}.task-card.inprog{border-left-color:var(--cyan);background:rgba(0,229,255,.06)}.task-card.done{border-left-color:var(--green);background:rgba(0,230,118,.06)}.task-card.overdue{border-left-color:var(--red);background:rgba(255,23,68,.06)}.fi{padding:12px 14px;border-left:5px solid var(--red);background:var(--red-dim);border-radius:0 10px 10px 0;margin-bottom:8px;font-size:13px;transition:background .2s;position:relative}.fi:hover{background:rgba(255,23,68,.15)}input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;margin-top:6px;outline:none;transition:var(--transition);background:var(--input-bg);color:var(--text);position:relative}input:hover,select:hover,textarea:hover{border-color:rgba(255,255,255,.15)}input:focus,select:focus,textarea:focus{border-color:var(--cyan);outline:2px solid var(--cyan);outline-offset:-1px;background:rgba(0,229,255,.04)}input::placeholder,textarea::placeholder{color:var(--text3)}select option{background:var(--bg-secondary);color:var(--text)}#rchk-room,#adm-rchk-room{background:var(--card-bg)!important}select optgroup{color:var(--text)!important;font-weight:700}label{font-weight:700;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-top:4px}.toast{position:fixed;top:70px;right:16px;background:var(--toast-bg);border:1px solid var(--card-border);padding:10px 18px;border-radius:12px;font-size:13px;z-index:999;display:none;box-shadow:0 8px 40px rgba(0,0,0,.5);font-weight:700}.toast.show{display:block}.theme-toggle{position:fixed;bottom:76px;right:14px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:var(--card-bg);border:1px solid var(--card-border);box-shadow:var(--shadow-card);font-size:20px;display:flex;align-items:center;justify-content:center;transition:var(--transition);color:var(--text)}.theme-toggle:hover{transform:scale(1.12);border-color:var(--cyan)}.theme-toggle:active{transform:scale(.92)}[data-theme='light'] .theme-toggle-d{display:none}[data-theme='dark'] .theme-toggle-l{display:none}.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;background:var(--bg-primary)}.login-box{background:var(--login-box-bg);border:1px solid var(--login-box-border);border-radius:24px;padding:32px 26px;width:100%;max-width:380px;box-shadow:var(--shadow-card);position:relative}.login-logo{font-size:52px;text-align:center;margin-bottom:8px;display:block;position:relative;z-index:2}.login-title{text-align:center;font-size:22px;font-weight:900;margin-bottom:4px;letter-spacing:-.5px;color:var(--text);position:relative;z-index:2}.login-sub{text-align:center;font-size:13px;color:var(--text3);margin-bottom:24px;position:relative;z-index:2}.emp-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,255,.08);padding:8px 16px;border-radius:22px;font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:16px;border:1px solid rgba(0,229,255,.15);position:relative}.summary-glow{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.12);border-radius:8px;padding:12px;color:var(--cyan)}details>summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--cyan);padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px}details>summary::-webkit-details-marker{display:none}details>summary::before{content:'▶';font-size:10px;transition:transform .3s cubic-bezier(.22,1,.36,1)}details[open]>summary::before{transform:rotate(90deg)}details code{background:rgba(0,0,0,.3);color:var(--cyan);display:block;padding:10px;border-radius:8px;margin:4px 0;font-size:11px;border:1px solid rgba(0,229,255,.1)}.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.dsh-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;border-radius:16px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);position:relative;overflow:hidden;transition:var(--transition);min-height:90px;box-shadow:var(--shadow-card);text-align:center}.dsh-tile::before{content:'';position:absolute;inset:0;background:var(--tile-bg,transparent);opacity:.15;transition:opacity .3s;border-radius:inherit}.dsh-tile:hover{transform:translateY(-3px);border-color:var(--cyan)}.dsh-tile:hover::before{opacity:.25}.dsh-tile:active{transform:scale(.95)}.dsh-tile .tile-label{font-size:11px;font-weight:700;line-height:1.3;position:relative;z-index:1}.tile-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:10px;font-weight:900;line-height:18px;text-align:center;padding:0 3px;border:2px solid var(--bg-secondary)}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--hdr-bg);border-top:1px solid var(--hdr-border);display:flex;justify-content:space-around;align-items:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0));z-index:200;box-shadow:0 -4px 32px rgba(0,0,0,.3)}.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 12px;border:none;background:none;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;transition:var(--transition);position:relative}.nav-item .nav-icon{font-size:20px;line-height:1}.nav-item.active{color:var(--cyan)}.nav-item.active::after{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:20px;height:3px;background:var(--cyan);border-radius:2px}.nav-item:hover{color:var(--text)}.profile-hub{grid-column:1/-1;background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(41,121,255,.1))!important;border-radius:20px!important;border:1px solid rgba(0,229,255,.12)!important;position:relative}.hub-avatar{font-size:48px;margin-bottom:8px;display:block}.hub-name{font-size:20px;font-weight:900;color:#fff}.hub-id{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}.hub-phone{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px}.hub-status-badge{display:inline-block;margin-top:12px;padding:5px 16px;border-radius:20px;font-size:12px;font-weight:800;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.1);letter-spacing:.3px}@media(max-width:480px){.wrap{padding:12px 10px 100px}.card{padding:16px}.btn{padding:13px 14px;font-size:13px}.login-box{padding:24px 18px}.kpi-grid{gap:8px}.kpi{padding:16px 8px}.kpi .num{font-size:24px}.tabs{gap:3px;padding:3px}.tab{padding:8px 4px;font-size:10px}.hdr h1{font-size:17px}.hdr{padding:12px 14px}.theme-toggle{bottom:68px;right:10px;width:40px;height:40px;font-size:18px}.toast{top:60px;right:10px}.login-box{padding:20px 16px}.login-title{font-size:19px}}@media(max-width:380px){.sb{padding:6px 9px;font-size:10px}.s-btns{gap:3px}.ep-row{padding:10px 12px}.item-row{padding:10px 12px}.hbtn{padding:6px 10px;font-size:10px}.btn{padding:12px 12px;font-size:12px}}</style></head>
   <body><div class="page">
-  <h1>🏥 ${cfg.hosp} — ${label}</h1>
-  <p style="color:var(--text2);font-size:13px">Generated: ${new Date().toLocaleString('en-IN')} · Days: ${dates.length} · Staff: ${empRows.length}</p>
+  <h1>🏥 ${cfg.hosp} — ${label} · ${deptLabel}</h1>
+  <p style="color:var(--text2);font-size:13px">Generated: ${new Date().toLocaleString('en-IN')} · Days: ${dates.length} · Staff: ${empRows.length} · Dept: ${deptLabel}</p>
   <div class="kpi-grid">
     <div class="kpi"><div class="n" style="color:var(--green)">${avgPct}%</div><div class="l">Avg Completion</div></div>
     <div class="kpi"><div class="n" style="color:var(--red)">${empRows.reduce((s,e)=>s+e.totalFaults,0)}</div><div class="l">Total Faults</div></div>
@@ -7282,8 +7283,9 @@ function downloadCurrentReport(){
   <h2>👷 Employee Performance</h2>
   ${empRows.map(e=>{const avg=Math.min(100,Math.round(e.totalPct/e.days));const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';const gr=avg>=95?'A':avg>=85?'B':avg>=70?'C':'D';
     return `<div class="emp-row"><div style="min-width:140px;font-weight:700;font-size:13px">${e.name}</div><div class="bar-bg"><div class="bar-fill" style="width:${avg}%;background:${col}"></div></div><div style="min-width:40px;font-weight:800;color:${col};text-align:right">${avg}%</div><div style="min-width:22px;background:${col}20;color:${col};border-radius:5px;padding:2px 6px;font-weight:800;font-size:12px">${gr}</div><div style="font-size:11px;color:var(--text3);min-width:70px">${e.days}d · ${e.totalFaults}⚡</div></div>`;}).join('')}
+  const deptEmpIds=dept&&dept!=='all'?new Set(filteredEmps.map(e=>e.loginId)):null;
   <h2>📈 Daily Trend</h2>
-  ${dates.map(date=>{const vals=Object.values(rangeData[date]||{}).filter(Boolean).filter(d=>d.pct!==undefined);const avg=vals.length?Math.min(100,Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length)):0;const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
+  ${dates.map(date=>{const vals=Object.entries(rangeData[date]||{}).filter(([lid,d])=>d&&d.pct!==undefined&&(!deptEmpIds||deptEmpIds.has(lid))).map(([_,d])=>d);const avg=vals.length?Math.min(100,Math.round(vals.reduce((s,d)=>s+(d.pct||0),0)/vals.length)):0;const col=avg>=95?'#2E7D32':avg>=85?'#1565C0':avg>=70?'#E65100':'#C62828';
     return `<div class="trend-row"><div style="min-width:80px">${date}</div><div class="trend-bg"><div class="bar-fill" style="width:${avg}%;background:${col};height:100%"></div></div><div style="min-width:40px;font-weight:700;color:${col};text-align:right">${avg}%</div></div>`;}).join('')}
   <h2>⚠️ Problems Reported (${allProblems.length})</h2>
   ${allProblems.length?allProblems.map(p=>`<div class="prob"><strong>${p.pri||''} ${p.loc}</strong> — ${p.desc} <span style="color:var(--text3);font-size:11px">${p.date} · ${p.emp}</span></div>`).join(''):'<p style="color:var(--text3)">No problems in this period.</p>'}
@@ -7358,11 +7360,13 @@ function downloadCurrentExcel(){
   const dates=Object.keys(rangeData).sort();
   const allTasks=getTaskArchive().filter(t=>t.archivedDate>=from&&t.archivedDate<=to);
   const allProblems=[];
+  const deptEmpIds=dept&&dept!=='all'?new Set(cfg.employees.filter(e=>e.dept===dept).map(e=>e.loginId)):null;
   // Summary sheet data
   const summaryRows=[['Date','Employee','Completion %','Faults','OK Items','N/A Items','Grade']];
   dates.forEach(date=>{
     Object.entries(rangeData[date]||{}).forEach(([lid,d])=>{
       if(!d)return;
+      if(deptEmpIds&&!deptEmpIds.has(lid))return;
       const pct=d.pct||0;
       const grade=pct>=95?'A':pct>=85?'B':pct>=70?'C':'D';
       summaryRows.push([date,d.name||lid,pct,d.fault||0,d.ok||0,d.na||0,grade]);
@@ -8608,15 +8612,18 @@ function adminRemoveDischargeItem(idx){
 // ══════════════════════════════════════════════════════
 function populateDeptSelects(){
   const depts=getDepts();
-  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept'];
+  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept','rep-dept','adm-excel-dept'];
   ids.forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const old=el.value;
     const isAct=id==='inv-act-dept'||id==='sk-inv-act-dept';
+    const isRep=id==='rep-dept'||id==='adm-excel-dept';
     let html=isAct?'<option value="all">All Depts</option>':'';
+    if(isRep) html='<option value="all">All Departments</option>';
     html+=depts.map(d=>`<option value="${d.id}">${d.icon} ${d.label}</option>`).join('');
+    if(isRep) html+='<option value="transport">🚑 Transport</option>';
     el.innerHTML=html;
-    if(depts.find(d=>d.id===old)||(isAct&&old==='all'))el.value=old;
+    if(depts.find(d=>d.id===old)||(isAct&&old==='all')||(isRep&&(old==='all'||old==='transport')))el.value=old;
   });
 }
 function renderDepts(){
