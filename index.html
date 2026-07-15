@@ -3860,10 +3860,14 @@ function openStockOut(){
 function renderStockInItems(){
   const dept=document.getElementById('si-dept').value;
   const items=getDeptStockItems(dept);
+  const commonItems=dept!=='common'?getDeptStockItems('common'):[];
+  const allItems=[...commonItems,...items];
+  const seen=new Set();
+  const merged=allItems.filter(i=>{if(seen.has(i.name))return false;seen.add(i.name);return true;});
   const sel=document.getElementById('si-item');
   if(!sel) return;
-  sel.innerHTML='<option value="">— Select —</option>'+items.map(i=>`<option>${i.name}</option>`).join('');
-  if(items.length===0){
+  sel.innerHTML='<option value="">— Select —</option>'+merged.map(i=>`<option>${i.name}</option>`).join('');
+  if(merged.length===0){
     sel.style.display='none';
     document.getElementById('si-item-new').style.display='block';
   } else {
@@ -3874,9 +3878,13 @@ function renderStockInItems(){
 function renderStockOutItems(){
   const dept=document.getElementById('so-dept').value;
   const items=getDeptStockItems(dept);
+  const commonItems=dept!=='common'?getDeptStockItems('common'):[];
+  const allItems=[...commonItems,...items];
+  const seen=new Set();
+  const merged=allItems.filter(i=>{if(seen.has(i.name))return false;seen.add(i.name);return true;});
   const sel=document.getElementById('so-item');
   if(!sel) return;
-  sel.innerHTML='<option value="">— Select item —</option>'+items.map(i=>`<option value="${i.name}" data-qty="${i.qty||0}">${i.name} (Available: ${i.qty||0})</option>`).join('');
+  sel.innerHTML='<option value="">— Select item —</option>'+merged.map(i=>`<option value="${i.name}" data-qty="${i.qty||0}">${i.name} (Available: ${i.qty||0})</option>`).join('');
 }
 function doStockIn(){
   const dept=document.getElementById('si-dept').value;
@@ -8625,10 +8633,11 @@ function getInvDeptIcons(){const m={};getDepts().forEach(d=>{m[d.id]=d.icon;});r
 function getInvDeptIcon(id){const d=getDepts().find(dp=>dp.id===id);return d?d.icon:'📦';}
 function getInvDeptIds(){return getDepts().map(d=>d.id);}
 function getInvLabel(d){const m={};const depts=getDepts();depts.forEach(dp=>{m[dp.id]=dp.label;});return m[d]||d;}
-function getDepts(){if(!cfg.departments||!cfg.departments.length)cfg.departments=[{id:'fm',label:'Facility Management',icon:'👷'},{id:'maintenance',label:'Maintenance',icon:'🔧'},{id:'housekeeping',label:'Housekeeping',icon:'🧹'},{id:'stationery',label:'Stationery',icon:'📎'},{id:'radiology',label:'Radiology',icon:'🔬'},{id:'ot',label:'OT',icon:'🏥'},{id:'medical',label:'Medical',icon:'💊'},{id:'canteen',label:'Canteen',icon:'🍽️'},{id:'cssd',label:'CSSD',icon:'🧪'},{id:'laundry',label:'Laundry',icon:'👕'},{id:'linen',label:'Linen',icon:'🛏️'},{id:'furniture',label:'Furniture',icon:'🪑'}];return cfg.departments;}
+function getDepts(){if(!cfg.departments||!cfg.departments.length)cfg.departments=[{id:'common',label:'Common',icon:'📋'},{id:'fm',label:'Facility Management',icon:'👷'},{id:'maintenance',label:'Maintenance',icon:'🔧'},{id:'housekeeping',label:'Housekeeping',icon:'🧹'},{id:'stationery',label:'Stationery',icon:'📎'},{id:'radiology',label:'Radiology',icon:'🔬'},{id:'ot',label:'OT',icon:'🏥'},{id:'medical',label:'Medical',icon:'💊'},{id:'canteen',label:'Canteen',icon:'🍽️'},{id:'cssd',label:'CSSD',icon:'🧪'},{id:'laundry',label:'Laundry',icon:'👕'},{id:'linen',label:'Linen',icon:'🛏️'},{id:'furniture',label:'Furniture',icon:'🪑'}];return cfg.departments;}
 function getDefaultPerms(dept){
   const all={checklist:true,tasks:true,projects:true,requests:true,problems:true,complaints:true,roomcheck:true,admission:true,discharge:true,material:true,report:true,phone:true,stockIn:true,stockOut:true};
   const deptPerms={
+    common:all,
     fm:all,
     maintenance:{...all,complaints:false,roomcheck:false,admission:false,discharge:false,stockIn:true,stockOut:true},
     housekeeping:{...all,projects:false,requests:false,admission:false,discharge:false,material:false},
