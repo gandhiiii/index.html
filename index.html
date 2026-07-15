@@ -8774,6 +8774,53 @@ function adminAddInvItem(){
   document.getElementById('inv-warranty-start').value='';document.getElementById('inv-warranty-end').value='';document.getElementById('inv-expiry').value='';document.getElementById('inv-price').value='';
   renderInvItems();showToast2('✅ '+name+' added to '+getInvLabel(dept));
 }
+function adminEditInvItem(dept,idx){
+  const inv=getInventory();
+  if(!inv[dept]||!inv[dept].items[idx])return;
+  const item=inv[dept].items[idx];
+  const existing=document.getElementById('edit-inv-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='edit-inv-modal';
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  modal.innerHTML=`<div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:900;font-size:15px">✏️ Edit Item</span>
+      <button onclick="this.closest('#edit-inv-modal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:900">✕</button>
+    </div>
+    <div style="padding:16px 18px;display:grid;gap:10px">
+      <div><label>Item Name</label><input id="eii-name" value="${item.name.replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box"></div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1"><label>Unit</label><input id="eii-unit" value="${item.unit||'pcs'}" style="width:100%;box-sizing:border-box"></div>
+        <div style="flex:1"><label>Min Stock</label><input id="eii-min" type="number" value="${item.min||0}" style="width:100%;box-sizing:border-box"></div>
+        <div style="flex:1"><label>Price ₹</label><input id="eii-price" type="number" value="${item.price||0}" style="width:100%;box-sizing:border-box"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1"><label>Warranty Start</label><input id="eii-ws" type="date" value="${item.warrantyStart||''}" style="width:100%;box-sizing:border-box"></div>
+        <div style="flex:1"><label>Warranty End</label><input id="eii-we" type="date" value="${item.warrantyEnd||''}" style="width:100%;box-sizing:border-box"></div>
+      </div>
+      <div><label>Expiry Date</label><input id="eii-exp" type="date" value="${item.expiry||''}" style="width:100%;box-sizing:border-box"></div>
+      <button onclick="saveAdminEditInvItem('${dept}',${idx})" style="background:var(--green);border:none;color:#fff;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;font-size:14px">💾 Save Changes</button>
+    </div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+}
+function saveAdminEditInvItem(dept,idx){
+  const inv=getInventory();
+  if(!inv[dept]||!inv[dept].items[idx])return;
+  const name=document.getElementById('eii-name').value.trim();
+  if(!name){showToast2('⚠️ Enter item name');return;}
+  inv[dept].items[idx].name=name;
+  inv[dept].items[idx].unit=document.getElementById('eii-unit').value.trim()||'pcs';
+  inv[dept].items[idx].min=parseInt(document.getElementById('eii-min').value)||0;
+  inv[dept].items[idx].price=parseFloat(document.getElementById('eii-price').value)||0;
+  inv[dept].items[idx].warrantyStart=document.getElementById('eii-ws').value||'';
+  inv[dept].items[idx].warrantyEnd=document.getElementById('eii-we').value||'';
+  inv[dept].items[idx].expiry=document.getElementById('eii-exp').value||'';
+  saveInventory(inv);
+  document.getElementById('edit-inv-modal').remove();
+  renderInvItems();showToast2('✅ '+name+' updated');
+}
 function adminRemoveInvItem(dept,idx){
   if(!confirm('Remove this item?'))return;
   const inv=getInventory();
@@ -8808,6 +8855,7 @@ function renderInvItems(){
       <div style="display:flex;gap:4px;flex-wrap:wrap">
         <button onclick="storekeeperAddStock('${dept}',${i})" style="background:rgba(0,230,118,.08);border:none;color:var(--green);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">+ IN</button>
         <button onclick="storekeeperRemoveStock('${dept}',${i})" style="background:rgba(255,23,68,.08);border:none;color:var(--red);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">− OUT</button>
+        <button onclick="adminEditInvItem('${dept}',${i})" style="background:none;border:none;color:var(--cyan);font-size:14px;cursor:pointer;padding:0 4px">✏️</button>
         <button onclick="adminRemoveInvItem('${dept}',${i})" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:0 4px">×</button>
       </div>
     </div>`;
