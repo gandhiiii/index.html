@@ -8221,7 +8221,7 @@ function submitRoomChecklist(){
   saved.room=room;
   saved.submittedAt=Date.now();
   saveRoomChkProgress(room,saved);
-  showToast('✅ Room checklist for '+room+' submitted ✓');
+  showToast2('✅ Room checklist for '+room+' submitted ✓');
   onRoomChecklistRoomChange();
 }
 function setRoomChkStatus(idx,val,btn){
