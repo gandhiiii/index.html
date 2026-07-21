@@ -5501,7 +5501,6 @@ function startLiveTracking(){
                   '\n📊 '+(emp.pct||0)+'% completion\n✅ OK: '+(emp.ok||0)+'  ❌ Fault: '+(emp.fault||0));
                 sendNovu({event:'shift_completed',hospital:cfg.hosp,employee:(emp.name||emp.loginId),pct:(emp.pct||0),ok:(emp.ok||0),fault:(emp.fault||0)});
   }
-  renderAdminRoomChkSummary();
 }
           });
           localStorage.setItem('HFM4_NOTIFIED_SHIFTS',JSON.stringify(notifiedShifts));
@@ -5554,6 +5553,33 @@ function startLiveTracking(){
         }
       }
     }catch(e){/* room checklist fetch failed — non-blocking */}
+    // Sync room checklist items (so admin sees room names)
+    try{
+      const rci=await fetchWithTimeout(base+'/roomChecklist/items.json',{},5000);
+      if(rci.ok){
+        const rciData=await rci.json();
+        if(rciData&&typeof rciData==='object') localStorage.setItem('HFM4_ROOMCHK_ITEMS',JSON.stringify(rciData));
+      }
+    }catch(e){}
+    renderAdminRoomChkSummary();
+    // Sync admissions from Firebase
+    try{
+      const ar=await fetchWithTimeout(base+'/admissions.json',{},5000);
+      if(ar.ok){
+        const aData=await ar.json();
+        const aArr=fbToArray(aData);
+        if(aArr.length) localStorage.setItem('HFM4_ADMISSIONS',JSON.stringify(aArr));
+      }
+    }catch(e){}
+    // Sync discharged patients from Firebase
+    try{
+      const dr=await fetchWithTimeout(base+'/dischargeChecklist/discharged.json',{},5000);
+      if(dr.ok){
+        const dData=await dr.json();
+        const dArr=fbToArray(dData);
+        if(dArr.length) localStorage.setItem('HFM4_DISCHARGED_PATIENTS',JSON.stringify(dArr));
+      }
+    }catch(e){}
     // Sync tasks — always replace local with Firebase truth
     try{
       const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
@@ -5604,6 +5630,12 @@ function startLiveTracking(){
       renderProjectKPIs();
       const probTab=document.getElementById('tab-problems');
       if(probTab&&probTab.style.display!=='none') renderAdminProblems();
+      const rchkTab=document.getElementById('tab-roomchk');
+      if(rchkTab&&rchkTab.style.display!=='none'){renderAdminRoomChkItems();renderAdminRoomChkSummary();}
+      const admTab=document.getElementById('tab-admissions');
+      if(admTab&&admTab.style.display!=='none') renderAdminAdmissions();
+      const dcTab=document.getElementById('tab-discharge');
+      if(dcTab&&dcTab.style.display!=='none') renderAdminDischarge();
       const transTab=document.getElementById('tab-transport');
       if(transTab&&transTab.style.display!=='none') renderAdminTransport();
     }catch(e){/* render failed — non-blocking */}
