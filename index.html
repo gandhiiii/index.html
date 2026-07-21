@@ -1270,6 +1270,8 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         <div class="kpi"><div class="num" id="k-complaints" style="color:#00695C">0</div><div class="lbl">Complaints</div></div>
         <div class="kpi"><div class="num" id="k-pending" style="color:#FF6F00">0</div><div class="lbl">Pending Tasks</div></div>
         <div class="kpi"><div class="num" id="k-overdue" style="color:#B71C1C">0</div><div class="lbl">Overdue Tasks</div></div>
+        <div class="kpi"><div class="num" id="k-admitted" style="color:#1565C0">0</div><div class="lbl">Admitted Today</div></div>
+        <div class="kpi"><div class="num" id="k-discharged" style="color:#2E7D32">0</div><div class="lbl">Discharged Today</div></div>
       </div>
       <div class="card">
         <div style="font-weight:800;font-size:14px;margin-bottom:13px">Overall Breakdown</div>
@@ -2326,6 +2328,13 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
           <button onclick="clearTaskArchive()" style="background:#FFEBEE;border:none;color:#C62828;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">Clear Archive</button>
         </div>
         <div id="archive-list" style="padding:13px;max-height:340px;overflow-y:auto"></div>
+      </div>
+      <!-- Admission / Discharge Report -->
+      <div class="card" style="border-left:4px solid #1565C0">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:8px">🏥 Today's Admission &amp; Discharge Report</h3>
+        <div style="display:grid;gap:8px">
+          <button class="btn" style="background:#1565C0;color:#fff" onclick="downloadAdmissionDischargeReport()">📥 Download Report (HTML)</button>
+        </div>
       </div>
     </div>
   </div>
@@ -4374,19 +4383,25 @@ function completeShift(){
     (pct>=95?'A':pct>=85?'B':pct>=70?'C':'D')+'*\n✅ OK: '+ok+'  ❌ Fault: '+fault+'  — N/A: '+na);
   sendNovu({event:'shift_completed',hospital:cfg.hosp,employee:currentEmp.name,pct,ok,fault,na});
   // Auto-send WhatsApp (fallback)
-  const msg=buildReport();
-  window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+  if(cfg.waNum&&cfg.waNum!=='undefined'&&cfg.waNum.length>=8){
+    const msg=buildReport();
+    window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+  }
   showToast('Shift completed! Report sent ✓');
   setTimeout(()=>loadEmployeeHome(),1500);
 }
 
-function sendWhatsApp(){const msg=buildReport();window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');}
+function sendWhatsApp(){
+  if(!cfg.waNum||cfg.waNum==='undefined'||cfg.waNum.length<8){alert('⚠️ Admin WhatsApp number not configured. Ask your admin to set it in Settings → Admin WhatsApp Number.');return;}
+  const msg=buildReport();window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
+}
 function sendEmail(){
   const sub=encodeURIComponent(cfg.hosp+' Shift Report — '+currentEmp.name+' — '+new Date().toLocaleDateString('en-IN'));
   const body=encodeURIComponent(buildReport().replace(/\*/g,''));
   window.location.href='mailto:'+cfg.email+'?subject='+sub+'&body='+body;
 }
 function sendReportManual(){
+  if(!cfg.waNum||cfg.waNum==='undefined'||cfg.waNum.length<8){alert('⚠️ Admin WhatsApp number not configured. Ask your admin to set it in Settings → Admin WhatsApp Number.');return;}
   const msg=buildReport();
   window.open('https://wa.me/'+cfg.waNum+'?text='+encodeURIComponent(msg),'_blank');
 }
@@ -4553,6 +4568,16 @@ function renderAdmin(){
   const overdueCount=allTasks.filter(t=>taskStatus(t)==='Overdue').length;
   document.getElementById('k-pending').textContent=pendingCount+inProgCount;
   document.getElementById('k-overdue').textContent=overdueCount;
+  // Admission / Discharge KPIs
+  const allAdms=getAdmissions();
+  const todayAdms=allAdms.filter(a=>a.admissionDate===todayStr()&&a.status==='admitted');
+  const admsEl=document.getElementById('k-admitted');
+  if(admsEl) admsEl.textContent=todayAdms.length;
+  const allDischarged=getDischargedPatients();
+  const todayStart=new Date();todayStart.setHours(0,0,0,0);
+  const todayDc=allDischarged.filter(d=>d.dischargedAt&&new Date(d.dischargedAt)>=todayStart);
+  const dcEl=document.getElementById('k-discharged');
+  if(dcEl) dcEl.textContent=todayDc.length;
   // Pending tasks dashboard section
   const ptEl=document.getElementById('dash-pending-tasks');
   if(ptEl){
@@ -5300,6 +5325,7 @@ function downloadTransportExcel(repDate){
 }
 
 function shareReportWA(){
+  if(!cfg.waNum||cfg.waNum==='undefined'||cfg.waNum.length<8){alert('⚠️ Admin WhatsApp number not configured. Set it in Settings → Admin WhatsApp Number.');return;}
   const deptEl=document.getElementById('adm-excel-dept')||document.getElementById('rep-dept');
   const dept=deptEl?deptEl.value:'all';
   if(dept==='transport')downloadTransportExcel(document.getElementById('rep-date').value||todayStr());
@@ -8342,6 +8368,70 @@ function openPatientAdmission(){
   if(dateEl&&!dateEl.value) dateEl.value=todayStr();
   renderAdmissions();
   go('view-patient-admission');
+}
+function downloadAdmissionDischargeReport(){
+  const adms=getAdmissions();
+  const dc=getDischargedPatients();
+  const todayStart=new Date();todayStart.setHours(0,0,0,0);
+  const todayEnd=new Date();todayEnd.setHours(23,59,59,999);
+  const today=todayStr();
+  // Today's admissions (status='admitted' and date matches today)
+  const tAdms=adms.filter(a=>a.admissionDate===today);
+  // Today's discharges (dischargedAt timestamp is today)
+  const tDc=dc.filter(d=>d.dischargedAt&&new Date(d.dischargedAt)>=todayStart&&new Date(d.dischargedAt)<=todayEnd);
+  // Currently admitted patients (admitted but not discharged)
+  const admittedIds=new Set(adms.filter(a=>a.status==='admitted').map(a=>a.id));
+  const currAdmitted=adms.filter(a=>a.status==='admitted');
+  let html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${cfg.hosp} — Admission & Discharge Report</title>
+<style>body{font-family:Arial,sans-serif;max-width:900px;margin:20px auto;padding:0 16px;color:#333}h1{color:#1565C0;border-bottom:2px solid #1565C0;padding-bottom:8px}h2{color:#37474F;margin-top:24px}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{padding:8px 12px;text-align:left;border:1px solid #ddd}th{background:#1565C0;color:#fff}tr:nth-child(even){background:#F5F5F5}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:700}.b-admitted{background:#E3F2FD;color:#1565C0}.b-discharged{background:#E8F5E9;color:#2E7D32}.kpi-row{display:flex;gap:16px;margin:16px 0}.kpi-box{flex:1;background:#F5F5F5;border-radius:10px;padding:16px;text-align:center}.kpi-num{font-size:28px;font-weight:900;color:#1565C0}.kpi-lbl{font-size:12px;color:#78909C;margin-top:4px}.kpi-box.green .kpi-num{color:#2E7D32}.footer{margin-top:32px;font-size:11px;color:#90A4AE;text-align:center;border-top:1px solid #E0E0E0;padding-top:12px}</style></head><body>
+<h1>🏥 ${cfg.hosp} — Admission & Discharge Report</h1>
+<p style="color:#607D8B">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+<div class="kpi-row">
+  <div class="kpi-box"><div class="kpi-num">${tAdms.length}</div><div class="kpi-lbl">Admitted Today</div></div>
+  <div class="kpi-box green"><div class="kpi-num">${tDc.length}</div><div class="kpi-lbl">Discharged Today</div></div>
+  <div class="kpi-box"><div class="kpi-num">${currAdmitted.length}</div><div class="kpi-lbl">Currently Admitted</div></div>
+</div>`;
+  // Today's admissions table
+  html+=`<h2>📋 Today's Admissions (${tAdms.length})</h2>`;
+  if(tAdms.length){
+    html+=`<table><thead><tr><th>Patient Name</th><th>Room/Bed</th><th>Doctor</th><th>Contact</th><th>Admitted By</th><th>Status</th></tr></thead><tbody>`;
+    tAdms.forEach(a=>{
+      html+=`<tr><td>${a.name}</td><td>${a.room||'—'} / ${a.bed||'—'}</td><td>${a.doctor||'—'}</td><td>${a.contact||'—'}</td><td>${a.admittedBy||'—'}</td><td><span class="badge ${a.status==='admitted'?'b-admitted':'b-discharged'}">${a.status==='admitted'?'🏥 Admitted':'✅ Discharged'}</span></td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  } else {
+    html+=`<p style="color:#90A4AE">No admissions today.</p>`;
+  }
+  // Currently admitted patients (all, not just today)
+  html+=`<h2>🏥 Currently Admitted Patients (${currAdmitted.length})</h2>`;
+  if(currAdmitted.length){
+    html+=`<table><thead><tr><th>Patient Name</th><th>Room/Bed</th><th>Doctor</th><th>Admission Date</th><th>Admitted By</th></tr></thead><tbody>`;
+    currAdmitted.forEach(a=>{
+      html+=`<tr><td>${a.name}</td><td>${a.room||'—'} / ${a.bed||'—'}</td><td>${a.doctor||'—'}</td><td>${a.admissionDate||'—'}</td><td>${a.admittedBy||'—'}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  } else {
+    html+=`<p style="color:#90A4AE">No patients currently admitted.</p>`;
+  }
+  // Today's discharges table
+  html+=`<h2>✅ Today's Discharges (${tDc.length})</h2>`;
+  if(tDc.length){
+    html+=`<table><thead><tr><th>Patient Name</th><th>Room/Bed</th><th>Admission Date</th><th>Discharged At</th><th>Discharged By</th></tr></thead><tbody>`;
+    tDc.forEach(d=>{
+      const dt=d.dischargedAt?new Date(d.dischargedAt).toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+      html+=`<tr><td>${d.patientName||d.patient||'—'}</td><td>${d.room||'—'} / ${d.bed||'—'}</td><td>${d.admissionDate||'—'}</td><td>${dt}</td><td>${d.dischargedBy||'—'}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  } else {
+    html+=`<p style="color:#90A4AE">No discharges today.</p>`;
+  }
+  html+=`<div class="footer">Generated by Hospital FM on ${new Date().toLocaleString('en-IN')}</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${cfg.hosp}_Admission_Discharge_${todayStr()}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 function getAdmissions(){
   try{return JSON.parse(localStorage.getItem('HFM4_ADMISSIONS')||'[]');}catch(e){return[];}
