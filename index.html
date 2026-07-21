@@ -1749,11 +1749,6 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="emp-item-list" style="padding:13px"></div>
       </div>
-      <!-- Room checklist items summary -->
-      <div class="card" style="border-left:4px solid #00695C;margin-top:16px">
-        <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🛏️ Room Checklist Items Summary</h3>
-        <div id="adm-roomchk-summary" style="padding:0"></div>
-      </div>
     </div>
 
     <!-- REQUESTS -->
@@ -1940,10 +1935,9 @@ label{font-weight:700;font-size:11px;color:#546E7A;text-transform:uppercase;lett
         </div>
         <div id="adm-rchk-list" style="padding:13px"><div style="text-align:center;color:#90A4AE;padding:20px">No items added yet.</div></div>
       </div>
-      <!-- Room checklist employee progress -->
       <div class="card" style="border-left:4px solid #00695C;margin-top:16px">
-        <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🛏️ Employee Room Checklist Progress</h3>
-        <div id="adm-rchk-progress" style="padding:0"></div>
+        <h3 style="font-size:14px;font-weight:800;color:#00695C;margin-bottom:10px">🛏️ Room Checklist Items Summary</h3>
+        <div id="adm-roomchk-summary" style="padding:0"></div>
       </div>
     </div>
 
@@ -4514,7 +4508,7 @@ function admTab(tab,el){
   if(tab==='requests'){renderRequestsAdmin();}
   if(tab==='problems'){renderAdminProblems();}
   if(tab==='complaints'){syncPatientComplaints().then(()=>renderAdminComplaints());}
-  if(tab==='roomchk'){renderAdminRoomChkItems();renderAdminRoomChkSummary('adm-rchk-progress');}
+  if(tab==='roomchk'){renderAdminRoomChkItems();renderAdminRoomChkSummary();}
   if(tab==='admissions'){renderAdminAdmissions();}
   if(tab==='discharge'){renderAdminDischarge();}
   if(tab==='transport'){renderAdminTransport();}
@@ -5636,7 +5630,7 @@ function startLiveTracking(){
       const probTab=document.getElementById('tab-problems');
       if(probTab&&probTab.style.display!=='none') renderAdminProblems();
       const rchkTab=document.getElementById('tab-roomchk');
-      if(rchkTab&&rchkTab.style.display!=='none'){renderAdminRoomChkItems();renderAdminRoomChkSummary('adm-rchk-progress');}
+      if(rchkTab&&rchkTab.style.display!=='none'){renderAdminRoomChkItems();renderAdminRoomChkSummary();}
       const admTab=document.getElementById('tab-admissions');
       if(admTab&&admTab.style.display!=='none') renderAdminAdmissions();
       const dcTab=document.getElementById('tab-discharge');
@@ -7005,8 +6999,8 @@ function renderEmpItems(){
   el.innerHTML=rows.length?rows.join(''):'<p style="color:#90A4AE;font-size:13px">No employee-specific items yet.</p>';
 }
 
-function renderAdminRoomChkSummary(elId){
-  const el=document.getElementById(elId||'adm-roomchk-summary');if(!el)return;
+function renderAdminRoomChkSummary(){
+  const el=document.getElementById('adm-roomchk-summary');if(!el)return;
   const all=getRoomChkAll();
   const common=all.__common__||[];
   const roomKeys=Object.keys(all).filter(k=>k!=='__common__').sort();
