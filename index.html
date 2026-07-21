@@ -989,6 +989,9 @@
       <div id="rchk-items" style="display:grid;gap:6px">
         <div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">Select a room above to see checklist items.</div>
       </div>
+      <div id="rchk-submit-area" style="display:none;margin-top:14px;text-align:center">
+        <button class="btn green" onclick="submitRoomChecklist()" style="font-size:15px;padding:14px 28px">✅ Complete &amp; Submit Room Check</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2070,7 +2073,8 @@
         <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
           <span style="font-weight:800;color:var(--green)">📊 Inventory Report &amp; Export</span>
           <div style="display:flex;gap:6px">
-            <button onclick="downloadInvExcel()" style="background:rgba(0,230,118,.12);color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📥 Excel</button>
+            <button onclick="downloadInvExcel()" style="background:rgba(0,230,118,.12);color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📥 Dept Excel</button>
+            <button onclick="downloadInvReportExcelAll()" style="background:#E65100;border:none;color:#fff;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📊 Full Report</button>
             <button onclick="downloadInvPDF()" style="background:var(--red);border:none;color:#fff;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">📄 PDF</button>
           </div>
         </div>
@@ -2132,8 +2136,19 @@
           <button onclick="quickReport('month')" style="background:rgba(255,145,0,.08);border:none;color:var(--orange);padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 This Month's Report (30 days)</button>
           <button onclick="quickReport('lastmonth')" style="background:rgba(255,145,0,.08);border:none;color:var(--orange);padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📅 Last Month's Report</button>
           <button onclick="quickReport('year')" style="background:rgba(0,229,255,.06);border:none;color:#283593;padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 This Year's Report (365 days)</button>
-          <button onclick="quickReport('lastyear')" style="background:#EFEBE9;border:none;color:var(--text);padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 Last Year's Report</button>
+           <button onclick="quickReport('lastyear')" style="background:#EFEBE9;border:none;color:var(--text);padding:11px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;text-align:left">📆 Last Year's Report</button>
         </div>
+      </div>
+      <!-- Inventory Report -->
+      <div class="card" style="border-left:4px solid var(--orange)">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:var(--orange)">📦 Inventory Report</h3>
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="inv-rep-dept" style="flex:1;font-size:13px;padding:9px;font-weight:600"></select>
+            <button onclick="downloadInvReportExcel()" style="background:#E65100;border:none;color:#fff;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;font-size:13px;white-space:nowrap">📥 Download Excel</button>
+          </div>
+        </div>
+        <div id="inv-rep-preview" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
       </div>
       <!-- Loading indicator -->
       <div id="rep-loading" style="display:none;text-align:center;padding:30px;color:var(--text2);font-weight:700">
@@ -4518,6 +4533,7 @@ function renderAdmin(){
       <span class="grade grade-${grade}">${grade}</span>
       ${fault>0?`<span class="badge b-fault">${fault}✗</span>`:''}
       ${saved.shiftCompleted?'<span style="font-size:11px;color:var(--green);font-weight:700">✅</span>':''}
+      ${saved.roomChk&&saved.roomChk.checkedRooms>0?`<span style="font-size:10px;color:var(--teal);font-weight:700" title="Rooms checked: ${saved.roomChk.checkedRooms}/${saved.roomChk.totalRooms}">🛏️</span>`:''}
     </div>`);
   });
   document.getElementById('emp-bars').innerHTML=empBars.join('')||'<div style="color:var(--text3);font-size:13px;padding:4px">No employees added yet. Go to Staff tab.</div>';
@@ -5504,6 +5520,18 @@ function startLiveTracking(){
       const transTab=document.getElementById('tab-transport');
       if(transTab&&transTab.style.display!=='none') renderAdminTransport();
     }catch(e){/* transport fetch failed — non-blocking */}
+    // Sync room checklist progress from Firebase
+    try{
+      const rcr=await fetchWithTimeout(base+'/roomChecklist/progress.json',{},5000);
+      if(rcr.ok){
+        const rcData=await rcr.json();
+        if(rcData&&typeof rcData==='object'){
+          Object.entries(rcData).forEach(([roomKey,data])=>{
+            if(data) localStorage.setItem('HFM4_ROOMCHK_PROGRESS_'+roomKey,JSON.stringify(data));
+          });
+        }
+      }
+    }catch(e){/* room checklist fetch failed — non-blocking */}
     // Sync tasks — always replace local with Firebase truth
     try{
       const tr=await fetchWithTimeout(base+'/tasks.json',{},5000);
@@ -6925,10 +6953,27 @@ function renderAdminRoomChkSummary(){
     html+=`<div style="font-size:12px;font-weight:800;color:var(--teal);margin-bottom:6px;padding:6px 0;border-bottom:2px solid #80DEEA">🛏️ Per-Room Items (${roomKeys.length} rooms)</div>`;
     roomKeys.forEach(r=>{
       const items=all[r]||[];
+      // Check employee progress for this room
+      const progKey='HFM4_ROOMCHK_PROGRESS_'+r.replace(/\s+/g,'_');
+      const progStr=localStorage.getItem(progKey);
+      let empInfo='';
+      if(progStr){
+        try{
+          const prog=JSON.parse(progStr);
+          const vals=Object.values(prog).filter(v=>v==='OK'||v==='Fault'||v==='N/A');
+          const o=vals.filter(v=>v==='OK').length;
+          const f=vals.filter(v=>v==='Fault').length;
+          const n=vals.filter(v=>v==='N/A').length;
+          const em=prog.empName||'';
+          const sub=prog.submittedAt?new Date(prog.submittedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
+          empInfo=`<span style="font-size:11px;color:var(--green);font-weight:700"> 👷 ${em}  ✅ ${o} ❌ ${f} — ${n}${sub?'  🕐 '+sub:''}</span>`;
+        }catch(e){}
+      }
       html+=`<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:12px;color:var(--text)">
         <span style="font-weight:700;color:var(--teal);min-width:60px">${r}</span>
         <span style="color:#78909C">${items.length} item${items.length!==1?'s':''}</span>
         <span style="color:var(--text3);font-size:11px;margin-left:4px">${items.slice(0,3).join(', ')}${items.length>3?', …':''}</span>
+        ${empInfo}
       </div>`;
     });
   }
@@ -8030,10 +8075,40 @@ function getRoomChkProgress(room){
   try{return JSON.parse(localStorage.getItem(key)||'{}');}catch(e){return{};}
 }
 function saveRoomChkProgress(room,progress){
-  const key='HFM4_ROOMCHK_PROGRESS_'+room?.replace?.(/\s+/g,'_')||'';
-  localStorage.setItem(key,JSON.stringify(progress));
   progress.room=room;
   progress.updated=Date.now();
+  if(currentEmp){
+    progress.empName=currentEmp.name;
+    progress.empLoginId=currentEmp.loginId;
+  }
+  const key='HFM4_ROOMCHK_PROGRESS_'+room?.replace?.(/\s+/g,'_')||'';
+  localStorage.setItem(key,JSON.stringify(progress));
+  // Also save to daily employee data so admin dashboard sees it
+  if(currentEmp){
+    let ok=0,fault=0,na=0;
+    Object.values(progress).forEach(v=>{if(v==='OK')ok++;else if(v==='Fault')fault++;else if(v==='N/A')na++;});
+    const saved=JSON.parse(localStorage.getItem('HFM4_'+todayStr()+'_'+currentEmp.loginId)||'{}');
+    const all=getRoomChkAll();
+    const roomKeys=Object.keys(all).filter(k=>k!=='__common__');
+    const totalRooms=roomKeys.length;
+    // Count how many rooms have at least one item checked
+    let checkedRooms=0;
+    roomKeys.forEach(r=>{
+      const p=getRoomChkProgress(r);
+      const vals=Object.values(p).filter(v=>v==='OK'||v==='Fault'||v==='N/A');
+      if(vals.length>0) checkedRooms++;
+    });
+    if(!saved.roomChk) saved.roomChk={rooms:{},checkedRooms:0,totalRooms:0};
+    saved.roomChk.rooms[room]={ok,fault,na,updated:Date.now()};
+    saved.roomChk.checkedRooms=checkedRooms;
+    saved.roomChk.totalRooms=totalRooms;
+    saved.roomChk.empName=currentEmp.name;
+    saved.roomChk.empLoginId=currentEmp.loginId;
+    localStorage.setItem('HFM4_'+todayStr()+'_'+currentEmp.loginId,JSON.stringify(saved));
+    if(getDbUrl()){
+      fbPut('/daily/'+todayStr()+'/'+currentEmp.loginId,saved).catch(()=>{});
+    }
+  }
   if(getDbUrl()){
     fbPut('/roomChecklist/progress/'+(room?.replace?.(/\s+/g,'_')||''),progress).catch(()=>{});
   }
@@ -8102,6 +8177,20 @@ function onRoomChecklistRoomChange(){
     html+=`</div>`;
   }
   el.innerHTML=html;
+  // Show submit button if items exist
+  const submitArea=document.getElementById('rchk-submit-area');
+  if(submitArea) submitArea.style.display=items.length?'block':'none';
+}
+function submitRoomChecklist(){
+  const sel=document.getElementById('rchk-room');
+  const room=sel.value; if(!room)return;
+  if(!confirm('Submit room checklist for '+room+'?'))return;
+  const saved=getRoomChkProgress(room);
+  saved.room=room;
+  saved.submittedAt=Date.now();
+  saveRoomChkProgress(room,saved);
+  showToast('✅ Room checklist for '+room+' submitted ✓');
+  onRoomChecklistRoomChange();
 }
 function setRoomChkStatus(idx,val,btn){
   const sel=document.getElementById('rchk-room');
@@ -8110,8 +8199,6 @@ function setRoomChkStatus(idx,val,btn){
   // Convert old boolean format to status string
   if(saved[idx]===true||saved[idx]===false) delete saved[idx];
   saved[idx]=saved[idx]===val?undefined:val;
-  saved.empName=currentEmp?.name||'Employee';
-  saved.empLoginId=currentEmp?.loginId||'';
   saveRoomChkProgress(room,saved);
   onRoomChecklistRoomChange();
 }
@@ -8568,12 +8655,12 @@ function adminRemoveDischargeItem(idx){
 // ══════════════════════════════════════════════════════
 function populateDeptSelects(){
   const depts=getDepts();
-  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept','rep-dept','adm-excel-dept','si-dept','so-dept'];
+  const ids=['ne-dept','inv-dept','inv-act-dept','sk-inv-dept','sk-inv-act-dept','mat-req-dept','rep-dept','adm-excel-dept','si-dept','so-dept','inv-rep-dept'];
   ids.forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const old=el.value;
     const isAct=id==='inv-act-dept'||id==='sk-inv-act-dept';
-    const isRep=id==='rep-dept'||id==='adm-excel-dept';
+    const isRep=id==='rep-dept'||id==='adm-excel-dept'||id==='inv-rep-dept';
     let html=isAct?'<option value="all">All Depts</option>':'';
     if(isRep) html='<option value="all">All Departments</option>';
     html+=depts.map(d=>`<option value="${d.id}">${d.icon} ${d.label}</option>`).join('');
@@ -9100,6 +9187,79 @@ function downloadInvExcel(){
   XLSX.utils.book_append_sheet(wb,ws,getInvLabel(dept)+' Inventory');
   XLSX.writeFile(wb,getInvLabel(dept)+'_Inventory_'+todayStr()+'.xlsx');
   showToast2('✅ Excel downloaded');
+}
+function downloadInvReportExcelAll(){downloadInvReportExcel('all');}
+function downloadInvReportExcel(dept){
+  if(!dept) dept=document.getElementById('inv-rep-dept')?.value||'all';
+  const inv=getInventory();
+  const allTxns=getInvTransactions();
+  const allReqs=getMaterialRequests();
+  const wb=XLSX.utils.book_new();
+  const depts=dept==='all'?Object.keys(inv):[dept];
+  // KPI Summary sheet
+  let totalItems=0,totalQty=0,lowItems=[],expiredItems=[],warnItems=[];
+  Object.entries(inv).forEach(([d,data])=>{
+    (data.items||[]).forEach(item=>{
+      totalItems++;totalQty+=(item.qty||0);
+      if((item.qty||0)<=item.min)lowItems.push({...item,dept:d});
+      const es=getExpiryStatus(item);if(es&&es.label.includes('Expired'))expiredItems.push({...item,dept:d});
+      const ws=getWarrantyStatus(item);if((ws&&ws.label.includes('ending'))||(es&&es.label.includes('soon')))warnItems.push({...item,dept:d});
+    });
+  });
+  const pendingReqs=allReqs.filter(r=>r.status==='pending').length;
+  const kpiRows=[
+    ['INVENTORY REPORT — '+cfg.hosp],[],['Generated',new Date().toLocaleString('en-IN')],['Department',dept==='all'?'All':getInvLabel(dept)],[],
+    ['Total Items',totalItems],['Total Stock',totalQty],['Low Stock Items',lowItems.length],
+    ['Expired Items',expiredItems.length],['Ending Soon',warnItems.length],['Pending Material Requests',pendingReqs],[]
+  ];
+  if(lowItems.length){
+    kpiRows.push(['LOW STOCK ITEMS']);kpiRows.push(['Department','Item','Stock','Min','Unit']);
+    lowItems.forEach(i=>kpiRows.push([getInvLabel(i.dept),i.name,i.qty||0,i.min,i.unit]));
+    kpiRows.push([]);
+  }
+  if(expiredItems.length){
+    kpiRows.push(['EXPIRED ITEMS']);kpiRows.push(['Department','Item','Expiry Date','Unit']);
+    expiredItems.forEach(i=>kpiRows.push([getInvLabel(i.dept),i.name,i.expiry,i.unit]));
+    kpiRows.push([]);
+  }
+  const wsK=XLSX.utils.aoa_to_sheet(kpiRows);
+  XLSX.utils.book_append_sheet(wb,wsK,'📊 KPI Summary');
+  // One sheet per department
+  depts.forEach(d=>{
+    const data=inv[d];if(!data||!data.items||!data.items.length)return;
+    const txns=allTxns.filter(t=>t.dept===d);
+    const rows=[['Item Name','Unit','Min Stock','Current Qty','Price (₹)','Stock Value','Warranty Start','Warranty End','Expiry Date','Status','Last IN','Last OUT']];
+    data.items.forEach(item=>{
+      const itemTxns=txns.filter(t=>t.item.toLowerCase()===item.name.toLowerCase());
+      const lastIn=itemTxns.filter(t=>t.type==='IN').slice(-1)[0];
+      const lastOut=itemTxns.filter(t=>t.type==='OUT').slice(-1)[0];
+      const ws=getWarrantyStatus(item);const es=getExpiryStatus(item);
+      const status=[ws?ws.label:'',es?es.label:''].filter(Boolean).join(' · ');
+      rows.push([item.name,item.unit,item.min,item.qty||0,item.price||0,(item.price||0)*(item.qty||0),item.warrantyStart||'',item.warrantyEnd||'',item.expiry||'',status,lastIn?new Date(lastIn.date).toLocaleDateString('en-IN'):'',lastOut?new Date(lastOut.date).toLocaleDateString('en-IN'):'']);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:28},{wch:10},{wch:10},{wch:12},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,getInvLabel(d));
+  });
+  // Transactions sheet
+  const txnRows=[['Date','Type','Department','Item','Qty','Unit','By']];
+  const filteredTxns=dept==='all'?allTxns:allTxns.filter(t=>t.dept===dept);
+  filteredTxns.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{
+    txnRows.push([t.date?new Date(t.date).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'',t.type,getInvLabel(t.dept),t.item,t.qty,t.unit||'',t.by||'']);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(txnRows),'IN/OUT Activity');
+  // Material Requests sheet
+  const reqRows=[['Date','Department','Item','Qty','Unit','Requested By','Status']];
+  const filteredReqs=dept==='all'?allReqs:allReqs.filter(r=>r.dept===dept);
+  filteredReqs.sort((a,b)=>b.createdAt-a.createdAt).forEach(r=>{
+    reqRows.push([r.createdAt?new Date(r.createdAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'',getInvLabel(r.dept),r.item,r.qty,r.unit||'',r.requestedBy||'',r.status]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(reqRows),'Material Requests');
+  const fname=cfg.hosp.replace(/\s+/g,'_')+'_Inventory_Report_'+todayStr()+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showToast2('✅ Inventory report downloaded');
+  const preview=document.getElementById('inv-rep-preview');
+  if(preview) preview.textContent='✅ '+getInvLabel(dept)+' report — '+totalItems+' items, '+totalQty+' total stock';
 }
 function downloadInvPDF(){
   const dept=document.getElementById('inv-dept').value;
